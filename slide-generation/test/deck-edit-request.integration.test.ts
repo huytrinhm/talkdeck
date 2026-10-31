@@ -135,7 +135,7 @@ test("canonical Fast forwards one exact explicit deck request to Slow without pu
         "role" in item &&
         item.role === "user" &&
         typeof item.content === "string" &&
-        item.content.startsWith('{"context"'),
+        JSON.parse(item.content).kind === "current_boundary",
     ) as { content: string };
     const tasks = JSON.parse(boundary.content).tasks;
     assert.equal(tasks.length, 1);

@@ -119,11 +119,20 @@ export function compileDesignContext(
   const read = (path: string) =>
     snapshot.files.find((f) => f.path === path)!.text;
   const catalog = catalogSchema.parse(JSON.parse(read("catalog.json")));
-  const sections = [
-    read("common.md"),
-    read("authoring.md"),
-    read(`modes/${mode === "specialist" ? "slow" : mode}.md`),
-  ];
+  if (mode === "specialist") return {
+    skill: "talkdeck-slide-design",
+    version: snapshot.version,
+    sha256: snapshot.sha256,
+    instructions: `# Private specialist design guidance
+Complete only the supplied task using its facts, constraints and attached evidence. This guidance is self-contained; no external authoring reference or recipe retrieval is required.
+
+Preserve exact substantive wording, qualifications, units and uncertainty. Do not invent missing facts, logos, quotations, results or comparison values. Choose a simple visual relationship that matches the supplied evidence: comparison, sequence, grouping or a single focal point. Keep quantitative geometry truthful and do not imply unsupported causal links or a winning option.
+
+Use the supplied style when available. Give the main idea a clear first reading, group related elements, align deliberately and leave breathing room. Keep text readable and avoid decorative clutter. Missing style or evidence remains missing; report material limitations instead of guessing. Inspect any supplied asset preview for text accuracy and readability without claiming checks you could not perform.
+
+Private artifact references are not automatically resolved canonical assets. Do not claim integration or presentation readiness. Send explanations or limitations to the supplied parent recipient with send_message. Successful save_artifact/image_generate results are queued to the parent automatically; do not resend their bytes. Call finish when the assigned work is complete. finish ends the activation; it does not deliver prose, so send needed explanations before it.`,
+  };
+  const sections = [read("common.md"), read("authoring.md"), read(`modes/${mode}.md`)];
   if (mode === "fast") {
     sections.push(
       "## Available style intentions (preserve the current theme)\n" +
@@ -141,10 +150,7 @@ export function compileDesignContext(
     for (const e of [...catalog.styles, ...catalog.patterns])
       sections.push(`## ${e.id} — ${e.name}\n${read(e.file)}`);
   }
-  if (mode === "specialist")
-    sections.push(
-      "Your specialist task remains private. These recipes do not authorize shared source edits or new tools; return only artifacts permitted by the host.",
-    );
+
   return {
     skill: "talkdeck-slide-design",
     version: snapshot.version,

@@ -4,7 +4,7 @@ import type {
 } from "openai/resources/responses/responses";
 import type { InputUtterance } from "../source/ingestion.js";
 import type { Publisher } from "./publisher.js";
-import type { Role, Speech } from "./types.js";
+import type { Role, Speech, Observation } from "./types.js";
 
 export interface GenerationInvocation {
   agent: string;
@@ -24,6 +24,8 @@ export interface GenerationPolicy {
   instructions(role: Role): string;
   definitions(role: Role): FunctionTool[];
   context(input: Omit<GenerationInvocation, "context">): unknown;
+  /** Immutable source and real pixels, cached by rendered content. Not edit anchors. */
+  observe?(slideId: string, signal: AbortSignal): Promise<Observation>;
   invoke(
     input: GenerationInvocation,
     name: string,

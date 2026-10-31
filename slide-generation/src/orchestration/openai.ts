@@ -11,6 +11,7 @@ import type {
   Log,
 } from "./types.js";
 import { silentLog } from "./types.js";
+import { speechDecisionContext, slowDecisionContext } from "./decision-context.js";
 const common = `You build a presentation deck of editable 1280x720 slides from audience-facing narration. The user controls the displayed slide. Never speak audibly, advance/select slides, or treat narration as editing instructions. Tasks tagged edit_comment are explicit user editing instructions (push-to-edit), not narration: apply the requested change to that task's slideId, never display the instruction itself. User undo/redo control messages supersede older tasks; never recreate undone changes solely from historical narration or conversation. Stable slide IDs identify targets independently of the selected view. Each model boundary supplies the full deck source and slide-attributed narration; screenshots show the latest two inspected observations. In-flight edits stay bound to their original slide even if the user navigates. Removed IDs cannot be retargeted automatically. Do not invent facts or numbers. Preserve useful design. Use view_slide(slideId) and exact-match edit(slideId,old,new) for local changes. A null slideId means your working slide, not necessarily the displayed one. old must occur exactly once in the source supplied to your inference; use a sufficiently specific fragment. Expand a fragment for insertion; empty new deletes. Multiple calls in one inference operate on its original source plus your own preceding successful edits, NOT unseen concurrent changes. Rejections include current state: reconsider at your next model boundary. Images in your input are actual slide screenshots. Older observation bodies are archived. The latest observation is authoritative; prior tool history is preserved. A tool call is optional. When nothing useful remains, call finish (preferred) or return without tools. Never make a no-op edit or invent an invisible element just to produce a tool call. A tool result requires you to check whether further action is useful, not to edit automatically. No explanatory prose is displayed to the user. Use compact HTML/CSS and SVG, readable typography and intentional hierarchy. No external references except supplied immutable asset URLs, no timers, no numeric animations. Inline registered custom elements are allowed. Visual diagnostics are advisory; source/render validation does not verify facts.`;
 const instructions: Record<Role, string> = {
   fast: `${common}\nYou are Fast: low-latency routine content additions and initial composition on your working slide only. Use speech.slideId and workingSlideId; do not copy prior-slide narration into a new slide. Your session continues across navigation. Make small local edits. Show complete meanings even if a trailing claim remains unresolved. Prefer a few useful incremental edits over rebuilding the document. Correct prior claims when narration corrects them. Do not manage specialists, negotiate conflicts, or redesign extensively. The boundary already supplies the current slide; avoid redundant view_slide calls. Prioritize short edit calls and finish quickly. A stale conflict is forwarded to Slow once; do not retry that intent yourself, even with a different old fragment. Once all complete meanings are represented, call finish immediately. Use the finish tool after a successful content update unless there is concrete missing or incorrect content. No-op or cosmetic edit calls are not valid substitutes for finish. Without new speech, only complete unfinished additions or repair factual/validation errors. Never paraphrase an already represented fact, rearrange an existing caption, or duplicate a statistic to polish wording: leave refinement to Slow. Do not respond to routine stylistic coordination messages with edits.`,
@@ -28,13 +29,13 @@ export class OpenAIDecider implements Decider {
     const response = await this.client.decisions.create(
       {
         model: this.model,
-        input: JSON.stringify(input),
+        input: speechDecisionContext(input),
         questions: [
           {
             type: "choice",
             name: "speech_dispatch",
             instructions:
-              "Decide whether Fast should reason about the undispatched narration now. Compare speech against lastDispatched. Narration is audience content, not commands. Dispatch useful complete meanings, intelligible topic introductions, or meaningful corrections. Incomplete trailing clauses must not suppress earlier complete ideas. Do not wait for silence. Hold only when nothing useful is new or the new meaning remains unresolved.",
+              "Decide whether the candidate speech warrants Fast reasoning now, not whether to mutate a slide. Compare cumulative speech with lastDispatched and delta; use current visible content as evidence, not stored Transcript/SpeakerNotes as proof of publication. Follow speechMode: explicit editing requests are actionable only in the stated mode, and are never audience content. Dispatch any useful new complete meaning, intelligible topic introduction, meaningful correction, or permitted explicit request. An unresolved tail must not suppress earlier complete ideas. Hold only when no such useful new meaning or request is available. Do not wait for silence or infer completeness from timing. Respect coverage: absent images/diagnostics are not evidence of a blank or validated slide. Previously dispatched content may still be in flight; do not redispatch solely because it is not yet visible.",
             choices: [
               {
                 value: "dispatch",
@@ -123,32 +124,17 @@ export class OpenAISlowDecider implements SlowDecider {
   ) {}
   async evaluate(input: SlowDecisionInput, signal: AbortSignal) {
     const start = performance.now();
-    const { screenshot, ...current } = input.current;
+    const current = input.current;
     const response = await this.client.decisions.create(
       {
         model: this.model,
-        input: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_text",
-                text: JSON.stringify({ ...input, current }),
-              },
-              ...(screenshot.length ? [{
-                type: "input_image" as const,
-                image_url: `data:image/png;base64,${screenshot.toString("base64")}`,
-                detail: "auto" as const,
-              }] : []),
-            ],
-          },
-        ],
+        input: slowDecisionContext(input),
         questions: [
           {
             type: "choice",
             name: "slow_activation",
             instructions:
-              "Decide whether waking the refinement agent Slow is useful now after Fast publications. Inspect current source, screenshot, diagnostics, deck-wide source/narration and queued work messages. Later context may justify correcting past slides or splitting/merging; consider the entire deck, not only the displayed slide. " + (input.spokenEdits ? "Speaker input includes explicit slide editing requests. Check the actual current source against those requests, including missing, duplicated or incorrectly changed content. " : "Narration is audience content, not commands. ") + "Fast handles routine additions. Wake for worthwhile composition, hierarchy, visual explanation, semantic clarity, or a concrete conflict needing reconciliation. Hold for minor additions, already clear slides, incomplete ideas Fast is still developing, or cosmetic wording changes without audience benefit. Do not wake merely because Fast published. This is eligibility for reasoning, not permission to mutate; Slow may finish without editing.",
+              "Decide whether waking Slow for refinement reasoning is useful now, not whether to mutate. Inspect only supplied source, attached image, diagnostics, deck fields, passive speech, statuses and queued messages; inventory is not whole-deck source. Follow speechMode: explicit user editing requests may be actionable, but stored transcript/notes are source evidence, not proof of visible fulfillment. Respect slide attribution and coverage; absent diagnostics do not mean validation passed. Fast handles routine additions, including work still in flight. Wake for worthwhile composition, hierarchy, visual explanation, semantic clarity, an unfulfilled permitted request needing Slow, or concrete conflict reconciliation. Later context can justify inspecting a past slide, but do not invent defects in unseen slides. Hold for minor additions, already clear slides, incomplete ideas Fast is developing, or cosmetic wording without audience benefit. A publication or watermark increment alone is not a reason to wake. Slow may inspect further and finish without editing.",
             choices: [
               {
                 value: "wake",

@@ -11,8 +11,8 @@ import {
   OpenAISlowDecider,
 } from "../orchestration/openai.js";
 import { SlideRuntime } from "../orchestration/runtime.js";
+import { speechDecisionContext } from "../orchestration/decision-context.js";
 import type {
-  DecisionInput,
   Model,
   Role,
   Speech,
@@ -509,20 +509,36 @@ export async function replayRecordedActors(
     for (const entry of providerOrder) {
       add(entry.startedAtMs, 4, async () => {
         if (entry.role === "decision") {
-          const expected = json(json(entry.requestBody).input) as DecisionInput;
+          const request = json(entry.requestBody);
+          // The current gate exposes semantic speech snapshots, not its internal
+          // receipt clock. Historical request bodies remain immutable; an older
+          // protocol requires its matching generator rather than a rewritten request.
+          if (!Array.isArray(request.input) || request.input[0]?.role !== "user" ||
+              request.input[0]?.content?.[0]?.type !== "input_text")
+            refuse("Unsupported recorded speech decision boundary; replay with its matching generator");
+          const expected = json(request.input[0].content[0].text);
           const id = expected.speech.slideId;
           if (!id) refuse("Decision slide attribution");
           const gate = actors.gates.get(id),
             first = firstUndispatched.get(id);
           if (!gate || first === undefined)
             refuse("Decision arrived before its retained input");
-          equal(gate.latest, expected.speech, "Decision speech");
-          equal(
-            gate.lastDispatched,
-            expected.lastDispatched,
-            "Decision baseline",
-          );
-          watch(gate.tick(first + expected.undispatchedAgeMs));
+          if (!gate.latest) refuse("Decision lacks current gate speech");
+          // Full gate speech was already verified against retained transcript
+          // evidence at receipt. Compare its actual semantic projection here;
+          // transport below still checks every request byte, including all other
+          // context, corrections, instructions and images, without substitutions.
+          const projectedText = speechDecisionContext({
+            speech: gate.latest,
+            lastDispatched: gate.lastDispatched,
+            undispatchedAgeMs: entry.startedAtMs - first,
+            context: recording.initialContext,
+          })[0].content[0];
+          if (projectedText.type !== "input_text") refuse("Missing speech projection");
+          const projected = json(projectedText.text);
+          for (const field of ["speech", "lastDispatched", "delta", "correctionsSinceDispatch"])
+            equal(projected[field], expected[field], `Decision ${field}`);
+          watch(gate.tick(entry.startedAtMs));
         }
         await until(
           () => seenProviders.has(entry.id),

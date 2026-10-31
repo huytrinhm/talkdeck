@@ -130,7 +130,8 @@ test("actual scheduler commits via canonical hashline tools and real Chromium; u
     assert.match(slowInputs[0].current.source, /Measured growth/);
     assert.match(slowInputs[0].current.source, /Growth is 42%, provisionally/);
     assert.equal(slowInputs[0].spokenEdits, true);
-    assert.equal(slowInputs[0].current.screenshot.length, 0);
+    assert.ok(slowInputs[0].current.screenshot.length > 1000);
+    assert.equal(slowInputs[0].current.screenshotMimeType, "image/jpeg");
     assert.equal(f.backend.historyStatus().undoDepth, 1);
     assert.ok(
       inputs.every((input) =>
@@ -139,7 +140,7 @@ test("actual scheduler commits via canonical hashline tools and real Chromium; u
     );
     assert.ok(
       inputs.every(
-        (input) => !JSON.stringify(input.input).includes("input_image"),
+        (input) => JSON.stringify(input.input).includes("input_image"),
       ),
     );
     assert.match(JSON.stringify(inputs[0].input), /explicit slide editing requests/);

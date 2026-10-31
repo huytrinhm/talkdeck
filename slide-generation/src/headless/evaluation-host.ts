@@ -44,9 +44,9 @@ export interface HeadlessHostOptions {
 }
 export async function createEvaluationHost(options: HeadlessHostOptions) {
   const { recorder } = options, root = fileURLToPath(new URL('../../', import.meta.url));
-  const basePrompt = await readFile(join(root, 'docs/AGENT_PROMPT.md'), 'utf8');
-  const specification = await readFile(join(root, 'SPEC.md'), 'utf8');
-  const instructions = `${basePrompt}\n\n${specification}`;
+  // Match the practice host: implementation requirements in SPEC.md are not
+  // model instructions. Role rules, tools and design guidance are added by JsxBackend.
+  const instructions = await readFile(join(root, 'docs/AGENT_PROMPT.md'), 'utf8');
   const designSkills = await loadDesignSkills();
   const local = await createLocalRuntime({ directory: join(recorder.directory, 'runtime') });
   let cleanupRecording: HeadlessRecordingSession | undefined, cleanupActors: SlideRuntime | undefined;

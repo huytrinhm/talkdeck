@@ -115,10 +115,7 @@ export async function main(argv: string[]) {
       throw new Error(
         "Recorded instructions differ from their configuration hash",
       );
-    const currentInstructions =
-      (await readFile(join(root, "docs/AGENT_PROMPT.md"), "utf8")) +
-      "\n\n" +
-      (await readFile(join(root, "SPEC.md"), "utf8"));
+    const currentInstructions = await readFile(join(root, "docs/AGENT_PROMPT.md"), "utf8");
     const currentPromptSha = lineHash(currentInstructions),
       promptMatches = currentPromptSha === configuration.promptSha256;
     // Transaction replay does not infer. A changed prompt is recorded, never passed off as actor compatibility.

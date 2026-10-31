@@ -57,7 +57,7 @@ const schemas = {
 export type ToolName = keyof typeof schemas;
 const descriptions: Record<ToolName, string> = {
   finish:
-    "Finish this activation when no useful work remains. Preserve the session for future narration/tasks. Never use a no-op edit to finish. Pending speech/tasks and required specialist results still take precedence.",
+    "End this activation, not the session, when useful work is complete. This does not certify deck readiness or publish anything. Pending speech/tasks and required specialist results still take precedence. Specialists must deliver findings through save_artifact or send_message before finishing; assistant prose is not forwarded. Specialist completion queues a parent notice and resumes a parent waiting for it, but does not wake an idle parent. Never use a no-op edit to finish.",
   view_slide:
     "Inspect a stable slide ID, or your working slide when null. Returns source, actual screenshot, geometry and diagnostics. Does not navigate the user.",
   list_slides:
@@ -70,17 +70,17 @@ const descriptions: Record<ToolName, string> = {
     "Atomically merge adjacent observed slides in deck order into one self-contained HTML document. First ID survives; removed IDs reject stale edits.",
   edit: "Exact-match replace in the source this inference observed; publish through validation. Empty new deletes. Failure leaves displayed state unchanged.",
   delegate:
-    "Start a focused private specialist task. Returns a specialist ID immediately. Only Slow integrates results. At most two active specialists.",
+    "Start a focused private specialist task; returns {recipient: specialistId} immediately and makes its completion required for this activation. Supply a self-contained task and facts, including exact wording, units, constraints and desired deliverable: the specialist does not inherit your conversation or reasoning. slideId null uses your working slide. Specialists cannot edit or validate the shared deck; only Slow integrates useful results. At most two active specialists. Use wait_for when required work remains outstanding.",
   send_message:
-    "Queue information to an existing agent; does not wake an idle recipient.",
+    "Queue text to an existing agent ID; returns {queued:true}, not a read receipt, and does not wake an idle recipient. Specialists may send only to their parent Slow session. Use this to deliver findings or limitations without an artifact; it does not end your activation. Use followup_task when asking an idle recipient to do new work.",
   followup_task:
-    "Request work from an existing agent; wakes idle recipient without duplicating an active turn.",
+    "Request work from an existing agent ID with a task and supporting facts. Returns {requested:true}, not completion; wakes an idle recipient or queues work for its active session. Existing session history is retained. Specialists may request work only from their parent, never themselves or siblings. A specialist followup becomes required work for an active parent.",
   wait_for:
-    "Wait for these required specialists to finish. Parent remains active but not inferring. Completion is otherwise queue-only.",
+    "Wait for your own specialist IDs to finish; parent remains active but not inferring. Returns each child's state, possible error and artifact references. A completed wait can include failed children: inspect state/error and queued result messages before integrating. Completion messages are otherwise queue-only and do not wake an idle parent. Waiting does not publish or integrate results.",
   save_artifact:
-    "Finalize an immutable private artifact and return its reference/content to Slow. Does not publish a slide.",
+    "Store an immutable private artifact. Returns {ref,mediaType,queuedToParent} to you and queues its ref, mediaType, full content and target slide to your parent Slow session. Queueing is not a read receipt. This does not end your task, publish a slide, validate the content or register a canonical asset. Call finish after delivering all needed results. HTML/CSS/SVG remain private artifact content, not native-ready Talkdeck elements or assets.",
   image_generate:
-    "Generate a private raster image with OpenAI gpt-image-2.5-flare (Flare 2.5); choose quality and aspect ratio. Returns immutable asset reference. Does not publish.",
+    "Generate a private PNG using OpenAI gpt-image-2.5-flare (Flare 2.5). Supply a self-contained visual prompt: the image provider receives no deck, task history or facts beyond this prompt. Null quality defaults to medium; null size defaults to 1536x1024. Returns {ref,mediaType,queuedToParent}; the next model boundary includes its preview, and the parent's artifact delivery includes the preview. Queueing is not a read receipt; inspect the supplied pixels before claiming visual review. Does not end the task, publish, or register a canonical Image asset; Slow must resolve integration separately.",
 };
 export function allowedTools(role: Role): ToolName[] {
   return role === "fast"

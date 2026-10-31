@@ -74,6 +74,15 @@ test("skills affect actor instructions only, preserve legacy mode, and do not ad
       enabled.generation.instructions("slow"),
       /S05 — Warm humanist/,
     );
+    const specialist = enabled.generation.instructions("specialist");
+    assert.deepEqual(enabled.generation.definitions("specialist"), []);
+    assert.match(specialist, /private specialist/i);
+    assert.match(specialist, /Private artifact references are not automatically resolved canonical assets/);
+    assert(specialist.length < 4000, "Specialists receive a compact private-task prompt, not the recipe book");
+    assert.doesNotMatch(specialist, /Host rules|# Canonical authoring boundary|# Refinement|Follow the canonical JSX|read_source|edit_source|read_speaker_notes|presentation_readiness|search_icons|read_icon|## L\d\d|## S\d\d/);
+    assert.match(specialist, /send_message/);
+    assert.match(specialist, /queued to the parent automatically/);
+    assert.match(specialist, /finish ends the activation; it does not deliver prose/);
     const frozen = enabled.generation.instructions("slow");
     snapshot.files[0].text = "Caller mutation";
     enabled.designContext("slow")!.instructions = "Returned value mutation";

@@ -46,6 +46,8 @@ export class JsxBackend implements GenerationBackend {
   validateAccess: Publisher['validateAccess'];
   readonly generation: GenerationPolicy;
   private readonly designContexts = new Map<DesignMode, DesignContext>();
+  private readonly observations = new Map<string, Promise<Observation>>();
+  private readonly pixels = new Map<string, Promise<Buffer>>();
   constructor(readonly runtime: Runtime, private options: JsxBackendOptions) {
     if (options.designSkills) {
       const snapshot = validateDesignSkillSnapshot(options.designSkills);
@@ -53,7 +55,11 @@ export class JsxBackend implements GenerationBackend {
         this.designContexts.set(mode, compileDesignContext(snapshot, mode));
     }
     this.generation = {
-      instructions: role => `${options.instructions}\n\nYou are ${role}. This runtime uses canonical JSX and hashline edit_source, never HTML edits. Spoken input includes explicit editing instructions. Preserve its exact words and qualifiers in notes/raw evidence. ${role === 'fast' ? 'Handle routine content and explicit edits within workingSlideId. Use read_source for that slide, then one granular edit_source when possible. For a blank slide, insert_before its closing </Slide> line; the preceding blank line is a stable insertion boundary. Do not anchor visible insertions to Transcript or SpeakerNotes lines, which change as speech arrives. After a stale refusal, reread and apply the latest requested state instead of finishing with the slide blank. For an explicit request requiring theme, library, slide deletion/reordering or cross-slide work, call request_deck_edit with its scope and the exact Prompt utteranceId copied from notes.transcript (or read_speaker_notes); this wakes Slow with the complete original input. Supply the ID, not quoted or combined speech. Do not merely finish or try to edit outside workingSlideId.' : 'Use shared definitions for repeated shapes and refine the whole deck only when useful. Preserve factual content and source evidence.'} Finish this activation promptly once the requested change is represented. Do not repeatedly inspect readiness or reword correct content. The host handles explicit new-slide/return navigation; never create another slide for an already-created workingSlideId. Only explicit screenshot calls provide images.`,
+      instructions: role => role === 'specialist'
+        ? `You are a private specialist working for Slow, not a deck editor. Complete only the supplied task using its facts, constraints and attached evidence. Preserve exact substantive wording, qualifications and units; do not invent missing facts. You have no native source, notes, catalog, render, screenshot, validation or deck-edit tools. Use only tools actually supplied in this request. Deliver explanations with send_message to the supplied parent recipient. Successful save_artifact/image_generate results queue to the parent automatically. Call finish after delivery; finish does not deliver prose; never claim to have changed or validated the shared deck. A private artifact reference is not automatically a resolved canonical Image asset. Report missing evidence or capabilities to Slow instead of assuming access to its context. Design recipes are advisory and do not expand this authority.`
+        : `${options.instructions}\n\n# Current role and activation\nYou are ${role}. This runtime uses canonical JSX and hashline edit_source, never HTML edits. Spoken input may include explicit editing instructions. Read the supplied notes/transcript and source; unchanged repeated context is not new speech and does not by itself invalidate issued anchors. ${role === 'fast'
+          ? 'Your edit scope is workingSlideId and its descendants only, even when a returned source snapshot includes the entire deck. Handle routine content and explicit local edits with one granular transaction when possible. Use an already supplied read_source snapshot, or read the working slide if none is usable. For a blank slide, insert_before its closing </Slide> line using that line hash. Do not anchor visible insertions to Transcript or SpeakerNotes lines, which change as speech arrives. After a stale refusal, reread and apply the latest requested state instead of finishing with the slide blank. Forward explicit theme, library, deletion/reordering or cross-slide requests with request_deck_edit, choosing its scope and copying the exact Prompt utteranceId from the supplied transcript or read_speaker_notes. This forwards that stored utterance to Slow; do not replace it with a paraphrase or edit outside your scope. An accepted handoff completes your forwarding responsibility; do not wait for Slow unless the host explicitly requires it.'
+          : 'Use shared definitions for repeated shapes and refine the whole deck only when useful. Read affected slides and their notes before substantive edits; include dependent corrections in one transaction.'} After an accepted edit, inspect its normalized source and findings. Finish promptly when requested local work or an accepted handoff is complete and no pending speech/tasks or explicitly required specialist result remains. finish ends this activation, not the session, and does not certify presentation readiness. Do not repeatedly check readiness, reread unchanged notes, or reword correct content. Before entering presentation, require a complete-deck readiness gate. Routine drafting does not need that extra sweep; accepted draft edits may retain existing errors and Pending placeholders. The host handles explicit new-slide/return navigation; never create another slide for an already-created workingSlideId. The host may attach a current slide observation image; use its revision/availability metadata. Call screenshot when a fresh visual inspection or another slide is needed.`,
       definitions: role => role === 'specialist' ? [] : runtime.tools.definitions()
         .map(d => ({ type: 'function', ...d, strict: false }) as FunctionTool),
       context: input => ({ epoch: this.historyEpoch, pauseEpoch: this.pauseEpoch, revision: runtime.engine.state().revision,
@@ -61,6 +67,7 @@ export class JsxBackend implements GenerationBackend {
         slides: this.list().map(s => ({ id: s.id, title: s.title })),
         notes: input.slideId ? runtime.engine.readSpeakerNotes(input.slideId) : undefined }),
       invoke: (input, name, args) => this.invoke(input, name, args),
+      observe: (slideId, signal) => this.observeSlide(slideId, signal),
       deliverUtterance: input => this.deliverUtterance(input),
     };
     const baseInstructions = this.generation.instructions;
@@ -70,6 +77,44 @@ export class JsxBackend implements GenerationBackend {
     };
   }
   designContext(mode: DesignMode) { const context = this.designContexts.get(mode); return context ? structuredClone(context) : undefined; }
+  /** Snapshot source before any await. Pixel cache keys include actual rendered HTML/CSS
+   * and resolved dependencies, never merely slide/version IDs or speech revisions. */
+  private async observeSlide(slideId: string, signal: AbortSignal): Promise<Observation> {
+    signal.throwIfAborted();
+    const source = this.runtime.engine.readDocument().source;
+    const sourceRevision = lineHash(source), base = this.get(slideId).observation;
+    const key = `${sourceRevision}:${slideId}:${base.historyEpoch}:${base.fastWatermark}`;
+    let pending = this.observations.get(key);
+    if (!pending) {
+      pending = (async () => {
+        try {
+          const artifact = await this.runtime.renderer.render(source, slideId);
+          const visualKey = lineHash(JSON.stringify([slideId, artifact.html, artifact.css, artifact.dependencies, artifact.fonts]));
+          let pixels = this.pixels.get(visualKey);
+          if (!pixels) {
+            pixels = this.runtime.browser.screenshot(source, [slideId]).then(frames => Buffer.from(frames[0].jpeg));
+            this.pixels.set(visualKey, pixels);
+            void pixels.catch(() => { this.pixels.delete(visualKey); });
+            while (this.pixels.size > 8) this.pixels.delete(this.pixels.keys().next().value!);
+          }
+          return { ...base, id: `${slideId}:${sourceRevision}`, sourceRevision,
+            visualSourceRevision: lineHash(artifact.source), screenshot: await pixels, screenshotMimeType: 'image/jpeg',
+            availability: { screenshot: 'available; final render of this immutable source, not proof of audience-visible pixels',
+              geometry: 'not measured in this observation', diagnostics: 'not evaluated in this observation; empty is not a readiness certificate' } };
+        } catch (error) {
+          // Missing browser evidence must be visible to the recipient, never fabricated.
+          this.observations.delete(key);
+          return { ...base, id: `${slideId}:${sourceRevision}`, sourceRevision,
+            availability: { screenshot: `unavailable: ${String(error)}`, geometry: 'unavailable', diagnostics: 'not evaluated' } };
+        }
+      })();
+      this.observations.set(key, pending);
+      while (this.observations.size > 16) this.observations.delete(this.observations.keys().next().value!);
+    }
+    const result = await pending;
+    signal.throwIfAborted();
+    return { ...result, screenshot: Buffer.from(result.screenshot), availability: { ...result.availability! } };
+  }
   async initialize(_source: string) { this.selectedId = this.list()[0]?.id ?? ''; if (!this.selectedId) throw new Error('Canonical deck requires an initial slide'); }
   list(): SlideRecord[] {
     const source = this.runtime.engine.readDocument().source;
@@ -117,6 +162,16 @@ export class JsxBackend implements GenerationBackend {
           { type: 'input_text', text: JSON.stringify({ slideId: frame.slideId, sourceDigest: frame.sourceDigest, artifactDigest: frame.artifactDigest }) },
           { type: 'input_image', image_url: `data:image/jpeg;base64,${frame.jpeg}`, detail: 'high' }]) }];
         return { output: result.map(({ jpeg: _jpeg, ...rest }: any) => rest), modelItems };
+      }
+      if (name === 'render') {
+        let omittedDataUrls = 0;
+        const compact = (text: string) => text.replace(/data:[\w.+-]+\/[\w.+-]+;base64,[A-Za-z0-9+/=]+/g, value => {
+          omittedDataUrls++;
+          return `[embedded bytes omitted; sha256=${lineHash(value)}]`;
+        });
+        const html = compact(result.html), css = compact(result.css);
+        return { output: { ...result, html, css, omittedDataUrls,
+          representation: 'Inspection-only render; embedded font/image bytes omitted. Use screenshot for pixels, read_source/edit_source for canonical edits. This does not publish or certify readiness.' } };
       }
       return { output: result };
     } catch (error) { event.error = { code: error instanceof SourceError ? error.code : 'internal', message: String(error) }; throw error; }

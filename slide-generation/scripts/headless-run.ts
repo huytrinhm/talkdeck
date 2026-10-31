@@ -96,6 +96,15 @@ const selectedModels = models(), limits = { maxCalls: Number(values['max-calls']
   maxOutputTokens: Number(values['max-output-tokens'] ?? 100_000), maxOutputTokensPerCall: 8000 };
 const promptFiles = ['docs/AGENT_PROMPT.md', 'SPEC.md', 'src/host/jsx-backend.ts',
   'src/orchestration/runtime.ts', 'src/orchestration/tools.ts', 'src/orchestration/openai.ts'];
+// Boundary serialization and native tools also shape what each model receives.
+// Resolve optional modules against the selected generator, including old frozen sources.
+for (const path of ['src/orchestration/decision-context.ts', 'src/orchestration/history.ts', 'src/tools.ts']) {
+  const present = await access(join(generationRoot, path)).then(() => true, error => {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  });
+  if (present) promptFiles.push(path);
+}
 // Older frozen generators have no design skill. New ones fingerprint their own
 // resource inventory, never the current harness's recipes.
 const designModule = join(generationRoot, 'src/design/skills.ts');

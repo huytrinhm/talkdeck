@@ -1,5 +1,5 @@
 import { abortable } from "./abortable.js";
-import type { Decider, Speech, Log } from "./types.js";
+import type { Decider, Speech, Log, DecisionInput } from "./types.js";
 import { errorMessage, silentLog } from "./types.js";
 export class SpeechGate {
   latest: Speech | null = null;
@@ -20,6 +20,10 @@ export class SpeechGate {
     readonly maxInFlight = 8,
     readonly deadlineMs = 30000,
     readonly slideId?: string,
+    private snapshot?: (signal: AbortSignal) => Promise<{
+      input: Pick<DecisionInput, "current" | "deck" | "statuses" | "spokenEdits">;
+      isCurrent: () => boolean;
+    }>,
   ) {}
   get inFlight() {
     return this.controllers.size;
@@ -69,6 +73,8 @@ export class SpeechGate {
       this.deadlineMs,
     );
     try {
+      const snapshot = this.snapshot ? await abortable(this.snapshot(controller.signal), controller.signal) : undefined;
+      if (snapshot && !snapshot.isCurrent()) return;
       const result = await abortable(
         this.decider.evaluate(
           {
@@ -76,12 +82,17 @@ export class SpeechGate {
             lastDispatched: structuredClone(this.lastDispatched),
             undispatchedAgeMs: now - this.firstUndispatchedAt,
             context: this.context,
+            ...snapshot?.input,
           },
           controller.signal,
         ),
         controller.signal,
       );
       if (this.closed || this.paused || controller.signal.aborted) return;
+      if (snapshot && !snapshot.isCurrent()) {
+        this.log.write("decision_stale", { revision: speech.revision, reason: "slide_changed" });
+        return;
+      }
       this.failures = 0;
       // New append-only words are still pending. Any correction invalidates the evaluated snapshot.
       if (

@@ -190,3 +190,14 @@ replay and finalized-review retry do not silently receive revised guidance.
 
 See [DESIGN-SKILLS.md](DESIGN-SKILLS.md). No improved generation-quality or latency
 claim follows from the standalone HTML study or prompt integration alone.
+
+## D60 — Self-contained model boundaries (2026-10-31)
+
+User-directed cold-recipient audit: every model-facing instruction, context, tool input/result
+must state the recipient's job and actual evidence, without assuming shared conversations or
+unseen images. Both decision gates now receive working-slide source and real rendered pixels,
+past/current/new speech semantics and collaborator status; dispatch remains reasoning rather
+than publication. Canonical histories bound repeated state/image bodies. Practice revision
+uses a compact proposal DTO and real candidate image parts, never the persisted preview record.
+Specialists remain private and no frontend is added. See [MODEL-BOUNDARIES.md](MODEL-BOUNDARIES.md)
+for the inventory, evidence limitations, measured packet sizes and replay compatibility.

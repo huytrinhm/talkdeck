@@ -12,6 +12,7 @@ now lives under `src/orchestration/`, with tests in `test/orchestration/` and hi
 - [Slide-design skill](skills/slide-design/SKILL.md) and [integration guide](docs/DESIGN-SKILLS.md): shared design guidance, five styles, twenty patterns, canonical authoring and recorded role-specific prompts.
 - [Improvement loop](docs/IMPROVEMENT_LOOP.md) and [five timed talks](fixtures/talks/README.md): measurement and comparison.
 - [Practice feedback and proposals](docs/PRACTICE-REVIEW.md): record first, one tool-free end review, private previews and explicit acceptance. Run `npm run practice:server`.
+- [Model-boundary audit](docs/MODEL-BOUNDARIES.md): recipient contracts, decision images/transcript deltas, bounded history, private results, and review wire formats.
 - [Headless evidence](src/headless/README.md): actual viewer frames, recording, audits and reports.
 - [Orchestration history](docs/orchestration/HANDOFF.md): preserved scheduler/control contracts and historical measurements.
 

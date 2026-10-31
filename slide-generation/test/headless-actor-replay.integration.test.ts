@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import OpenAI from "openai";
 import { createLocalRuntime } from "../src/runtime.js";
 import { JsxBackend } from "../src/host/jsx-backend.js";
@@ -29,7 +31,8 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
   const commits: ActorReplayRecording["commits"] = [],
     operations: any[] = [],
     scheduler: any[] = [];
-  const initialSource = local.engine.readDocument().source;
+  const initial = local.engine.readDocument(), initialSource = initial.source;
+  const instructions = await readFile("docs/AGENT_PROMPT.md", "utf8");
   let before = lineHash(initialSource),
     responseNumber = 0;
   const unsubscribe = local.engine.subscribe((event) => {
@@ -45,7 +48,7 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
     before = event.revision;
   });
   const backend = new JsxBackend(local, {
-    instructions: "Use exact canonical source; synthetic replay test.",
+    instructions,
     onTool: (event) => {
       operations.push({
         kind: "tool",
@@ -156,7 +159,7 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
       sourceSha256: local.engine.state().revision,
     });
     await actor.gate.tick();
-    await actor.settle(5000);
+    await actor.settle(30000);
     const recording: ActorReplayRecording = {
       initialSource,
       finalSourceSha256: lineHash(local.engine.readDocument().source),
@@ -172,6 +175,46 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
     };
     await actor.close();
     unsubscribe();
+    // Exercise the actual CLI on a new-protocol recording, including disk loading,
+    // context extraction and transaction preflight, not only the replay function.
+    const recorded = resolve(directory, "cli-recording"), cliOutput = resolve(directory, "cli-output");
+    await mkdir(join(recorded, "states"), { recursive: true });
+    await mkdir(join(recorded, "final"));
+    const artifact = await local.renderer.render(initialSource, "n10");
+    const files: Record<string, unknown> = {
+      "initial.json": initial,
+      "final/deck.json": local.engine.readDocument(),
+      "configuration.json": {
+        source: "real-actor-jsx-headless", instructions, models,
+        promptSha256: lineHash(instructions),
+        toolSchemaSha256: lineHash(JSON.stringify(local.tools.definitions())),
+        initialDependencies: artifact.dependencies,
+      },
+      "manifest.json": {
+        schemaVersion: 1, sourceSha: "0".repeat(40), dirty: true,
+        nodeVersion: process.version, platform: process.platform,
+        startedAt: new Date().toISOString(),
+        lockSha256: lineHash(await readFile("package-lock.json", "utf8")),
+        promptSha256: lineHash(instructions), fixtureSha256: "0".repeat(64),
+        dependencies: [], mode: "transaction-replay",
+      },
+      "provider-cassette.json": recording.providers,
+      "commits.json": commits.map(commit => ({ kind: "commit", ...commit })),
+      "operations.json": operations,
+    };
+    await Promise.all(Object.entries(files).map(([name, value]) =>
+      writeFile(join(recorded, name), JSON.stringify(value))));
+    await writeFile(join(recorded, "scheduler.jsonl"), scheduler.map(value => JSON.stringify(value)).join("\n"));
+    const originalCassette = await readFile(join(recorded, "provider-cassette.json"), "utf8");
+    await promisify(execFile)(process.execPath, ["--import", "tsx", "scripts/headless-actor-replay.ts",
+      "--run", recorded, "--out", cliOutput], { timeout: 60_000 });
+    const cliReport = JSON.parse(await readFile(join(cliOutput, "report.json"), "utf8"));
+    assert.equal(cliReport.passed, true);
+    assert.equal(cliReport.result.actorReplay, true);
+    assert.equal(cliReport.result.exactProviderRequests, recording.providers.records.length);
+    assert.equal(cliReport.offline.blockedAttempts, 0);
+    assert.equal(await readFile(join(cliOutput, "final-deck.jsx"), "utf8"), local.engine.readDocument().source);
+    assert.equal(await readFile(join(recorded, "provider-cassette.json"), "utf8"), originalCassette);
     network = disableReplayNetwork();
     let counter = 0;
     const run = async (value: ActorReplayRecording) => {
@@ -179,7 +222,7 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
         directory: resolve(directory, `replayed-${++counter}`),
       });
       const target = new JsxBackend(replay, {
-        instructions: "Use exact canonical source; synthetic replay test.",
+        instructions,
       });
       try {
         return await replayRecordedActors(value, target);
@@ -200,6 +243,26 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
     const contextChanged = structuredClone(recording);
     contextChanged.initialContext += " changed";
     await assert.rejects(run(contextChanged), /literal request differs/);
+    const speechChanged = structuredClone(recording);
+    const changedDecision = speechChanged.providers.records.find(
+      (entry) => entry.role === "decision",
+    )!;
+    const changedRequest = JSON.parse(changedDecision.requestBody);
+    const changedProjection = JSON.parse(changedRequest.input[0].content[0].text);
+    changedProjection.speech.text = "Unrecorded claim";
+    changedRequest.input[0].content[0].text = JSON.stringify(changedProjection);
+    changedDecision.requestBody = JSON.stringify(changedRequest);
+    await assert.rejects(run(speechChanged), /Decision speech differs/);
+    const oldProtocol = structuredClone(recording);
+    const oldDecision = oldProtocol.providers.records.find(
+      (entry) => entry.role === "decision",
+    )!;
+    const oldRequest = JSON.parse(oldDecision.requestBody);
+    oldRequest.input = JSON.stringify({ speech: changedProjection.speech });
+    oldDecision.requestBody = JSON.stringify(oldRequest);
+    const preservedRequest = oldDecision.requestBody;
+    await assert.rejects(run(oldProtocol), /Unsupported recorded speech decision boundary/);
+    assert.equal(oldDecision.requestBody, preservedRequest);
     const resultChanged = structuredClone(recording);
     resultChanged.operations.find(
       (o) => o.kind === "tool" && o.name === "read_source",

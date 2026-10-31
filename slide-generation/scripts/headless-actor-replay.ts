@@ -58,12 +58,11 @@ try {
   );
   if (lineHash(configuration.instructions) !== configuration.promptSha256)
     throw new Error("Recorded instructions hash differs");
-  const currentInstructions =
-    (await readFile(join(root, "docs/AGENT_PROMPT.md"), "utf8")) +
-    "\n\n" +
-    (await readFile(join(root, "SPEC.md"), "utf8"));
+  const currentInstructions = await readFile(
+    join(root, "docs/AGENT_PROMPT.md"), "utf8",
+  );
   if (currentInstructions !== configuration.instructions)
-    throw new Error("Actor prompt differs from recorded instructions");
+    throw new Error("Unsupported recorded actor prompt: current instructions differ; historical requests are not rewritten");
   if (
     lineHash(await readFile(join(root, "package-lock.json"), "utf8")) !==
     manifest.lockSha256
@@ -75,14 +74,18 @@ try {
     .filter(Boolean)
     .map((line) => JSON.parse(line));
   const firstInference = scheduler.find((event) => event.type === "inference");
-  const firstContext = firstInference?.input.find(
-    (item: any) =>
-      item.role === "user" &&
-      typeof item.content === "string" &&
-      item.content.startsWith('{"context"'),
-  );
-  if (!firstContext) throw new Error("No recorded initial actor context");
-  const initialContext = JSON.parse(firstContext.content).context;
+  const initialBoundaries = (firstInference?.input ?? []).flatMap((item: any) => {
+    if (item.role !== "user" || typeof item.content !== "string") return [];
+    try {
+      const value = JSON.parse(item.content);
+      return value?.kind === "current_boundary" ? [value] : [];
+    } catch {
+      return []; // Observation text and archived evidence are not boundary envelopes.
+    }
+  });
+  if (initialBoundaries.length !== 1 || typeof initialBoundaries[0].context !== "string")
+    throw new Error("Unsupported initial actor boundary: expected one current_boundary with string context; historical requests are not rewritten");
+  const initialContext = initialBoundaries[0].context;
   await new FileDeckRepository(join(out, "runtime/deck.json")).initialize(
     initial,
   );
@@ -93,7 +96,7 @@ try {
   )
     throw new Error("Recorded tool schema differs");
   const backend = new JsxBackend(local, {
-    instructions: currentInstructions,
+    instructions: configuration.instructions,
     designSkills:
       configuration.designSkills === undefined
         ? undefined

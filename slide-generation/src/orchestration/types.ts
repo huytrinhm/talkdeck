@@ -35,6 +35,10 @@ export interface Observation {
   id: string;
   source: string;
   screenshot: Buffer;
+  screenshotMimeType?: string;
+  availability?: { screenshot: string; geometry: string; diagnostics: string };
+  sourceRevision?: string;
+  visualSourceRevision?: string;
   geometry: Geometry[];
   diagnostics: Diagnostic[];
   fastWatermark: number;
@@ -53,6 +57,10 @@ export interface DecisionInput {
   lastDispatched: Speech | null;
   undispatchedAgeMs: number;
   context: string;
+  current?: Observation;
+  deck?: unknown;
+  statuses?: unknown;
+  spokenEdits?: boolean;
 }
 export interface Decider {
   evaluate(
@@ -67,6 +75,7 @@ export interface SlowDecisionInput {
   messages: Message[];
   context: string;
   deck?: unknown;
+  statuses?: unknown;
   /** Canonical headless speech carries explicit edit requests as well as content. */
   spokenEdits?: boolean;
 }

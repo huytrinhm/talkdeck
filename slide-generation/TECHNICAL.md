@@ -232,3 +232,13 @@ headless/practice factories opt in; directly constructed backends remain explici
 Decision gates and tool inventories are unchanged. Review context retains exact
 guidance; headless configuration retains the whole skill snapshot for replay.
 See [DESIGN-SKILLS.md](docs/DESIGN-SKILLS.md) for capability limits and provenance.
+
+## Model-facing boundary audit
+
+The current canonical flow supersedes the earlier metadata-only decision payloads and
+explicit-screenshot-only actor input. Both gates and actors receive immutable source plus
+real rendered image observations with explicit availability; history projection bounds
+repeated state. Native tool contracts and specialist result delivery are self-contained.
+Practice revision excludes persisted preview artifacts from model text and attaches candidate
+images separately. Headless/practice hosts load the same compact editor instruction base.
+See [MODEL-BOUNDARIES.md](docs/MODEL-BOUNDARIES.md) for exact scope, evidence and limitations.
