@@ -64,3 +64,40 @@ test('scope root cannot be renamed and duplicate IDs are refused after staging',
   assert.throws(() => store.stage(source, [edit(read, 1, 1, '<Text id="t3">A</Text>')]), /does not exist/);
   assert.throws(() => store.stage(source, [edit(read, 1, 1, '<Text id="t2">A</Text>')]), /Duplicate ID/);
 });
+
+test('root insertions and replacement siblings cannot escape a selected scope', () => {
+  const store = new SnapshotStore(), read = store.read(source, 't1');
+  for (const op of ['insert_before', 'insert_after'] as const)
+    assert.throws(() => store.stage(source, [edit(read, 1, 1, '<Text>Intruder</Text>', op)]), /parent/);
+  for (const text of ['<Text>Intruder</Text><Text id="t1">Alpha</Text>', '<Text id="t1">Alpha</Text><Text>Intruder</Text>'])
+    assert.throws(() => store.stage(source, [edit(read, 1, 1, text)]), /escapes/);
+  assert.match(store.stage(source, [edit(read, 1, 1, '<Text id="t1">Changed root</Text>')]), /Changed root/);
+});
+test('resolved anchors include exact bytes, all hashes, ranges and relocation evidence', () => {
+  const store = new SnapshotStore(), read = store.read(source, 'n2');
+  const current = source.replace('    <Text id="t1">', '    <Spacer />\n    <Text id="t1">');
+  const result = store.stageDetailed(current, [edit(read, 3, 1, '    <Text id="t2">Ω 😀 &amp; β</Text>')]);
+  assert.equal(result.resolutions[0].relocated, true);
+  assert.equal(result.resolutions[0].currentLine, 4);
+  assert.equal(result.resolutions[0].exactText, read.lines[2].text);
+  assert.deepEqual(result.resolutions[0].hashes, [read.lines[2].hash]);
+  assert.equal(read.revision, lineHash(source));
+  assert.equal(source.slice(read.sourceRange.start, read.sourceRange.end), read.lines.map(l => l.text).join('\n'));
+});
+test('inline siblings, multiline attributes and disjoint replacements match a reference result', () => {
+  const s = '<Deck id="n1"><Slide id="n2"><Text id="t1"\n role="body">A</Text><Text id="t2">B</Text></Slide></Deck>';
+  const store = new SnapshotStore(), a = store.read(s, 't1'), b = store.read(s, 't2');
+  assert.equal(store.stage(s, [edit(a, 2, 1, ' role="body">Ω</Text>'), edit(b, 1, 1, '<Text id="t2">😀</Text>')]), s.replace('>A<', '>Ω<').replace('>B<', '>😀<'));
+  for (let n = 1; n <= 40; n++) {
+    const src = `<Deck id="n1">${Array.from({ length: n }, (_, i) => `<Text id="t${i}">${i}</Text>`).join('\n')}</Deck>`;
+    const scopes = Array.from({ length: n }, (_, i) => store.read(src, `t${i}`));
+    const patches = scopes.filter((_, i) => i % 2 === 0).map(r => edit(r, 1, 1, `<Text id="${r.nodeId}">Changed</Text>`));
+    const expected = src.replace(/<Text id="t(\d+)">\d+<\/Text>/g, (s, i) => Number(i) % 2 ? s : `<Text id="t${i}">Changed</Text>`);
+    assert.equal(store.stage(src, patches), expected);
+  }
+});
+test('snapshot handles cannot cross deck engines or survive eviction/restart', () => {
+  const store = new SnapshotStore(), read = store.read(source, 'n2');
+  assert.throws(() => new SnapshotStore().stage(source, [edit(read, 2, 1, '')]), /Read this node/);
+  assert.throws(() => new SnapshotStore(0), /positive/);
+});

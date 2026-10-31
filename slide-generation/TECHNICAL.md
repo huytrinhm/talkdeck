@@ -247,3 +247,12 @@ Instance syntax for the expansion milestone: named `<Slot name="…">one child</
 are empty `<Slot name="…" kind="…" />`. Each repeats a wrapper using Item; repeated bindings are resolved in P4.
 Literal text remains byte-preserving in source and is not trimmed by schemas. Inline emphasis is text syntax, not raw
 HTML/JSX tags. Persisted envelope schema remains version 1; no automatic migration is performed by schema validation.
+
+## P2 staging update
+
+Anchored reads include source range and revision digest. `stageDetailed` returns exact matched bytes, every hash,
+original/current scope ranges, line relocation, and candidate source. Insertions at the outside of a scoped root refuse;
+root replacements cannot smuggle siblings outside the selected node. Target the parent for sibling insertion/deletion.
+Tests include inline siblings, multiline attributes, Unicode, and 40 deterministic disjoint-edit comparisons. Snapshots
+are engine-local, bounded, and not persistent; restart/eviction requires a fresh read. Transport idempotency and durable
+ownership/evidence lifecycle are still P3/P7 work. No edits commit yet.

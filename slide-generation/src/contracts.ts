@@ -33,7 +33,7 @@ export const transactionSchema = z.object({ edits: z.array(editSchema).min(1).ma
 export type SourceEdit = z.infer<typeof editSchema>;
 export type Transaction = z.infer<typeof transactionSchema>;
 export interface AnchoredLine { number: number; hash: string; text: string }
-export interface SourceRead { snapshotId: string; nodeId: string; lines: AnchoredLine[] }
+export interface SourceRead { snapshotId: string; nodeId: string; lines: AnchoredLine[]; sourceRange: { start: number; end: number }; revision: string }
 export interface ValidationReport {
   /** Must remain false if any required stage is missing, times out, or crashes. */
   complete: boolean;
