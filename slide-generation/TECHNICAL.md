@@ -244,11 +244,14 @@ See [DESIGN-SKILLS.md](docs/DESIGN-SKILLS.md) for capability limits and provenan
 ## Model-facing boundary audit
 
 The current canonical flow supersedes the earlier metadata-only decision payloads and
-explicit-screenshot-only actor input. Both gates and actors receive immutable source plus
-real rendered image observations with explicit availability; history projection bounds
-repeated state. Native tool contracts and specialist result delivery are self-contained.
-Practice revision excludes persisted preview artifacts from model text and attaches candidate
-images separately. Headless/practice hosts load the same compact editor instruction base.
+explicit-screenshot-only actor input. Gates receive actual current-slide images (visible-source fallback when unavailable),
+attributed speech and decision-relevant evidence rather than scheduler objects. Editors receive
+immutable source and images; specialists receive focused tasks and visual references without
+ambient narration or editable source. Role-specific history projection bounds repeated state. Native tool contracts and specialist result delivery are self-contained.
+Practice review sends exact full-deck source once through issued anchors when possible,
+retains all distinct rehearsal evidence, and puts frozen design guidance in instructions.
+Revision excludes preview artifacts and duplicate intent representations from model text,
+attaching candidate images separately. Headless/practice hosts load the same compact editor instruction base.
 See [MODEL-BOUNDARIES.md](docs/MODEL-BOUNDARIES.md) for exact scope, evidence and limitations.
 
 Immediate viewer publications bypass animation geometry and per-node style snapshots while retaining the last visible surface during resource preparation. Confirmation of identical settled HTML/CSS/build content updates publication identity without replacing the DOM or replaying motion. Normal same-slide content changes retain the animated path.

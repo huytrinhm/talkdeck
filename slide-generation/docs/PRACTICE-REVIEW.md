@@ -243,6 +243,8 @@ New practice runtimes also freeze the [design skill](DESIGN-SKILLS.md) into
 `context.design`: canonical authoring limits, full style/pattern recipes and
 review-specific guidance. This adds no tools or proposal fields. Legacy contexts
 without design guidance remain usable; retry does not silently upgrade them.
+The provider sends that frozen guidance as instructions, not a second policy
+object inside user evidence. Persisted contexts remain unchanged.
 
 `test/practice.integration.test.ts` runs the real canonical engine and Chromium:
 private previews, acceptance/history, cancellation boundaries, context attribution,

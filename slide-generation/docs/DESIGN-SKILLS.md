@@ -43,6 +43,10 @@ the reviewer need not infer available primitives from existing slides. Source,
 anchors, notes, images and rehearsal evidence remain the factual context. Pattern
 IDs are never valid evidence citations.
 
+This is the persisted context, not the wire DTO. The OpenAI adapter places the
+frozen guidance in instructions and omits its duplicate metadata from user text.
+See [model boundaries](MODEL-BOUNDARIES.md) for source/speech deduplication.
+
 The end pass still produces feedback and complete independent native transactions
 in one tool-free response. The existing engine fork validates and renders private
 previews. A proposal is not applied without acceptance. Unsupported visuals may
