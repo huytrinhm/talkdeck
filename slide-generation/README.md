@@ -53,9 +53,12 @@ an unresolved named-target input; durable receipt and canonical integration are 
 [baseline case](docs/rounds/headless-round-01/cases/edit-heavy-baseline-01-no-visible-generation.md) and
 [candidate case](docs/rounds/headless-round-01/cases/edit-heavy-candidate-context-01-anchor-conflict.md).
 The implementation through `16a1671` was pushed after typecheck and 302 passing tests
-(`.artifacts/environment/pre-push-headless-suite.tap`). A frozen A/B edit-heavy pair under
-`.artifacts/runs/headless-round-02/` is in progress; no candidate quality result is claimed. The repeated five-talk
-qualification and subsequent verified refactoring remain unfinished.
+(`.artifacts/environment/pre-push-headless-suite.tap`). The frozen round 02 pair finished with blank output; its
+[case](docs/rounds/headless-round-02/cases/edit-heavy-pair-01-bullet-validation.md) identified missing bullet-marker
+typography metadata. After that fix, [round 03](docs/rounds/headless-round-03/README.md) produced actual visible edits
+but remained unfaithful: Publish was lost, requested edits were missed and one named-target input remained unresolved.
+The next combined candidate is pending measurement. Repeated five-talk qualification and verified refactoring remain
+unfinished; accepted edits and structural readiness do not establish faithfulness.
 
 Responses requests use `service_tier: "fast"`; provider records distinguish requested and actually returned tiers.
 The Decisions endpoint exposes no `service_tier` field, so its policy is recorded as `endpoint-default`, without an
@@ -87,6 +90,19 @@ Offline commands require the actual evidence directory, not its frozen execution
 npm run headless:replay -- --run .artifacts/runs/headless-integration-2026-10-31/pilot-01 --out .artifacts/replay/new-pilot-transactions
 npm run headless:actor-replay -- --run .artifacts/runs/headless-integration-2026-10-31/pilot-01 --out .artifacts/replay/new-pilot-actors
 ```
+
+Later passes include `final/deck-contact-sheet.png`: every final live-slide screenshot combined in canonical order with
+numbered IDs, using the original captures. It is created after timed observation, with explicit failure if the complete
+set is unavailable. Final slide JPEGs and the live viewer timeline remain separate. Generate a sheet for an existing run
+without rewriting its artifacts:
+
+```sh
+npm run headless:contact-sheet -- --run EXISTING_EVIDENCE_DIR --out .artifacts/review/NEW_CONTACT_SHEET_DIR
+```
+
+The standalone command makes no model calls and requires a new output directory outside the original run. See the
+[round 03 entire-deck image](.artifacts/review/round03-deck-contact-sheet/deck-contact-sheet.png) and its
+[recorded limitations](docs/rounds/headless-round-03/README.md).
 
 Transaction replay checks canonical operations; actor replay additionally checks the actual scheduler/gates and recorded
 provider requests without live fallback. Compatibility failures remain failures. For a failed run whose cleanup finished

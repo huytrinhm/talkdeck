@@ -28,10 +28,28 @@ rename made a named target unresolved. Receipt retention and canonical source in
 ready=true faithfulness. Current scoring rejects removal credit for never-visible content; preserve old metrics and use
 the same current evaluator/observer on both sides.
 
-A fresh frozen pair is running under `.artifacts/runs/headless-round-02/`: baseline `5f970fb` from
-`.artifacts/baselines/headless-pre-fix/`, candidate `16a1671` from `.artifacts/baselines/headless-candidate-16a1671/`.
-Inspect `batch.json` and each container's `run-location.json` before review; the latter points to nested raw evidence.
-No candidate quality result is claimed while that pair is unfinished.
+Round 02 finished: both frozen versions produced blank final slides and scored 0/30 under the conservative common
+observer/evaluator. Exact recorded candidate replay identified unmeasured numbered Bullet markers; `64f1e0d` fixed
+renderer role attribution without disabling checks. See [round 02](../rounds/headless-round-02/README.md).
+
+Round 03 tested frozen marker-fixed `734d84a`: 84 calls, 894,397 input tokens, 3,396 output tokens; six accepted
+model transactions and visible slides, but only 3/30 automatic successes, 12 failures and 15 manual checks. It ended
+host-error with 21 canonical inputs from 22 durable receipts because a later edit named an unperformed rename.
+The checklist lost Publish and retained Launch instead of Release; final readiness=true is not faithfulness.
+See [round 03 case](../rounds/headless-round-03/cases/edit-heavy-01-visible-but-unfaithful.md).
+
+New changes awaiting fresh measurement: `509f5d2` delegates the exact original request by stable utterance ID;
+`7967297` supplies actual canonical source and explicit editing intent to Slow gates; `2bacb78` retains an explicit
+pending rename as a routing alias without changing visible content. Contact sheets (`192651c`, `b1aa0ab`) now combine
+every final live slide in canonical order into `final/deck-contact-sheet.png`, preserving original per-slide captures.
+Missing, duplicate, extra or invalid captures produce an explicit incomplete status. User requested full-deck images
+for later passes. Historical round 03 has a separate derived image under
+`.artifacts/review/round03-deck-contact-sheet/`; its original run remains immutable.
+
+Next: finish package checks and push after fetch/rebase; freeze a clean candidate; measure a fresh bounded pair against
+the previous functioning marker-fixed `734d84a` export, then broaden to the five timed talks. Keep the original
+blank-output baseline for historical diagnosis, not as evidence of competitive speed. All-five-talk repeated qualification
+and separately verified refactors remain unfinished.
 
 Commands are current in [README](../../README.md): `headless:run --frozen`, `headless:batch --plan-only`,
 `headless:replay`, `headless:actor-replay`, and report-only `headless:run --recover`. Batch defaults to 30 sequential runs
