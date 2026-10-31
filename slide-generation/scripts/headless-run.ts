@@ -19,6 +19,9 @@ import { atomicWrite } from '../src/storage/files.js';
 import { HeadlessViewer } from '../src/headless/viewer.js';
 import { writeDeckContactSheet, ContactSheetError } from '../src/headless/contact-sheet.js';
 import { createHash } from 'node:crypto';
+import { manifestDependencies, recordedDependencyInventory, type DependencySource } from '../src/evaluation/dependencies.js';
+import { parseSource } from '../src/parser.js';
+import { childNodes } from '../src/schema.js';
 
 const { values } = parseArgs({ options: { fixture: { type: 'string' }, out: { type: 'string' }, repetition: { type: 'string' },
   recover: { type: 'boolean' }, frozen: { type: 'string' }, 'verify-only': { type: 'boolean' }, 'max-calls': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'max-output-tokens': { type: 'string' } }, strict: true });
@@ -29,7 +32,7 @@ if (!outputRelative || outputRelative.startsWith('..') || isAbsolute(outputRelat
 const harnessSourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
 const harnessDirty = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' }).trim().length > 0;
 const evaluatorFiles = ['src/headless/audit.ts', 'src/headless/report.ts', 'src/evaluation/audit.ts', 'src/evaluation/driver.ts',
-  'src/evaluation/fixtures.ts', 'src/evaluation/clock.ts', 'src/evaluation/metrics.ts', 'src/evaluation/recorder.ts', 'src/evaluation/manifest.ts',
+  'src/evaluation/fixtures.ts', 'src/evaluation/dependencies.ts', 'src/evaluation/clock.ts', 'src/evaluation/metrics.ts', 'src/evaluation/recorder.ts', 'src/evaluation/manifest.ts',
   'src/headless/viewer.ts', 'src/viewer/document.ts', 'src/viewer/client.js', 'src/hashline.ts', 'src/parser.ts', 'src/schema.ts', 'src/contracts.ts', 'src/viewer/protocol.ts'];
 const evaluatorSha256 = lineHash(JSON.stringify(await Promise.all(evaluatorFiles.sort().map(async file => [file, lineHash(await readFile(join(root, file), 'utf8'))]))));
 const observerSha256 = lineHash(await readFile(join(root, 'src/headless/viewer.ts'), 'utf8'));
@@ -82,6 +85,13 @@ if (values.frozen) {
 const { createEvaluationHost } = await import(pathToFileURL(join(generationRoot, 'src/headless/evaluation-host.ts')).href) as { createEvaluationHost: typeof CreateEvaluationHost };
 const { models } = await import(pathToFileURL(join(generationRoot, 'src/orchestration/config.ts')).href) as { models: typeof Models };
 const fixture = await loadFixture(fixturePath);
+// Resolve actual selected-generator seed dependencies before recorder creation and paced input.
+const { createDeck } = await import(pathToFileURL(join(generationRoot, 'src/bootstrap.ts')).href) as typeof import('../src/bootstrap.js');
+const { HonoSlideRenderer } = await import(pathToFileURL(join(generationRoot, 'src/render/renderer.tsx')).href) as typeof import('../src/render/renderer.js');
+const seed = createDeck(), seedSlide = childNodes(parseSource(seed.source)).find(node => node.tag === 'Slide');
+if (!seedSlide?.id) throw new Error('Selected generator seed has no identified live slide');
+const initialArtifact = await new HonoSlideRenderer().render(seed.source, seedSlide.id);
+const initialDependencies = manifestDependencies(initialArtifact.dependencies);
 const selectedModels = models(), limits = { maxCalls: Number(values['max-calls'] ?? 200), maxInputTokens: Number(values['max-input-tokens'] ?? 2_000_000),
   maxOutputTokens: Number(values['max-output-tokens'] ?? 100_000), maxOutputTokensPerCall: 8000 };
 const promptFiles = ['docs/AGENT_PROMPT.md', 'SPEC.md', 'src/host/jsx-backend.ts',
@@ -91,7 +101,7 @@ const promptSha256 = lineHash(JSON.stringify(promptFingerprint));
 const manifest = { schemaVersion: 1, sourceSha: frozen?.sourceSha ?? harnessSourceSha, dirty: frozen ? false : harnessDirty, harness,
   nodeVersion: process.version, platform: `${process.platform}/${process.arch}`, startedAt: new Date().toISOString(),
   lockSha256: lineHash(await readFile(join(generationRoot, 'package-lock.json'), 'utf8')), promptSha256,
-  fixtureSha256: lineHash(await readFile(fixturePath, 'utf8')), dependencies: [],
+  fixtureSha256: lineHash(await readFile(fixturePath, 'utf8')), dependencies: initialDependencies,
   model: { provider: 'openai', name: selectedModels.fast, roles: selectedModels, serviceTier: 'fast',
     settingsSha256: lineHash(JSON.stringify({ models: selectedModels, limits, reasoning: { fast: 'none', slow: 'medium', specialist: 'low' }, decisionsTier: 'endpoint-default' })),
     maxCalls: limits.maxCalls, maxTokens: limits.maxOutputTokensPerCall }, mode: 'live',
@@ -111,6 +121,9 @@ try {
     sha256: promptSha256, files: promptFingerprint }, null, 2), { flag: 'wx' });
   host = await createEvaluationHost({ recorder, clock: monotonicClock, initialContext: fixture.initialContext,
     budget: { maxCalls: limits.maxCalls, maxTokens: limits.maxOutputTokensPerCall, serviceTier: 'fast' }, limits });
+  const configuration = JSON.parse(await readFile(join(recorder.directory, 'configuration.json'), 'utf8'));
+  if (JSON.stringify(manifestDependencies(configuration.initialDependencies)) !== JSON.stringify(initialDependencies))
+    throw new Error('Host initial render dependencies differ from recorded selected-generator seed');
   console.log(JSON.stringify({ event: 'started', directory: recorder.directory, fixture: fixture.id, limits }));
   const run = await runTalk(fixture, host, { onInput: input => recorder.input({ ...input, ...(input.error ? { error: safeHeadlessError(input.error) } : {}) }), onEvent: event => {
     if (event.kind === 'input.delivered' || event.kind === 'run.finished') console.log(JSON.stringify(event));
@@ -125,8 +138,14 @@ try {
     try { await atomicWrite(join(recorder.directory, 'finalization-error.json'), JSON.stringify(finishFailure, null, 2)); }
     catch (exportError) { failed('finalization error export', exportError); }
   }
+  let dependencyInventoryComplete = false;
+  try {
+    const inventory = await exportRecordedDependencies(recorder.directory, run.finishedAtMs);
+    dependencyInventoryComplete = inventory.status === 'consistent';
+    if (!dependencyInventoryComplete) failed('dependency inventory', `Recorded render dependency inventory is ${inventory.status}`);
+  } catch (error) { failed('dependency inventory export', error); }
   const evidence = host.finalEvidence(), budget = host.providers.budget.snapshot();
-  const facts = { recordingComplete: !finishFailure && !host.errors.length && !recorder.failures.length && !host.backend.recordingFailures.length,
+  const facts = { recordingComplete: dependencyInventoryComplete && !finishFailure && !host.errors.length && !recorder.failures.length && !host.backend.recordingFailures.length,
     finalReady: evidence.readiness?.complete ? evidence.readiness.ready : null,
     modelCalls: budget.calls, inputTokens: budget.observedInputTokens, outputTokens: budget.observedOutputTokens, costUsd: null };
   const contactSheet = await finalContactSheet(recorder.directory, evidence.source, host.finalSlides, run.finishedAtMs);
@@ -265,4 +284,31 @@ async function finalContactSheet(directory: string, source: string, slides: { sl
     contactSheetUnavailable = `${contactSheetUnavailable ? `${contactSheetUnavailable}; ` : ''}Contact-sheet status export failed: ${safeHeadlessError(error)}`;
   }
   return { ...(status.complete === true ? { contactSheetPath } : {}), ...(contactSheetUnavailable ? { contactSheetUnavailable } : {}) };
+}
+
+
+async function exportRecordedDependencies(directory: string, runFinishedAtMs: number) {
+  const sources: DependencySource[] = [], errors: { reference: string; error: string }[] = [];
+  const readJson = async (name: string) => JSON.parse(await readFile(join(directory, name), 'utf8'));
+  try {
+    const configuration = await readJson('configuration.json'), initial = await readJson('initial.json');
+    sources.push({ phase: 'initial', reference: 'configuration.json#initialDependencies', source: initial.source,
+      slideId: childNodes(parseSource(initial.source)).find(node => node.tag === 'Slide')?.id, dependencies: configuration.initialDependencies });
+  } catch (error) { errors.push({ reference: 'configuration.json / initial.json', error: safeHeadlessError(error) }); }
+  try {
+    for (const name of (await readdir(join(directory, 'states'))).filter(name => name.endsWith('.json')).sort()) {
+      const reference = `states/${name}`;
+      try {
+        const state = await readJson(reference);
+        if (typeof state.source !== 'string' || state.revision !== lineHash(state.source) || !Array.isArray(state.renders)) throw new Error('Invalid recorded source/render state');
+        for (const render of state.renders) sources.push({ phase: 'recorded-state', reference, source: state.source,
+          revision: state.revision, slideId: render.slideId, dependencies: JSON.parse(render.dependenciesJson) });
+      } catch (error) { errors.push({ reference, error: safeHeadlessError(error) }); }
+    }
+  } catch (error) { errors.push({ reference: 'states/', error: safeHeadlessError(error) }); }
+  const inventory = recordedDependencyInventory(sources, errors);
+  await writeFile(join(directory, 'resolved-dependencies.json'), JSON.stringify({ ...inventory, generatedAtMs: performance.now(),
+    generatedAfterRunFinishedAtMs: runFinishedAtMs,
+    limitations: ['Only initial and available recorded state renders are covered. No final-deck or rejected-candidate dependency coverage is asserted.'] }, null, 2), { flag: 'wx' });
+  return inventory;
 }
