@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "id": "style-switch",
+  "title": "Mid-talk style switch",
+  "purpose": "Global re-theme under incoming content, shared definitions, readability, frame consistency, and stable identity.",
+  "initialContext": "This is a fictional rehearsal. Create and edit a multi-slide deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. New-slide and editing commands are part of the spoken input.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 2.8,
+    "postTalkObservationMs": 15000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "style-switch-001",
+      "startMs": 1000,
+      "endMs": 9215,
+      "kind": "utterance",
+      "text": "Create a slide titled Workshop plan. Start with a warm white background, dark text, and a teal accent. Use the bundled default font.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-002",
+      "startMs": 9215,
+      "endMs": 15287,
+      "kind": "utterance",
+      "text": "Set the running frame to Workshop on the left and Rehearsal on the right. Show page numbers.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-003",
+      "startMs": 15287,
+      "endMs": 18859,
+      "kind": "utterance",
+      "text": "Add this subtitle: A fictional rehearsal of a shared plan.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-004",
+      "startMs": 18859,
+      "endMs": 24574,
+      "kind": "utterance",
+      "text": "New slide titled Prepare. Use three points: Read the brief. Check the tools. Agree on roles.",
+      "targetAlias": "prepare",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-005",
+      "startMs": 24574,
+      "endMs": 30289,
+      "kind": "utterance",
+      "text": "New slide titled Practice. Use three points: Try the flow. Record the friction. Adjust the plan.",
+      "targetAlias": "practice",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-006",
+      "startMs": 30289,
+      "endMs": 35289,
+      "kind": "utterance",
+      "text": "New slide titled Timebox. Show 25 minutes as the single metric, labeled Practice time.",
+      "targetAlias": "timebox",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-007",
+      "startMs": 35289,
+      "endMs": 44932,
+      "kind": "utterance",
+      "text": "Now change the whole deck to a dark navy background with light text and a warm amber accent. Keep the words, slide order, and frame labels unchanged.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-008",
+      "startMs": 44932,
+      "endMs": 48147,
+      "kind": "utterance",
+      "text": "On Practice, add a fourth point: Share the findings.",
+      "targetAlias": "practice",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-009",
+      "startMs": 48147,
+      "endMs": 54219,
+      "kind": "utterance",
+      "text": "Keep the new point in the new dark theme, even if an older styling operation finishes late.",
+      "targetAlias": "practice",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-010",
+      "startMs": 54219,
+      "endMs": 57077,
+      "kind": "utterance",
+      "text": "On Timebox, change 25 minutes to 30 minutes.",
+      "targetAlias": "timebox",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-011",
+      "startMs": 57077,
+      "endMs": 62077,
+      "kind": "utterance",
+      "text": "Change the running frame right label from Rehearsal to Workshop review across the deck.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-012",
+      "startMs": 62077,
+      "endMs": 68149,
+      "kind": "utterance",
+      "text": "New slide titled Reflect. Use three points: Keep what worked. Name what failed. Choose the next step.",
+      "targetAlias": "reflect",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-013",
+      "startMs": 68149,
+      "endMs": 74935,
+      "kind": "utterance",
+      "text": "Make Prepare and Reflect use the same list design. Do not create a duplicate layout with the same slots.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-014",
+      "startMs": 74935,
+      "endMs": 80293,
+      "kind": "utterance",
+      "text": "Return to Workshop plan. Make its title larger, preserving the new colors and all text.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "style-switch-015",
+      "startMs": 80293,
+      "endMs": 84579,
+      "kind": "utterance",
+      "text": "Finish the deck for presentation. Resolve any empty slots without inventing content.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 15000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "style-switch-a001",
+      "triggerEventId": "style-switch-001",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "Workshop plan"
+      ]
+    },
+    {
+      "id": "style-switch-a002",
+      "triggerEventId": "style-switch-001",
+      "targetAlias": "opening",
+      "kind": "theme",
+      "description": "warm white background, dark text, teal accent"
+    },
+    {
+      "id": "style-switch-a003",
+      "triggerEventId": "style-switch-002",
+      "targetAlias": "opening",
+      "kind": "frame",
+      "left": "Workshop",
+      "right": "Rehearsal",
+      "page": true
+    },
+    {
+      "id": "style-switch-a004",
+      "triggerEventId": "style-switch-003",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "A fictional rehearsal of a shared plan."
+      ]
+    },
+    {
+      "id": "style-switch-a005",
+      "triggerEventId": "style-switch-004",
+      "targetAlias": "prepare",
+      "kind": "visible_exact",
+      "texts": [
+        "Read the brief.",
+        "Check the tools.",
+        "Agree on roles."
+      ]
+    },
+    {
+      "id": "style-switch-a006",
+      "triggerEventId": "style-switch-004",
+      "targetAlias": "prepare",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "style-switch-a007",
+      "triggerEventId": "style-switch-005",
+      "targetAlias": "practice",
+      "kind": "visible_exact",
+      "texts": [
+        "Try the flow.",
+        "Record the friction.",
+        "Adjust the plan."
+      ]
+    },
+    {
+      "id": "style-switch-a008",
+      "triggerEventId": "style-switch-005",
+      "targetAlias": "practice",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "style-switch-a009",
+      "triggerEventId": "style-switch-006",
+      "targetAlias": "timebox",
+      "kind": "number_exact",
+      "value": "25 minutes",
+      "label": "Practice time"
+    },
+    {
+      "id": "style-switch-a010",
+      "triggerEventId": "style-switch-007",
+      "targetAlias": "deck",
+      "kind": "theme",
+      "description": "dark navy background, light text, warm amber accent",
+      "scope": "deck"
+    },
+    {
+      "id": "style-switch-a011",
+      "triggerEventId": "style-switch-007",
+      "targetAlias": "deck",
+      "kind": "unchanged_except",
+      "allowed": [
+        "theme colors and required readability adjustments"
+      ]
+    },
+    {
+      "id": "style-switch-a012",
+      "triggerEventId": "style-switch-008",
+      "targetAlias": "practice",
+      "kind": "visible_exact",
+      "texts": [
+        "Share the findings."
+      ]
+    },
+    {
+      "id": "style-switch-a013",
+      "triggerEventId": "style-switch-009",
+      "targetAlias": "practice",
+      "kind": "no_stale_theme",
+      "description": "dark navy background, light text, warm amber accent"
+    },
+    {
+      "id": "style-switch-a014",
+      "triggerEventId": "style-switch-010",
+      "targetAlias": "timebox",
+      "kind": "correction",
+      "old": "25 minutes",
+      "new": "30 minutes",
+      "label": "Practice time"
+    },
+    {
+      "id": "style-switch-a015",
+      "triggerEventId": "style-switch-011",
+      "targetAlias": "deck",
+      "kind": "frame",
+      "left": "Workshop",
+      "right": "Workshop review",
+      "page": true
+    },
+    {
+      "id": "style-switch-a016",
+      "triggerEventId": "style-switch-012",
+      "targetAlias": "reflect",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep what worked.",
+        "Name what failed.",
+        "Choose the next step."
+      ]
+    },
+    {
+      "id": "style-switch-a017",
+      "triggerEventId": "style-switch-012",
+      "targetAlias": "reflect",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "style-switch-a018",
+      "triggerEventId": "style-switch-013",
+      "targetAlias": "deck",
+      "kind": "consistent_pair",
+      "aliases": [
+        "prepare",
+        "reflect"
+      ]
+    },
+    {
+      "id": "style-switch-a019",
+      "triggerEventId": "style-switch-013",
+      "targetAlias": "deck",
+      "kind": "no_duplicate_layouts"
+    },
+    {
+      "id": "style-switch-a020",
+      "triggerEventId": "style-switch-014",
+      "targetAlias": "opening",
+      "kind": "style_target",
+      "text": "Workshop plan",
+      "change": "larger type"
+    },
+    {
+      "id": "style-switch-a021",
+      "triggerEventId": "style-switch-014",
+      "targetAlias": "opening",
+      "kind": "no_stale_theme",
+      "description": "dark navy background, light text, warm amber accent"
+    },
+    {
+      "id": "style-switch-a022",
+      "triggerEventId": "style-switch-015",
+      "targetAlias": "deck",
+      "kind": "presentation_ready"
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 5,
+    "allUserSourceRetained": true,
+    "latestThemeEverywhere": true,
+    "frame": {
+      "left": "Workshop",
+      "right": "Workshop review",
+      "page": true
+    },
+    "noDuplicateSlotShapes": true,
+    "presentationReady": true
+  }
+}

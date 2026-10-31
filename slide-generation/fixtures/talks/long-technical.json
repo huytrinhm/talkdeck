@@ -1,0 +1,1309 @@
+{
+  "schemaVersion": 1,
+  "id": "long-technical",
+  "title": "Long technical talk",
+  "purpose": "34 slides with recurring section, three-point, single-number, and caveat layouts; deck consistency and sustained backlog.",
+  "initialContext": "This is a fictional rehearsal. Create and edit a multi-slide deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. New-slide and editing commands are part of the spoken input.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 2.5,
+    "postTalkObservationMs": 15000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "long-technical-001",
+      "startMs": 1000,
+      "endMs": 10200,
+      "kind": "utterance",
+      "text": "Create an opening slide titled Arbor reliability review. The subtitle is A fictional systems rehearsal. Keep a consistent running frame across the deck.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-002",
+      "startMs": 10200,
+      "endMs": 16200,
+      "kind": "utterance",
+      "text": "New section slide titled Ingestion. Put this line beneath it: Capture source before scheduling work.",
+      "targetAlias": "ingestion-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-003",
+      "startMs": 17700,
+      "endMs": 22500,
+      "kind": "utterance",
+      "text": "New slide titled Ingestion checklist. Use three points and reveal them together.",
+      "targetAlias": "ingestion-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-004",
+      "startMs": 22500,
+      "endMs": 24100,
+      "kind": "utterance",
+      "text": "Record the original event.",
+      "targetAlias": "ingestion-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-005",
+      "startMs": 24100,
+      "endMs": 26100,
+      "kind": "utterance",
+      "text": "Assign a stable event ID.",
+      "targetAlias": "ingestion-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-006",
+      "startMs": 26100,
+      "endMs": 27300,
+      "kind": "utterance",
+      "text": "Acknowledge durable receipt.",
+      "targetAlias": "ingestion-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-007",
+      "startMs": 27300,
+      "endMs": 34500,
+      "kind": "utterance",
+      "text": "New slide titled Ingestion in one number. Show 120 ms as the single metric, labeled median durable receipt.",
+      "targetAlias": "ingestion-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-008",
+      "startMs": 34500,
+      "endMs": 42900,
+      "kind": "utterance",
+      "text": "New slide titled Ingestion caveat. Use exactly this sentence: This is a median from our fictional trial, not a deadline guarantee.",
+      "targetAlias": "ingestion-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-009",
+      "startMs": 46900,
+      "endMs": 53300,
+      "kind": "utterance",
+      "text": "New section slide titled Ordering. Put this line beneath it: Separate arrival order from completion order.",
+      "targetAlias": "ordering-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-010",
+      "startMs": 54800,
+      "endMs": 59600,
+      "kind": "utterance",
+      "text": "New slide titled Ordering checklist. Use three points and reveal them together.",
+      "targetAlias": "ordering-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-011",
+      "startMs": 59600,
+      "endMs": 61200,
+      "kind": "utterance",
+      "text": "Keep original arrival order.",
+      "targetAlias": "ordering-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-012",
+      "startMs": 61200,
+      "endMs": 62800,
+      "kind": "utterance",
+      "text": "Track completed work separately.",
+      "targetAlias": "ordering-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-013",
+      "startMs": 62800,
+      "endMs": 64400,
+      "kind": "utterance",
+      "text": "Publish only validated revisions.",
+      "targetAlias": "ordering-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-014",
+      "startMs": 64400,
+      "endMs": 71200,
+      "kind": "utterance",
+      "text": "New slide titled Ordering in one number. Show 3 as the single metric, labeled independent input streams.",
+      "targetAlias": "ordering-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-015",
+      "startMs": 71200,
+      "endMs": 77600,
+      "kind": "utterance",
+      "text": "New slide titled Ordering caveat. Use exactly this sentence: Completion order may differ from arrival order.",
+      "targetAlias": "ordering-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-016",
+      "startMs": 81600,
+      "endMs": 87600,
+      "kind": "utterance",
+      "text": "New section slide titled Recovery. Put this line beneath it: Retain evidence across interrupted work.",
+      "targetAlias": "recovery-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-017",
+      "startMs": 89100,
+      "endMs": 93900,
+      "kind": "utterance",
+      "text": "New slide titled Recovery checklist. Use three points and reveal them together.",
+      "targetAlias": "recovery-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-018",
+      "startMs": 93900,
+      "endMs": 95900,
+      "kind": "utterance",
+      "text": "Keep the last committed revision.",
+      "targetAlias": "recovery-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-019",
+      "startMs": 95900,
+      "endMs": 97500,
+      "kind": "utterance",
+      "text": "Replay the recorded events.",
+      "targetAlias": "recovery-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-020",
+      "startMs": 97500,
+      "endMs": 99100,
+      "kind": "utterance",
+      "text": "Retry only unfinished work.",
+      "targetAlias": "recovery-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-021",
+      "startMs": 99100,
+      "endMs": 105900,
+      "kind": "utterance",
+      "text": "New slide titled Recovery in one number. Show 32 MB as the single metric, labeled replay buffer.",
+      "targetAlias": "recovery-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-022",
+      "startMs": 105900,
+      "endMs": 113500,
+      "kind": "utterance",
+      "text": "New slide titled Recovery caveat. Use exactly this sentence: The buffer size describes this rehearsal, not a universal recommendation.",
+      "targetAlias": "recovery-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-023",
+      "startMs": 117500,
+      "endMs": 123500,
+      "kind": "utterance",
+      "text": "New section slide titled Publication. Put this line beneath it: Make the committed state observable.",
+      "targetAlias": "publication-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-024",
+      "startMs": 125000,
+      "endMs": 129800,
+      "kind": "utterance",
+      "text": "New slide titled Publication checklist. Use three points and reveal them together.",
+      "targetAlias": "publication-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-025",
+      "startMs": 129800,
+      "endMs": 131400,
+      "kind": "utterance",
+      "text": "Measure the final layout.",
+      "targetAlias": "publication-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-026",
+      "startMs": 131400,
+      "endMs": 133400,
+      "kind": "utterance",
+      "text": "Commit source and evidence together.",
+      "targetAlias": "publication-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-027",
+      "startMs": 133400,
+      "endMs": 135800,
+      "kind": "utterance",
+      "text": "Confirm the viewer received the revision.",
+      "targetAlias": "publication-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-028",
+      "startMs": 135800,
+      "endMs": 142200,
+      "kind": "utterance",
+      "text": "New slide titled Publication in one number. Show 2 as the single metric, labeled validation workers.",
+      "targetAlias": "publication-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-029",
+      "startMs": 142200,
+      "endMs": 148600,
+      "kind": "utterance",
+      "text": "New slide titled Publication caveat. Use exactly this sentence: More workers do not remove ordering constraints.",
+      "targetAlias": "publication-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-030",
+      "startMs": 152600,
+      "endMs": 159400,
+      "kind": "utterance",
+      "text": "New section slide titled Backpressure. Put this line beneath it: Slow processing must not erase the input.",
+      "targetAlias": "backpressure-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-031",
+      "startMs": 160900,
+      "endMs": 165700,
+      "kind": "utterance",
+      "text": "New slide titled Backpressure checklist. Use three points and reveal them together.",
+      "targetAlias": "backpressure-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-032",
+      "startMs": 165700,
+      "endMs": 168900,
+      "kind": "utterance",
+      "text": "Retain every original utterance before scheduling model work.",
+      "targetAlias": "backpressure-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-033",
+      "startMs": 168900,
+      "endMs": 172500,
+      "kind": "utterance",
+      "text": "Coalesce pending scheduling while keeping the full source evidence.",
+      "targetAlias": "backpressure-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-034",
+      "startMs": 172500,
+      "endMs": 176100,
+      "kind": "utterance",
+      "text": "Measure how long the oldest unfinished request has waited.",
+      "targetAlias": "backpressure-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-035",
+      "startMs": 176100,
+      "endMs": 182900,
+      "kind": "utterance",
+      "text": "New slide titled Backpressure in one number. Show 4 as the single metric, labeled pending work categories.",
+      "targetAlias": "backpressure-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-036",
+      "startMs": 182900,
+      "endMs": 192100,
+      "kind": "utterance",
+      "text": "New slide titled Backpressure caveat. Use exactly this sentence: A short queue is not evidence of success if the system discarded the work.",
+      "targetAlias": "backpressure-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-037",
+      "startMs": 196100,
+      "endMs": 204100,
+      "kind": "utterance",
+      "text": "New section slide titled Caching. Put this line beneath it: A cache entry is valid only for its complete dependencies.",
+      "targetAlias": "caching-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-038",
+      "startMs": 205600,
+      "endMs": 210400,
+      "kind": "utterance",
+      "text": "New slide titled Caching checklist. Use three points and reveal them together.",
+      "targetAlias": "caching-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-039",
+      "startMs": 210400,
+      "endMs": 214800,
+      "kind": "utterance",
+      "text": "Include the source revision and the renderer version in the key.",
+      "targetAlias": "caching-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-040",
+      "startMs": 214800,
+      "endMs": 219200,
+      "kind": "utterance",
+      "text": "Include the exact font bytes and asset versions in the key.",
+      "targetAlias": "caching-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-041",
+      "startMs": 219200,
+      "endMs": 223200,
+      "kind": "utterance",
+      "text": "Invalidate the entry when any required check changes its policy.",
+      "targetAlias": "caching-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-042",
+      "startMs": 223200,
+      "endMs": 230400,
+      "kind": "utterance",
+      "text": "New slide titled Caching in one number. Show 60 s as the single metric, labeled illustrative cache lifetime.",
+      "targetAlias": "caching-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-043",
+      "startMs": 230400,
+      "endMs": 238800,
+      "kind": "utterance",
+      "text": "New slide titled Caching caveat. Use exactly this sentence: The cache lifetime is illustrative; dependency changes still invalidate an entry immediately.",
+      "targetAlias": "caching-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-044",
+      "startMs": 242800,
+      "endMs": 250400,
+      "kind": "utterance",
+      "text": "New section slide titled Observation. Put this line beneath it: A committed update is not necessarily a visible update.",
+      "targetAlias": "observation-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-045",
+      "startMs": 251900,
+      "endMs": 256700,
+      "kind": "utterance",
+      "text": "New slide titled Observation checklist. Use three points and reveal them together.",
+      "targetAlias": "observation-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-046",
+      "startMs": 256700,
+      "endMs": 260300,
+      "kind": "utterance",
+      "text": "Record the server commit and the browser application separately.",
+      "targetAlias": "observation-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-047",
+      "startMs": 260300,
+      "endMs": 264300,
+      "kind": "utterance",
+      "text": "Confirm that the requested content reached a visible painted frame.",
+      "targetAlias": "observation-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-048",
+      "startMs": 264300,
+      "endMs": 267900,
+      "kind": "utterance",
+      "text": "Keep the previous incorrect frames in the evidence timeline.",
+      "targetAlias": "observation-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-049",
+      "startMs": 267900,
+      "endMs": 274300,
+      "kind": "utterance",
+      "text": "New slide titled Observation in one number. Show 1920×1080 as the single metric, labeled reference canvas.",
+      "targetAlias": "observation-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-050",
+      "startMs": 274300,
+      "endMs": 283500,
+      "kind": "utterance",
+      "text": "New slide titled Observation caveat. Use exactly this sentence: A screenshot of the final state does not prove that earlier states were correct.",
+      "targetAlias": "observation-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-051",
+      "startMs": 287500,
+      "endMs": 294700,
+      "kind": "utterance",
+      "text": "New section slide titled Rollout. Put this line beneath it: Compare the same workload before claiming an improvement.",
+      "targetAlias": "rollout-section",
+      "silenceAfterMs": 1500
+    },
+    {
+      "id": "long-technical-052",
+      "startMs": 296200,
+      "endMs": 301000,
+      "kind": "utterance",
+      "text": "New slide titled Rollout checklist. Use three points and reveal them together.",
+      "targetAlias": "rollout-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-053",
+      "startMs": 301000,
+      "endMs": 304200,
+      "kind": "utterance",
+      "text": "Freeze the complete previous source and dependency manifest.",
+      "targetAlias": "rollout-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-054",
+      "startMs": 304200,
+      "endMs": 308600,
+      "kind": "utterance",
+      "text": "Replay the same timed input without waiting for generation to finish.",
+      "targetAlias": "rollout-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-055",
+      "startMs": 308600,
+      "endMs": 312200,
+      "kind": "utterance",
+      "text": "Inspect the failures individually before accepting the aggregate result.",
+      "targetAlias": "rollout-checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-056",
+      "startMs": 312200,
+      "endMs": 319400,
+      "kind": "utterance",
+      "text": "New slide titled Rollout in one number. Show 1 as the single metric, labeled candidate change per experiment.",
+      "targetAlias": "rollout-metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "long-technical-057",
+      "startMs": 319400,
+      "endMs": 328200,
+      "kind": "utterance",
+      "text": "New slide titled Rollout caveat. Use exactly this sentence: An experiment that changes several factors cannot isolate which factor produced the improvement.",
+      "targetAlias": "rollout-caveat",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "long-technical-058",
+      "startMs": 332200,
+      "endMs": 343400,
+      "kind": "utterance",
+      "text": "New closing slide titled Keep the evidence. Use this line: Fast feedback depends on preserving the source. Do not add a summary of facts I have not said.",
+      "targetAlias": "closing",
+      "silenceAfterMs": 5000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "long-technical-a001",
+      "triggerEventId": "long-technical-001",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "Arbor reliability review",
+        "A fictional systems rehearsal"
+      ]
+    },
+    {
+      "id": "long-technical-a002",
+      "triggerEventId": "long-technical-002",
+      "targetAlias": "ingestion-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Ingestion",
+        "Capture source before scheduling work."
+      ]
+    },
+    {
+      "id": "long-technical-a003",
+      "triggerEventId": "long-technical-002",
+      "targetAlias": "ingestion-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a004",
+      "triggerEventId": "long-technical-003",
+      "targetAlias": "ingestion-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a005",
+      "triggerEventId": "long-technical-004",
+      "targetAlias": "ingestion-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Record the original event."
+      ]
+    },
+    {
+      "id": "long-technical-a006",
+      "triggerEventId": "long-technical-005",
+      "targetAlias": "ingestion-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Assign a stable event ID."
+      ]
+    },
+    {
+      "id": "long-technical-a007",
+      "triggerEventId": "long-technical-006",
+      "targetAlias": "ingestion-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Acknowledge durable receipt."
+      ]
+    },
+    {
+      "id": "long-technical-a008",
+      "triggerEventId": "long-technical-007",
+      "targetAlias": "ingestion-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "120 ms",
+        "median durable receipt"
+      ]
+    },
+    {
+      "id": "long-technical-a009",
+      "triggerEventId": "long-technical-007",
+      "targetAlias": "ingestion-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a010",
+      "triggerEventId": "long-technical-007",
+      "targetAlias": "ingestion-metric",
+      "kind": "number_exact",
+      "value": "120 ms",
+      "label": "median durable receipt"
+    },
+    {
+      "id": "long-technical-a011",
+      "triggerEventId": "long-technical-008",
+      "targetAlias": "ingestion-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "This is a median from our fictional trial, not a deadline guarantee."
+      ]
+    },
+    {
+      "id": "long-technical-a012",
+      "triggerEventId": "long-technical-008",
+      "targetAlias": "ingestion-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a013",
+      "triggerEventId": "long-technical-009",
+      "targetAlias": "ordering-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Ordering",
+        "Separate arrival order from completion order."
+      ]
+    },
+    {
+      "id": "long-technical-a014",
+      "triggerEventId": "long-technical-009",
+      "targetAlias": "ordering-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a015",
+      "triggerEventId": "long-technical-010",
+      "targetAlias": "ordering-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a016",
+      "triggerEventId": "long-technical-011",
+      "targetAlias": "ordering-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep original arrival order."
+      ]
+    },
+    {
+      "id": "long-technical-a017",
+      "triggerEventId": "long-technical-012",
+      "targetAlias": "ordering-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Track completed work separately."
+      ]
+    },
+    {
+      "id": "long-technical-a018",
+      "triggerEventId": "long-technical-013",
+      "targetAlias": "ordering-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Publish only validated revisions."
+      ]
+    },
+    {
+      "id": "long-technical-a019",
+      "triggerEventId": "long-technical-014",
+      "targetAlias": "ordering-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "3",
+        "independent input streams"
+      ]
+    },
+    {
+      "id": "long-technical-a020",
+      "triggerEventId": "long-technical-014",
+      "targetAlias": "ordering-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a021",
+      "triggerEventId": "long-technical-014",
+      "targetAlias": "ordering-metric",
+      "kind": "number_exact",
+      "value": "3",
+      "label": "independent input streams"
+    },
+    {
+      "id": "long-technical-a022",
+      "triggerEventId": "long-technical-015",
+      "targetAlias": "ordering-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "Completion order may differ from arrival order."
+      ]
+    },
+    {
+      "id": "long-technical-a023",
+      "triggerEventId": "long-technical-015",
+      "targetAlias": "ordering-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a024",
+      "triggerEventId": "long-technical-016",
+      "targetAlias": "recovery-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Recovery",
+        "Retain evidence across interrupted work."
+      ]
+    },
+    {
+      "id": "long-technical-a025",
+      "triggerEventId": "long-technical-016",
+      "targetAlias": "recovery-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a026",
+      "triggerEventId": "long-technical-017",
+      "targetAlias": "recovery-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a027",
+      "triggerEventId": "long-technical-018",
+      "targetAlias": "recovery-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep the last committed revision."
+      ]
+    },
+    {
+      "id": "long-technical-a028",
+      "triggerEventId": "long-technical-019",
+      "targetAlias": "recovery-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Replay the recorded events."
+      ]
+    },
+    {
+      "id": "long-technical-a029",
+      "triggerEventId": "long-technical-020",
+      "targetAlias": "recovery-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Retry only unfinished work."
+      ]
+    },
+    {
+      "id": "long-technical-a030",
+      "triggerEventId": "long-technical-021",
+      "targetAlias": "recovery-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "32 MB",
+        "replay buffer"
+      ]
+    },
+    {
+      "id": "long-technical-a031",
+      "triggerEventId": "long-technical-021",
+      "targetAlias": "recovery-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a032",
+      "triggerEventId": "long-technical-021",
+      "targetAlias": "recovery-metric",
+      "kind": "number_exact",
+      "value": "32 MB",
+      "label": "replay buffer"
+    },
+    {
+      "id": "long-technical-a033",
+      "triggerEventId": "long-technical-022",
+      "targetAlias": "recovery-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "The buffer size describes this rehearsal, not a universal recommendation."
+      ]
+    },
+    {
+      "id": "long-technical-a034",
+      "triggerEventId": "long-technical-022",
+      "targetAlias": "recovery-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a035",
+      "triggerEventId": "long-technical-023",
+      "targetAlias": "publication-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Publication",
+        "Make the committed state observable."
+      ]
+    },
+    {
+      "id": "long-technical-a036",
+      "triggerEventId": "long-technical-023",
+      "targetAlias": "publication-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a037",
+      "triggerEventId": "long-technical-024",
+      "targetAlias": "publication-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a038",
+      "triggerEventId": "long-technical-025",
+      "targetAlias": "publication-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Measure the final layout."
+      ]
+    },
+    {
+      "id": "long-technical-a039",
+      "triggerEventId": "long-technical-026",
+      "targetAlias": "publication-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Commit source and evidence together."
+      ]
+    },
+    {
+      "id": "long-technical-a040",
+      "triggerEventId": "long-technical-027",
+      "targetAlias": "publication-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Confirm the viewer received the revision."
+      ]
+    },
+    {
+      "id": "long-technical-a041",
+      "triggerEventId": "long-technical-028",
+      "targetAlias": "publication-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "2",
+        "validation workers"
+      ]
+    },
+    {
+      "id": "long-technical-a042",
+      "triggerEventId": "long-technical-028",
+      "targetAlias": "publication-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a043",
+      "triggerEventId": "long-technical-028",
+      "targetAlias": "publication-metric",
+      "kind": "number_exact",
+      "value": "2",
+      "label": "validation workers"
+    },
+    {
+      "id": "long-technical-a044",
+      "triggerEventId": "long-technical-029",
+      "targetAlias": "publication-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "More workers do not remove ordering constraints."
+      ]
+    },
+    {
+      "id": "long-technical-a045",
+      "triggerEventId": "long-technical-029",
+      "targetAlias": "publication-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a046",
+      "triggerEventId": "long-technical-030",
+      "targetAlias": "backpressure-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Backpressure",
+        "Slow processing must not erase the input."
+      ]
+    },
+    {
+      "id": "long-technical-a047",
+      "triggerEventId": "long-technical-030",
+      "targetAlias": "backpressure-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a048",
+      "triggerEventId": "long-technical-031",
+      "targetAlias": "backpressure-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a049",
+      "triggerEventId": "long-technical-032",
+      "targetAlias": "backpressure-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Retain every original utterance before scheduling model work."
+      ]
+    },
+    {
+      "id": "long-technical-a050",
+      "triggerEventId": "long-technical-033",
+      "targetAlias": "backpressure-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Coalesce pending scheduling while keeping the full source evidence."
+      ]
+    },
+    {
+      "id": "long-technical-a051",
+      "triggerEventId": "long-technical-034",
+      "targetAlias": "backpressure-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Measure how long the oldest unfinished request has waited."
+      ]
+    },
+    {
+      "id": "long-technical-a052",
+      "triggerEventId": "long-technical-035",
+      "targetAlias": "backpressure-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "4",
+        "pending work categories"
+      ]
+    },
+    {
+      "id": "long-technical-a053",
+      "triggerEventId": "long-technical-035",
+      "targetAlias": "backpressure-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a054",
+      "triggerEventId": "long-technical-035",
+      "targetAlias": "backpressure-metric",
+      "kind": "number_exact",
+      "value": "4",
+      "label": "pending work categories"
+    },
+    {
+      "id": "long-technical-a055",
+      "triggerEventId": "long-technical-036",
+      "targetAlias": "backpressure-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "A short queue is not evidence of success if the system discarded the work."
+      ]
+    },
+    {
+      "id": "long-technical-a056",
+      "triggerEventId": "long-technical-036",
+      "targetAlias": "backpressure-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a057",
+      "triggerEventId": "long-technical-037",
+      "targetAlias": "caching-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Caching",
+        "A cache entry is valid only for its complete dependencies."
+      ]
+    },
+    {
+      "id": "long-technical-a058",
+      "triggerEventId": "long-technical-037",
+      "targetAlias": "caching-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a059",
+      "triggerEventId": "long-technical-038",
+      "targetAlias": "caching-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a060",
+      "triggerEventId": "long-technical-039",
+      "targetAlias": "caching-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Include the source revision and the renderer version in the key."
+      ]
+    },
+    {
+      "id": "long-technical-a061",
+      "triggerEventId": "long-technical-040",
+      "targetAlias": "caching-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Include the exact font bytes and asset versions in the key."
+      ]
+    },
+    {
+      "id": "long-technical-a062",
+      "triggerEventId": "long-technical-041",
+      "targetAlias": "caching-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Invalidate the entry when any required check changes its policy."
+      ]
+    },
+    {
+      "id": "long-technical-a063",
+      "triggerEventId": "long-technical-042",
+      "targetAlias": "caching-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "60 s",
+        "illustrative cache lifetime"
+      ]
+    },
+    {
+      "id": "long-technical-a064",
+      "triggerEventId": "long-technical-042",
+      "targetAlias": "caching-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a065",
+      "triggerEventId": "long-technical-042",
+      "targetAlias": "caching-metric",
+      "kind": "number_exact",
+      "value": "60 s",
+      "label": "illustrative cache lifetime"
+    },
+    {
+      "id": "long-technical-a066",
+      "triggerEventId": "long-technical-043",
+      "targetAlias": "caching-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "The cache lifetime is illustrative; dependency changes still invalidate an entry immediately."
+      ]
+    },
+    {
+      "id": "long-technical-a067",
+      "triggerEventId": "long-technical-043",
+      "targetAlias": "caching-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a068",
+      "triggerEventId": "long-technical-044",
+      "targetAlias": "observation-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Observation",
+        "A committed update is not necessarily a visible update."
+      ]
+    },
+    {
+      "id": "long-technical-a069",
+      "triggerEventId": "long-technical-044",
+      "targetAlias": "observation-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a070",
+      "triggerEventId": "long-technical-045",
+      "targetAlias": "observation-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a071",
+      "triggerEventId": "long-technical-046",
+      "targetAlias": "observation-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Record the server commit and the browser application separately."
+      ]
+    },
+    {
+      "id": "long-technical-a072",
+      "triggerEventId": "long-technical-047",
+      "targetAlias": "observation-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Confirm that the requested content reached a visible painted frame."
+      ]
+    },
+    {
+      "id": "long-technical-a073",
+      "triggerEventId": "long-technical-048",
+      "targetAlias": "observation-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep the previous incorrect frames in the evidence timeline."
+      ]
+    },
+    {
+      "id": "long-technical-a074",
+      "triggerEventId": "long-technical-049",
+      "targetAlias": "observation-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "1920×1080",
+        "reference canvas"
+      ]
+    },
+    {
+      "id": "long-technical-a075",
+      "triggerEventId": "long-technical-049",
+      "targetAlias": "observation-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a076",
+      "triggerEventId": "long-technical-049",
+      "targetAlias": "observation-metric",
+      "kind": "number_exact",
+      "value": "1920×1080",
+      "label": "reference canvas"
+    },
+    {
+      "id": "long-technical-a077",
+      "triggerEventId": "long-technical-050",
+      "targetAlias": "observation-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "A screenshot of the final state does not prove that earlier states were correct."
+      ]
+    },
+    {
+      "id": "long-technical-a078",
+      "triggerEventId": "long-technical-050",
+      "targetAlias": "observation-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a079",
+      "triggerEventId": "long-technical-051",
+      "targetAlias": "rollout-section",
+      "kind": "visible_exact",
+      "texts": [
+        "Rollout",
+        "Compare the same workload before claiming an improvement."
+      ]
+    },
+    {
+      "id": "long-technical-a080",
+      "triggerEventId": "long-technical-051",
+      "targetAlias": "rollout-section",
+      "kind": "layout_family",
+      "family": "section-opener"
+    },
+    {
+      "id": "long-technical-a081",
+      "triggerEventId": "long-technical-052",
+      "targetAlias": "rollout-checklist",
+      "kind": "layout_family",
+      "family": "three-point-list"
+    },
+    {
+      "id": "long-technical-a082",
+      "triggerEventId": "long-technical-053",
+      "targetAlias": "rollout-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Freeze the complete previous source and dependency manifest."
+      ]
+    },
+    {
+      "id": "long-technical-a083",
+      "triggerEventId": "long-technical-054",
+      "targetAlias": "rollout-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Replay the same timed input without waiting for generation to finish."
+      ]
+    },
+    {
+      "id": "long-technical-a084",
+      "triggerEventId": "long-technical-055",
+      "targetAlias": "rollout-checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Inspect the failures individually before accepting the aggregate result."
+      ]
+    },
+    {
+      "id": "long-technical-a085",
+      "triggerEventId": "long-technical-056",
+      "targetAlias": "rollout-metric",
+      "kind": "visible_exact",
+      "texts": [
+        "1",
+        "candidate change per experiment"
+      ]
+    },
+    {
+      "id": "long-technical-a086",
+      "triggerEventId": "long-technical-056",
+      "targetAlias": "rollout-metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "long-technical-a087",
+      "triggerEventId": "long-technical-056",
+      "targetAlias": "rollout-metric",
+      "kind": "number_exact",
+      "value": "1",
+      "label": "candidate change per experiment"
+    },
+    {
+      "id": "long-technical-a088",
+      "triggerEventId": "long-technical-057",
+      "targetAlias": "rollout-caveat",
+      "kind": "visible_exact",
+      "texts": [
+        "An experiment that changes several factors cannot isolate which factor produced the improvement."
+      ]
+    },
+    {
+      "id": "long-technical-a089",
+      "triggerEventId": "long-technical-057",
+      "targetAlias": "rollout-caveat",
+      "kind": "layout_family",
+      "family": "single-statement"
+    },
+    {
+      "id": "long-technical-a090",
+      "triggerEventId": "long-technical-058",
+      "targetAlias": "closing",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep the evidence",
+        "Fast feedback depends on preserving the source."
+      ]
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 34,
+    "requiredLayoutFamilies": [
+      "section-opener",
+      "three-point-list",
+      "single-metric",
+      "single-statement"
+    ],
+    "sameFamilyConsistent": true,
+    "allUserSourceRetained": true,
+    "noDuplicateSlotShapes": true,
+    "presentationReady": true
+  }
+}

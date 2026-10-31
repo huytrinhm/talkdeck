@@ -1,0 +1,844 @@
+{
+  "schemaVersion": 1,
+  "id": "theme-decoration-v1",
+  "title": "Theme, decoration, and motion quality v1",
+  "purpose": "Expanded quality fixture: three global palette phases, shared typography/frame, varied native compositions, decorative primitives, dedicated icons, source fidelity, and explicit manual motion review. Separate from the frozen five-talk suite.",
+  "initialContext": "This is a fictional rehearsal. Create and edit the deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. Spoken input includes explicit editing and navigation requests.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 2.8,
+    "postTalkObservationMs": 15000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "theme-decoration-001",
+      "startMs": 1000,
+      "endMs": 14929,
+      "kind": "utterance",
+      "text": "Create a slide titled Signals and space. Use the subtitle A fictional rehearsal of a shared plan. Start with a warm ivory background, dark charcoal text, a deep teal accent, and the bundled default font. Keep the opening sparse.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "theme-decoration-002",
+      "startMs": 18929,
+      "endMs": 27501,
+      "kind": "utterance",
+      "text": "Set the running frame to Studio rehearsal on the left and Draft review on the right. Show page numbers and a fine frame rule.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-003",
+      "startMs": 27501,
+      "endMs": 36430,
+      "kind": "utterance",
+      "text": "On Signals and space, add a short accent rule below the subtitle and a faint decorative ring in the top-right corner, away from the words.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "theme-decoration-004",
+      "startMs": 39430,
+      "endMs": 52645,
+      "kind": "utterance",
+      "text": "New slide titled Readiness pair. Use two equal panels side by side. The left heading is Ready, with the sentence The owner has confirmed. The right heading is Waiting, with the sentence The owner has not confirmed.",
+      "targetAlias": "comparison",
+      "silenceAfterMs": 2000
+    },
+    {
+      "id": "theme-decoration-005",
+      "startMs": 54645,
+      "endMs": 70003,
+      "kind": "utterance",
+      "text": "New slide titled Handoff flow. Arrange these three labeled steps horizontally: Receive. Check. Send. Use a dedicated Lucide icon beside each label. Search the full catalog for inbox, shield-check, and send, and let their colors inherit the surrounding text. Keep the words visible.",
+      "targetAlias": "process",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-006",
+      "startMs": 70003,
+      "endMs": 78575,
+      "kind": "utterance",
+      "text": "On Handoff flow, reveal Receive, then Check, then Send. Keep each icon and its label together, and reserve their final positions before revealing them.",
+      "targetAlias": "process",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "theme-decoration-007",
+      "startMs": 81575,
+      "endMs": 95861,
+      "kind": "utterance",
+      "text": "New slide titled Operating notes. Use two columns with three complete sentences each. First column: Keep the original words. Check the committed revision. Confirm the next owner. Second column: Record every correction. Keep the full qualification. Review the visible result.",
+      "targetAlias": "dense",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "theme-decoration-008",
+      "startMs": 99861,
+      "endMs": 113790,
+      "kind": "utterance",
+      "text": "Now change the whole deck to dark navy with light text and a warm amber accent. Keep every word, slide order, frame label, and all existing content identities. Let decorative elements and inherited icon colors follow the new theme.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-009",
+      "startMs": 113790,
+      "endMs": 125576,
+      "kind": "utterance",
+      "text": "On Handoff flow, add a fourth step after Send: Confirm. Find a suitable dedicated Lucide confirmation icon. Give only that icon the theme accent override; the other three icons still inherit text color.",
+      "targetAlias": "process",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-010",
+      "startMs": 125576,
+      "endMs": 134148,
+      "kind": "utterance",
+      "text": "Keep Confirm and its icon in the new dark theme even if an older styling request finishes later. Do not customize any icon strokes.",
+      "targetAlias": "process",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "theme-decoration-011",
+      "startMs": 136648,
+      "endMs": 146291,
+      "kind": "utterance",
+      "text": "New slide titled Practice window. Show 25 minutes as a single large metric labeled Practice time. Add the caption This duration is illustrative, not a deadline guarantee.",
+      "targetAlias": "metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-012",
+      "startMs": 146291,
+      "endMs": 151649,
+      "kind": "utterance",
+      "text": "On Practice window, change 25 minutes to 30 minutes. Keep its label and qualification unchanged.",
+      "targetAlias": "metric",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-013",
+      "startMs": 151649,
+      "endMs": 155578,
+      "kind": "utterance",
+      "text": "Correction: use 28 minutes, not 30 minutes. Keep the qualification visible.",
+      "targetAlias": "metric",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "theme-decoration-014",
+      "startMs": 158578,
+      "endMs": 170007,
+      "kind": "utterance",
+      "text": "New slide titled One voice. Quote exactly: Clear ownership makes room for careful work. Attribute it to Mara. Make the quotation the main content, with generous open space and no surrounding panel.",
+      "targetAlias": "quote",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "theme-decoration-015",
+      "startMs": 174007,
+      "endMs": 187222,
+      "kind": "utterance",
+      "text": "New slide titled Review pair. Reuse the two-panel design from Readiness pair. The left heading is Observed, with the sentence The result was seen. The right heading is Unobserved, with the sentence The result was not seen.",
+      "targetAlias": "repeat",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-016",
+      "startMs": 187222,
+      "endMs": 196151,
+      "kind": "utterance",
+      "text": "Make Readiness pair and Review pair share the same panel spacing, typography, and surface treatment. Do not add a duplicate layout with the same slots.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "theme-decoration-017",
+      "startMs": 198651,
+      "endMs": 207223,
+      "kind": "utterance",
+      "text": "On Readiness pair, move Waiting to the left and Ready to the right. Keep each heading and its sentence together, preserving the existing nodes.",
+      "targetAlias": "comparison",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "theme-decoration-018",
+      "startMs": 209723,
+      "endMs": 225438,
+      "kind": "utterance",
+      "text": "New slide titled Review lenses. Use a full-width accent band for the heading, then a two-by-two grid. Show these four captions separately: Source fidelity. Visible response. Shared design. Quiet completion. Put this caption inside the heading band: Review every lens before accepting the result.",
+      "targetAlias": "chapter",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-019",
+      "startMs": 225438,
+      "endMs": 239010,
+      "kind": "utterance",
+      "text": "On Review lenses, search the full Lucide catalog and put a dedicated eye icon beside the heading inside the accent band. Add suitable dedicated icons beside the four grid captions. Let every icon inherit its local text color.",
+      "targetAlias": "chapter",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "theme-decoration-020",
+      "startMs": 242010,
+      "endMs": 256653,
+      "kind": "utterance",
+      "text": "Change the entire deck again to a high-key minimal theme: white backgrounds, near-black text, and a restrained blue accent. Keep all content, qualifications, icon choices, slide order, and build groups. Retain the panel comparisons; do not turn them into plain lists.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-021",
+      "startMs": 256653,
+      "endMs": 265939,
+      "kind": "utterance",
+      "text": "On Review lenses, put the footer sentence beneath the grid instead of inside a container with the heading. Preserve its exact words and existing node identity.",
+      "targetAlias": "chapter",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-022",
+      "startMs": 265939,
+      "endMs": 273440,
+      "kind": "utterance",
+      "text": "Change the frame right label to Final review everywhere. Keep Studio rehearsal on the left, page numbers, and the frame rule.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-023",
+      "startMs": 273440,
+      "endMs": 283440,
+      "kind": "utterance",
+      "text": "Set the shared type scale to title 96 pixels, body 36 pixels, and caption 24 pixels. Keep the bundled font, all words, and readable contrast across the deck.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "theme-decoration-024",
+      "startMs": 286440,
+      "endMs": 300726,
+      "kind": "utterance",
+      "text": "New slide titled A quiet signal. Show only this sentence as the main content: Keep the next action visible. Add a short blue rule and a faint dots motif away from the words. Use intentional open space, not empty panels.",
+      "targetAlias": "minimal",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "theme-decoration-025",
+      "startMs": 304726,
+      "endMs": 316512,
+      "kind": "utterance",
+      "text": "New slide titled Leave a clear next step. Use the main sentence Name the next owner. Add the caption Then confirm the next action. Keep this closing sparse in the current high-key theme.",
+      "targetAlias": "closing",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "theme-decoration-026",
+      "startMs": 319012,
+      "endMs": 327584,
+      "kind": "utterance",
+      "text": "Return to Signals and space. Make its title larger than the shared title scale without changing its wording, subtitle, rule, ring, or latest colors.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-027",
+      "startMs": 327584,
+      "endMs": 336870,
+      "kind": "utterance",
+      "text": "On Handoff flow, now reveal Receive and Check together, then Send and Confirm together. Keep every icon with its label and preserve final geometry while hidden.",
+      "targetAlias": "process",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-028",
+      "startMs": 336870,
+      "endMs": 345085,
+      "kind": "utterance",
+      "text": "Return to Practice window. Keep 28 minutes, Practice time, and the full illustrative-duration caption. Do not add a derived total or another figure.",
+      "targetAlias": "metric",
+      "silenceAfterMs": 2000
+    },
+    {
+      "id": "theme-decoration-029",
+      "startMs": 347085,
+      "endMs": 353871,
+      "kind": "utterance",
+      "text": "Return to Readiness pair. Keep Waiting on the left and Ready on the right, with both original sentences unchanged.",
+      "targetAlias": "comparison",
+      "silenceAfterMs": 2000
+    },
+    {
+      "id": "theme-decoration-030",
+      "startMs": 355871,
+      "endMs": 364800,
+      "kind": "utterance",
+      "text": "Return to Leave a clear next step. Remove decorations from this closing slide only. Keep its title, main sentence, caption, current colors, and running frame.",
+      "targetAlias": "closing",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-031",
+      "startMs": 364800,
+      "endMs": 371586,
+      "kind": "utterance",
+      "text": "Finish the deck for presentation. Resolve empty slots without inventing content. Preserve every original utterance in the source evidence.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "theme-decoration-032",
+      "startMs": 371586,
+      "endMs": 376229,
+      "kind": "utterance",
+      "text": "Stop changing the layout now. Keep the completed deck still during the silence.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 15000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "theme-decoration-a001",
+      "triggerEventId": "theme-decoration-001",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "Signals and space",
+        "A fictional rehearsal of a shared plan."
+      ]
+    },
+    {
+      "id": "theme-decoration-a002",
+      "triggerEventId": "theme-decoration-001",
+      "targetAlias": "opening",
+      "kind": "theme",
+      "description": "Warm ivory background, charcoal foreground, deep teal accent, bundled font",
+      "scope": "deck"
+    },
+    {
+      "id": "theme-decoration-a003",
+      "triggerEventId": "theme-decoration-001",
+      "targetAlias": "opening",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "theme-decoration-a004",
+      "triggerEventId": "theme-decoration-002",
+      "targetAlias": "deck",
+      "kind": "frame",
+      "left": "Studio rehearsal",
+      "right": "Draft review",
+      "page": true
+    },
+    {
+      "id": "theme-decoration-a005",
+      "triggerEventId": "theme-decoration-003",
+      "targetAlias": "opening",
+      "kind": "style_target",
+      "text": "Signals and space",
+      "change": "Short accent Rule below subtitle and faint top-right ring Shape, no text obstruction"
+    },
+    {
+      "id": "theme-decoration-a006",
+      "triggerEventId": "theme-decoration-004",
+      "targetAlias": "comparison",
+      "kind": "visible_exact",
+      "texts": [
+        "Ready",
+        "The owner has confirmed.",
+        "Waiting",
+        "The owner has not confirmed."
+      ]
+    },
+    {
+      "id": "theme-decoration-a007",
+      "triggerEventId": "theme-decoration-004",
+      "targetAlias": "comparison",
+      "kind": "layout_family",
+      "family": "two-panel-comparison"
+    },
+    {
+      "id": "theme-decoration-a008",
+      "triggerEventId": "theme-decoration-005",
+      "targetAlias": "process",
+      "kind": "visible_exact",
+      "texts": [
+        "Receive.",
+        "Check.",
+        "Send."
+      ]
+    },
+    {
+      "id": "theme-decoration-a009",
+      "triggerEventId": "theme-decoration-005",
+      "targetAlias": "process",
+      "kind": "layout_family",
+      "family": "horizontal-icon-process"
+    },
+    {
+      "id": "theme-decoration-a010",
+      "triggerEventId": "theme-decoration-005",
+      "targetAlias": "process",
+      "kind": "style_target",
+      "text": "Handoff flow",
+      "change": "Dedicated full-catalog Lucide Icons inherit foreground; no stroke customization; exact labels remain visible"
+    },
+    {
+      "id": "theme-decoration-a011",
+      "triggerEventId": "theme-decoration-006",
+      "targetAlias": "process",
+      "kind": "build_order",
+      "texts": [
+        "Receive.",
+        "Check.",
+        "Send."
+      ]
+    },
+    {
+      "id": "theme-decoration-a012",
+      "triggerEventId": "theme-decoration-007",
+      "targetAlias": "dense",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep the original words.",
+        "Check the committed revision.",
+        "Confirm the next owner.",
+        "Record every correction.",
+        "Keep the full qualification.",
+        "Review the visible result."
+      ]
+    },
+    {
+      "id": "theme-decoration-a013",
+      "triggerEventId": "theme-decoration-007",
+      "targetAlias": "dense",
+      "kind": "layout_family",
+      "family": "dense-two-column"
+    },
+    {
+      "id": "theme-decoration-a014",
+      "triggerEventId": "theme-decoration-008",
+      "targetAlias": "deck",
+      "kind": "theme",
+      "description": "Dark navy background, light text, warm amber accent",
+      "scope": "deck"
+    },
+    {
+      "id": "theme-decoration-a015",
+      "triggerEventId": "theme-decoration-008",
+      "targetAlias": "deck",
+      "kind": "unchanged_except",
+      "allowed": [
+        "theme colors and necessary readability adjustments"
+      ]
+    },
+    {
+      "id": "theme-decoration-a016",
+      "triggerEventId": "theme-decoration-009",
+      "targetAlias": "process",
+      "kind": "visible_exact",
+      "texts": [
+        "Confirm."
+      ]
+    },
+    {
+      "id": "theme-decoration-a017",
+      "triggerEventId": "theme-decoration-009",
+      "targetAlias": "process",
+      "kind": "style_target",
+      "text": "Confirm.",
+      "change": "Only the confirmation Icon uses theme accent override; earlier Icons inherit foreground"
+    },
+    {
+      "id": "theme-decoration-a018",
+      "triggerEventId": "theme-decoration-010",
+      "targetAlias": "process",
+      "kind": "no_stale_theme",
+      "description": "Dark navy/light text/amber remains after late older styling; fixed catalog strokes"
+    },
+    {
+      "id": "theme-decoration-a019",
+      "triggerEventId": "theme-decoration-011",
+      "targetAlias": "metric",
+      "kind": "number_exact",
+      "value": "25 minutes",
+      "label": "Practice time"
+    },
+    {
+      "id": "theme-decoration-a020",
+      "triggerEventId": "theme-decoration-011",
+      "targetAlias": "metric",
+      "kind": "visible_exact",
+      "texts": [
+        "This duration is illustrative, not a deadline guarantee."
+      ]
+    },
+    {
+      "id": "theme-decoration-a021",
+      "triggerEventId": "theme-decoration-011",
+      "targetAlias": "metric",
+      "kind": "layout_family",
+      "family": "single-metric"
+    },
+    {
+      "id": "theme-decoration-a022",
+      "triggerEventId": "theme-decoration-012",
+      "targetAlias": "metric",
+      "kind": "correction",
+      "old": "25 minutes",
+      "new": "30 minutes",
+      "label": "Practice time"
+    },
+    {
+      "id": "theme-decoration-a023",
+      "triggerEventId": "theme-decoration-013",
+      "targetAlias": "metric",
+      "kind": "correction",
+      "old": "30 minutes",
+      "new": "28 minutes",
+      "label": "Practice time"
+    },
+    {
+      "id": "theme-decoration-a024",
+      "triggerEventId": "theme-decoration-014",
+      "targetAlias": "quote",
+      "kind": "quote_exact",
+      "text": "Clear ownership makes room for careful work.",
+      "by": "Mara"
+    },
+    {
+      "id": "theme-decoration-a025",
+      "triggerEventId": "theme-decoration-014",
+      "targetAlias": "quote",
+      "kind": "quote_role",
+      "text": "Clear ownership makes room for careful work.",
+      "notRole": "title"
+    },
+    {
+      "id": "theme-decoration-a026",
+      "triggerEventId": "theme-decoration-014",
+      "targetAlias": "quote",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "theme-decoration-a027",
+      "triggerEventId": "theme-decoration-015",
+      "targetAlias": "repeat",
+      "kind": "visible_exact",
+      "texts": [
+        "Observed",
+        "The result was seen.",
+        "Unobserved",
+        "The result was not seen."
+      ]
+    },
+    {
+      "id": "theme-decoration-a028",
+      "triggerEventId": "theme-decoration-015",
+      "targetAlias": "repeat",
+      "kind": "layout_family",
+      "family": "two-panel-comparison"
+    },
+    {
+      "id": "theme-decoration-a029",
+      "triggerEventId": "theme-decoration-016",
+      "targetAlias": "deck",
+      "kind": "consistent_pair",
+      "aliases": [
+        "comparison",
+        "repeat"
+      ]
+    },
+    {
+      "id": "theme-decoration-a030",
+      "triggerEventId": "theme-decoration-016",
+      "targetAlias": "deck",
+      "kind": "no_duplicate_layouts"
+    },
+    {
+      "id": "theme-decoration-a031",
+      "triggerEventId": "theme-decoration-017",
+      "targetAlias": "comparison",
+      "kind": "relative_position",
+      "text": "Ready",
+      "relation": "right of",
+      "other": "Waiting"
+    },
+    {
+      "id": "theme-decoration-a032",
+      "triggerEventId": "theme-decoration-017",
+      "targetAlias": "comparison",
+      "kind": "unchanged_except",
+      "allowed": [
+        "positions of existing paired panels, preserving each heading/sentence association"
+      ]
+    },
+    {
+      "id": "theme-decoration-a033",
+      "triggerEventId": "theme-decoration-018",
+      "targetAlias": "chapter",
+      "kind": "visible_exact",
+      "texts": [
+        "Source fidelity.",
+        "Visible response.",
+        "Shared design.",
+        "Quiet completion.",
+        "Review every lens before accepting the result."
+      ]
+    },
+    {
+      "id": "theme-decoration-a034",
+      "triggerEventId": "theme-decoration-018",
+      "targetAlias": "chapter",
+      "kind": "layout_family",
+      "family": "band-and-grid"
+    },
+    {
+      "id": "theme-decoration-a035",
+      "triggerEventId": "theme-decoration-019",
+      "targetAlias": "chapter",
+      "kind": "style_target",
+      "text": "Review lenses",
+      "change": "Dedicated searched Lucide Icons inherit effective local foreground on page and Band; no stroke customization"
+    },
+    {
+      "id": "theme-decoration-a036",
+      "triggerEventId": "theme-decoration-020",
+      "targetAlias": "deck",
+      "kind": "theme",
+      "description": "White backgrounds, near-black foreground, restrained blue accent",
+      "scope": "deck"
+    },
+    {
+      "id": "theme-decoration-a037",
+      "triggerEventId": "theme-decoration-020",
+      "targetAlias": "deck",
+      "kind": "unchanged_except",
+      "allowed": [
+        "theme colors and necessary readability adjustments"
+      ]
+    },
+    {
+      "id": "theme-decoration-a038",
+      "triggerEventId": "theme-decoration-021",
+      "targetAlias": "chapter",
+      "kind": "relative_position",
+      "text": "Review every lens before accepting the result.",
+      "relation": "below",
+      "other": "Quiet completion."
+    },
+    {
+      "id": "theme-decoration-a039",
+      "triggerEventId": "theme-decoration-021",
+      "targetAlias": "chapter",
+      "kind": "unchanged_except",
+      "allowed": [
+        "footer container/position with stable node identity"
+      ]
+    },
+    {
+      "id": "theme-decoration-a040",
+      "triggerEventId": "theme-decoration-022",
+      "targetAlias": "deck",
+      "kind": "frame",
+      "left": "Studio rehearsal",
+      "right": "Final review",
+      "page": true
+    },
+    {
+      "id": "theme-decoration-a041",
+      "triggerEventId": "theme-decoration-023",
+      "targetAlias": "deck",
+      "kind": "style_target",
+      "text": "Signals and space",
+      "change": "Shared type scale title96/body36/caption24; preserve bundled font and exact words"
+    },
+    {
+      "id": "theme-decoration-a042",
+      "triggerEventId": "theme-decoration-024",
+      "targetAlias": "minimal",
+      "kind": "visible_exact",
+      "texts": [
+        "Keep the next action visible."
+      ]
+    },
+    {
+      "id": "theme-decoration-a043",
+      "triggerEventId": "theme-decoration-024",
+      "targetAlias": "minimal",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "theme-decoration-a044",
+      "triggerEventId": "theme-decoration-024",
+      "targetAlias": "minimal",
+      "kind": "style_target",
+      "text": "Keep the next action visible.",
+      "change": "Short blue Rule and faint dots Shape away from text"
+    },
+    {
+      "id": "theme-decoration-a045",
+      "triggerEventId": "theme-decoration-025",
+      "targetAlias": "closing",
+      "kind": "visible_exact",
+      "texts": [
+        "Leave a clear next step",
+        "Name the next owner.",
+        "Then confirm the next action."
+      ]
+    },
+    {
+      "id": "theme-decoration-a046",
+      "triggerEventId": "theme-decoration-025",
+      "targetAlias": "closing",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "theme-decoration-a047",
+      "triggerEventId": "theme-decoration-026",
+      "targetAlias": "opening",
+      "kind": "style_target",
+      "text": "Signals and space",
+      "change": "Title larger than shared96pixel scale, preserving all text and latest theme"
+    },
+    {
+      "id": "theme-decoration-a048",
+      "triggerEventId": "theme-decoration-026",
+      "targetAlias": "opening",
+      "kind": "no_stale_theme",
+      "description": "White/near-black/blue latest theme preserved"
+    },
+    {
+      "id": "theme-decoration-a049",
+      "triggerEventId": "theme-decoration-027",
+      "targetAlias": "process",
+      "kind": "build_groups",
+      "groups": [
+        [
+          "Receive.",
+          "Check."
+        ],
+        [
+          "Send.",
+          "Confirm."
+        ]
+      ]
+    },
+    {
+      "id": "theme-decoration-a050",
+      "triggerEventId": "theme-decoration-028",
+      "targetAlias": "metric",
+      "kind": "number_exact",
+      "value": "28 minutes",
+      "label": "Practice time"
+    },
+    {
+      "id": "theme-decoration-a051",
+      "triggerEventId": "theme-decoration-028",
+      "targetAlias": "metric",
+      "kind": "visible_exact",
+      "texts": [
+        "This duration is illustrative, not a deadline guarantee."
+      ]
+    },
+    {
+      "id": "theme-decoration-a052",
+      "triggerEventId": "theme-decoration-028",
+      "targetAlias": "metric",
+      "kind": "no_derived_numbers",
+      "scope": "metric"
+    },
+    {
+      "id": "theme-decoration-a053",
+      "triggerEventId": "theme-decoration-029",
+      "targetAlias": "comparison",
+      "kind": "relative_position",
+      "text": "Ready",
+      "relation": "right of",
+      "other": "Waiting"
+    },
+    {
+      "id": "theme-decoration-a054",
+      "triggerEventId": "theme-decoration-029",
+      "targetAlias": "comparison",
+      "kind": "visible_exact",
+      "texts": [
+        "The owner has confirmed.",
+        "The owner has not confirmed."
+      ]
+    },
+    {
+      "id": "theme-decoration-a055",
+      "triggerEventId": "theme-decoration-030",
+      "targetAlias": "closing",
+      "kind": "unchanged_except",
+      "allowed": [
+        "closing-slide decorative primitives only"
+      ]
+    },
+    {
+      "id": "theme-decoration-a056",
+      "triggerEventId": "theme-decoration-031",
+      "targetAlias": "deck",
+      "kind": "presentation_ready"
+    },
+    {
+      "id": "theme-decoration-a057",
+      "triggerEventId": "theme-decoration-032",
+      "targetAlias": "deck",
+      "kind": "no_churn",
+      "scope": "deck"
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 10,
+    "allUserSourceRetained": true,
+    "presentationReady": true,
+    "slideOrder": [
+      "opening",
+      "comparison",
+      "process",
+      "dense",
+      "metric",
+      "quote",
+      "repeat",
+      "chapter",
+      "minimal",
+      "closing"
+    ],
+    "requiredLayoutFamilies": [
+      "sparse-opener",
+      "two-panel-comparison",
+      "horizontal-icon-process",
+      "dense-two-column",
+      "single-metric",
+      "sparse-quotation",
+      "band-and-grid",
+      "sparse-statement"
+    ],
+    "sameFamilyConsistent": true,
+    "noDuplicateSlotShapes": true,
+    "quotesVerbatim": true,
+    "noInventedMetrics": true,
+    "noUnrequestedChangesDuringPauses": true,
+    "latestThemeEverywhere": true,
+    "frame": {
+      "left": "Studio rehearsal",
+      "right": "Final review",
+      "page": true
+    }
+  }
+}

@@ -1,0 +1,15 @@
+Our campus library has a simple problem: getting a book takes too long, even when we already know exactly which book we need.
+
+We tested a pickup service for two weeks. Students reserved a book online, library staff collected it from the shelves, and the student picked it up from a locker. So the process was reserve, collect, then pick up. Three steps, with no searching the shelves yourself.
+
+The pilot involved sixty students. Actually, let me correct that: sixty signed up, but forty-eight completed the trial. The results I'm describing are from those forty-eight.
+
+The biggest improvement was time. With the usual process, getting a book took twenty minutes on average. With locker pickup, it took five minutes. That's fifteen minutes saved per collection, or a seventy-five percent reduction.
+
+There were two other improvements. Successful first visits increased from eighty percent to ninety-five percent. And student satisfaction rose from three point two to four point six out of five.
+
+Sorry, that last number was four point four, not four point six. Three point two before, four point four after.
+
+There is a trade-off. Staff spent an additional thirty minutes each day preparing the reserved books. So this saved students time, but it wasn't free of extra work.
+
+Our recommendation is to extend the pilot for one month, keeping it limited to high-demand textbooks. The main takeaway is faster access to books, with a staffing cost we still need to evaluate.

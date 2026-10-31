@@ -1,0 +1,52 @@
+{
+  "name": "@talkdeck/slide-generation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts test/orchestration/*.test.ts",
+    "start": "node --import tsx src/server.ts",
+    "smoke:generation": "node --import tsx scripts/generation-smoke.ts",
+    "headless:run": "node --import tsx scripts/headless-run.ts",
+    "headless:replay": "node --import tsx scripts/headless-replay.ts",
+    "headless:batch": "node --import tsx scripts/headless-batch.ts",
+    "headless:actor-replay": "node --import tsx scripts/headless-actor-replay.ts",
+    "headless:contact-sheet": "node --import tsx scripts/headless-contact-sheet.ts",
+    "eval:talks": "node --import tsx src/evaluation/cli.ts talks",
+    "eval:replay": "node --import tsx src/evaluation/cli.ts replay",
+    "eval:compare": "node --import tsx src/evaluation/cli.ts compare",
+    "eval:report": "node --import tsx src/evaluation/cli.ts report",
+    "eval:freeze": "node --import tsx src/evaluation/cli.ts freeze",
+    "test:orchestration": "node --import tsx --test test/orchestration/*.test.ts",
+    "legacy:fixture": "node --import tsx src/orchestration/fixture-deck.ts",
+    "legacy:server": "node --import tsx src/orchestration/server.ts",
+    "practice:server": "node --import tsx src/practice/server.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "1.19.17",
+    "@xmldom/xmldom": "0.9.12",
+    "acorn": "8.19.0",
+    "acorn-jsx": "5.3.2",
+    "apca-w3": "0.1.9",
+    "fontkit": "2.0.4",
+    "hono": "4.13.14",
+    "playwright": "1.64.1",
+    "tailwindcss": "4.3.3",
+    "zod": "4.6.7",
+    "diff": "9.0.0",
+    "openai": "7.46.0",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/fontkit": "2.0.9",
+    "@types/node": "26.6.6",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "@types/ws": "8.18.2",
+    "prettier": "3.9.10"
+  }
+}

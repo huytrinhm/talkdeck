@@ -1,0 +1,82 @@
+# Canonical authoring boundary
+
+This is Talkdeck JSX data, not React, HTML or CSS. `SPEC.md` and the host tool/schema
+contract are authoritative. Use native hashline transactions; never output a full
+HTML document, script, stylesheet, SVG tag or arbitrary element. Read supplied
+source and exact anchors. Preserve IDs of retained/moved nodes; omit IDs on new
+nodes. Never change system versions, nextId, raw Transcript/Prompt or Archive.
+Preserve source facts and substantive wording in notes. SpeakerNotes are editable
+only as authorized; source evidence is not.
+
+## Composition vocabulary
+
+- `Slide` is a padded column; ordinary composition uses `Stack`, `Row`, `Grid`,
+  `Split`, `Center` and `Spacer`. `Split` has exactly two children and ratios
+  `1:1`, `2:1`, `1:2`, `3:2`, `2:3`. `Grid` has 2–6 equal columns.
+- Use `gap`/`pad` values `none`, `xs`, `sm`, `md`, `lg`, `xl` where supported.
+  Stack/Row alignment is `start`, `center`, `end`, `stretch`; justification is
+  `start`, `center`, `end`, `between`, `around`, `evenly`. Do not infer that every
+  node accepts these props: Grid accepts cols/gap/grow, not pad or align.
+- `Text` roles: title, subtitle, heading, lead, body, caption, label, display,
+  numeral. Text alignment is left/center/right. Supported inline bold/italic/code
+  markup stays inside text; no custom font or CSS props. `Bullets` contains Text
+  children, marker disc/number/dash/none, size body/lead. `Quote` takes `by` and
+  literal quoted words without decorative quotation marks.
+- `Stat` is childless with string `value`, optional `label`, size normal/hero and
+  left/center/right alignment. Keep units, denominator, period and qualifications
+  visible nearby. Do not invent trends or values. Host-approved bounded Stat
+  animation is outside this skill; never implement custom animation.
+- `Panel` and `Band` group related content, not every sentence. Panel variants are
+  fill/outline/ghost; radius none/md/lg. `Rule` uses theme color, length
+  short/full/bleed, weight bold/hair, orientation h/v. Bleed Rules are Slide-only.
+- `Image` is childless: `alt` plus `asset={{id: '...', version: '...'}}` using an
+  actually resolved immutable asset. It is contained, not cropped; no image
+  overlays, external URLs or invented asset IDs. There is no Chart, Table,
+  Diagram, Code, Math or connector primitive. Small tables/processes can use
+  aligned native text; precise charts/connected diagrams need an existing valid
+  definition or resolved visual asset. Do not fake quantitative geometry.
+- `Icon` requires an actual catalog name/version and alt text. Use available
+  catalog tools in generation; tool-free review can only use known resolved
+  references. No raw SVG paths or stroke overrides. Icons must not replace facts.
+- `Shape` is optional decoration, at most two directly inside a Slide; kinds
+  disc/ring/blob/pill/arc/dots/grid/glow/sparkle, sizes sm/md/lg/xl. Do not use
+  decorative shapes as a precision chart or add a mandatory motif.
+
+Example visual subtree (use only with real supplied content and valid anchors):
+
+```jsx
+<Split ratio="1:1" gap="lg">
+  <Stack gap="sm">
+    <Text role="heading">First alternative</Text>
+    <Text>Supplied evidence for the first alternative.</Text>
+  </Stack>
+  <Stack gap="sm">
+    <Text role="heading">Second alternative</Text>
+    <Text>Supplied evidence for the second alternative.</Text>
+  </Stack>
+</Split>
+```
+
+## Theme and reusable definitions
+
+Keep the existing Theme. Optional style recipes express intent, not available
+fonts or permission to recolor. Colors are Theme Token hex values; visual fill/color
+props reference token suffixes such as bg, fg, accent. Text-bearing fill X needs
+X-fg. Do not use raw hex on visual props. Font assets must resolve by explicit
+version; no system font assumptions, network fonts or invented serif/body tokens.
+Role sizes and spacing come from Scale and normalize to readability floors.
+
+Runtime Layout/Component definitions live in Library and contain one visual root;
+content enters through declared slots, never baked-in user facts. Reuse declared
+names only. A layout Slide has exactly one visual child, its instance. Definition
+changes affect all dependents. Duplicate Layout slot shapes are rejected even
+when their visual arrangement differs. The twenty Lxx patterns are guidance,
+not definition names. Free-form Slides require a meaningful `freeForm={{reason:
+'...'}}`; retain a valid existing reason. Both authored and expanded visual trees
+have maximum depth six. `class` is permitted only inside definitions and only from
+the runtime allowlist: no arbitrary CSS, positioning or inline style props.
+
+Do not shrink text below floors, discard content, or silently split a slide to
+pass validation. Use the authorized host workflow and report limits. Images and
+fonts must resolve; browser checks must complete. Source validation does not prove
+faithfulness, and an old screenshot does not prove a proposed edit looks correct.
