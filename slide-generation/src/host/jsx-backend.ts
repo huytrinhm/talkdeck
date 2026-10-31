@@ -1,3 +1,4 @@
+import { designState } from '../design/state.js';
 import { randomUUID } from 'node:crypto';
 import type { FunctionTool, ResponseInputItem } from 'openai/resources/responses/responses';
 import type { createLocalRuntime } from '../runtime.js';
@@ -64,6 +65,7 @@ export class JsxBackend implements GenerationBackend {
         .map(d => ({ type: 'function', ...d, strict: false }) as FunctionTool),
       context: input => ({ epoch: this.historyEpoch, pauseEpoch: this.pauseEpoch, revision: runtime.engine.state().revision,
         selectedSlideId: this.selectedId, workingSlideId: input.slideId,
+        designState: designState(runtime.engine.readDocument().source),
         slides: this.list().map(s => ({ id: s.id, title: s.title })),
         notes: input.slideId ? runtime.engine.readSpeakerNotes(input.slideId) : undefined }),
       invoke: (input, name, args) => this.invoke(input, name, args),
