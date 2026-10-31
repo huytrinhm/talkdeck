@@ -11,6 +11,7 @@ import {
   textContent,
 } from "../../slide-generation/src/parser.js";
 import { expandSource } from "../../slide-generation/src/expansion.js";
+import { ready } from "../../slide-generation/src/validation.js";
 import { readIcon } from "../../slide-generation/src/render/icons.js";
 import { childNodes } from "../../slide-generation/src/schema.js";
 import { escapeText } from "../../slide-generation/src/source/surgery.js";
@@ -23,6 +24,7 @@ import { models } from "../../slide-generation/src/orchestration/config.js";
 import { ProductProviders, safeError } from "./providers.js";
 import type {
   Command,
+  NavigationDeck,
   Material,
   Mode,
   Project,
@@ -943,6 +945,33 @@ export class ProjectOwner {
       this.broadcastSnapshot();
       return material;
     });
+  }
+  async navigationDeck(): Promise<NavigationDeck> {
+    const { source } = this.runtime.local.engine.readDocument();
+    const revision = this.runtime.local.engine.state().revision;
+    const epoch = this.data.epoch;
+    const mode = this.data.mode === "present" ? "presentation" : "editor";
+    const report = await this.runtime.local.browser.check(source, { reusePublicationChecks: true });
+    if (!report.complete) throw new ProductError("validation_unavailable", "Slide preparation did not complete");
+    const presentationReady = ready(report);
+    if (mode === "presentation" && !presentationReady)
+      throw new ProductError("presentation_blocked", "Deck is not ready for presentation");
+    const expanded = expandSource(source, { resolveIcon: readIcon });
+    const slides: NavigationDeck['slides'] = [];
+    for (const slide of expanded.slides) {
+      const artifact = await this.runtime.local.renderer.render(source, slide.id);
+      const builds = new Set<number>([0]);
+      const visit = (node: any) => {
+        builds.add(Number(node.props?.build ?? 0));
+        for (const child of node.children ?? []) if (typeof child !== "string") visit(child);
+      };
+      visit(slide);
+      slides.push({ slideId: slide.id, html: artifact.html, css: artifact.css,
+        readiness: { revision, ready: presentationReady }, builds: [...builds].sort((a,b) => a-b) });
+    }
+    if (revision !== this.runtime.local.engine.state().revision || epoch !== this.data.epoch)
+      throw new ProductError("revision_changed", "Deck changed during preparation");
+    return { revision, epoch, mode, slides };
   }
   async image(slideId: string, revision?: string) {
     const source = this.runtime.local.engine.readDocument().source;

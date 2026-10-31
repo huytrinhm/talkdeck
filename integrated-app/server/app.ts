@@ -115,6 +115,10 @@ export function createProductApp(
     const { owner, session } = await ownerAndSession(c);
     return c.json(owner.bootstrap(session));
   });
+  app.get("/api/projects/:project/navigation", async (c) => {
+    const { owner } = await ownerAndSession(c, true);
+    return c.json(await owner.navigationDeck());
+  });
   app.post("/api/projects/:project/viewer/ack", async (c) => {
     const { session } = await ownerAndSession(c);
     const body = await c.req.json();
@@ -161,8 +165,9 @@ export function createProductApp(
     });
   });
   app.post("/api/projects/:project/commands", async (c) => {
-    const { owner } = await ownerAndSession(c, true);
-    return c.json(await owner.command(commandSchema.parse(await c.req.json())));
+    const { owner, session } = await ownerAndSession(c, true);
+    const result = await owner.command(commandSchema.parse(await c.req.json()));
+    return c.json({ ...result, viewer: owner.bootstrap(session).message });
   });
   app.post("/api/projects/:project/input", async (c) => {
     const { owner, session } = await ownerAndSession(c, true);

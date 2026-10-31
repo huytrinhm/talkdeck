@@ -166,3 +166,26 @@ test('Add slide selects and publishes the created slide; subsequent navigation r
     console.log(`Unchanged previous + next: ${Math.round(performance.now() - start)}ms (local API)`);
   } finally { await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
 });
+
+test('prepared navigation contains canonical public renderer output and build order without changing selection', async () => {
+  const f = await setup();
+  try {
+    const p = await project(f.host, 'Prepared navigation');
+    const owner = await seed(f.host, p.id);
+    const before = await state(f.host, p);
+    const prepared = await request(f.host, `${p.base}/navigation`, undefined, p.session);
+    assert.equal(prepared.status, 200);
+    assert.equal(prepared.body.revision, before.revision);
+    assert.equal(prepared.body.epoch, before.epoch);
+    assert.deepEqual(prepared.body.slides[0].builds, [0, 2]);
+    assert.match(prepared.body.slides[0].html, /Before/);
+    assert.doesNotMatch(JSON.stringify(prepared.body), /Private project context|SpeakerNotes|Transcript/);
+    assert.equal(owner.runtime.backend.selectedId, before.selectedId);
+    await command(f.host, p, {type:'mode', mode:'present'});
+    const audience = (await request(f.host, `${p.base}/sessions`, {role:'audience'})).body;
+    assert.equal((await request(f.host, `${p.base}/navigation`, undefined, audience)).status, 403);
+    const next = await request(f.host, `${p.base}/navigation`, undefined, p.session);
+    assert.equal(next.body.mode, 'presentation');
+    assert.equal(next.body.slides[0].readiness.ready, true);
+  } finally { await f.host.close(); await rm(f.directory, {recursive:true,force:true}); }
+});

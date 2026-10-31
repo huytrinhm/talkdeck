@@ -133,3 +133,17 @@ export type ServerEvent = {
  * GET /api/projects/:project/practice/:id -> existing PracticeRecord (images/diff/version)
  * POST /api/projects/:project/practice/:id/request-change {slideId,prompt}
  */
+
+/** Immutable renderer output prepared for local navigation; never editable slide data. */
+export interface NavigationDeck {
+  revision: string;
+  epoch: number;
+  mode: 'editor' | 'presentation';
+  slides: {
+    slideId: string;
+    html: string;
+    css: string;
+    readiness: { revision: string; ready: boolean };
+    builds: number[];
+  }[];
+}

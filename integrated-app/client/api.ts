@@ -1,5 +1,6 @@
-import type { Command, Project, Receipt, Session, Snapshot, Utterance } from '../shared/protocol';
-import type { IncomingMessage, ViewerAcknowledgment } from '../../slide-generation/src/viewer/protocol';
+import { navigationTarget, type NavigationTarget } from './navigation';
+import type { Command, NavigationDeck, Project, Receipt, Session, Snapshot, Utterance } from '../shared/protocol';
+import type { IncomingMessage, PublicationMessage, ViewerAcknowledgment } from '../../slide-generation/src/viewer/protocol';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number, readonly code?: string) { super(message); }
@@ -22,6 +23,14 @@ export class ProjectConnection {
   private disposed = false;
   private eventSequence?: number;
   private recovering?: Promise<void>;
+  navigation?: NavigationTarget;
+  navigationDeck?: NavigationDeck;
+  private navigationTail: Promise<unknown> = Promise.resolve();
+  private navigationSerial = 0;
+  private navigationBatch = 0;
+  private preparedKey = '';
+  private latestPublication?: PublicationMessage;
+  private viewerSequence = -1;
   private retryTimer?: ReturnType<typeof setTimeout>;
   constructor(readonly projectId: string, private handlers: {
     snapshot: (snapshot: Snapshot) => void;
@@ -30,6 +39,7 @@ export class ProjectConnection {
     connection: (value: 'connecting' | 'connected' | 'disconnected') => void;
     error: (message: string) => void;
     receipt?: (receipt: Receipt) => void;
+    navigation?: (target: NavigationTarget | undefined) => void;
   }) {}
   get base() { return `/api/projects/${encodeURIComponent(this.projectId)}`; }
   headers(extra?: Record<string, string>) { return { 'X-Session-Id': this.session.id, 'X-Session-Token': this.session.token, ...extra }; }
@@ -45,24 +55,102 @@ export class ProjectConnection {
     const after = performance.now();
     if (this.disposed) return;
     this.session = session;
+    this.viewerSequence = -1; this.latestPublication = undefined;
+    this.preparedKey = ''; this.navigationDeck = undefined;
+    this.clearNavigation();
     this.epochOffsetMs = session.serverTimeMs - (before + after) / 2;
     this.clock = { offsetMs: session.serverMonotonicMs - (before + after) / 2, uncertaintyMs: (after - before) / 2 };
     if (session.snapshot) this.applySnapshot(session.snapshot);
     this.connectEvents();
   }
-  applySnapshot(snapshot: Snapshot) { this.snapshot = snapshot; this.handlers.snapshot(snapshot); }
+  applySnapshot(snapshot: Snapshot) {
+    if (this.snapshot && snapshot.serverTimeMs < this.snapshot.serverTimeMs) return;
+    if (this.snapshot && (snapshot.epoch !== this.snapshot.epoch || snapshot.revision !== this.snapshot.revision)) this.clearNavigation();
+    this.snapshot = snapshot; this.handlers.snapshot(snapshot);
+    void this.prepareNavigation();
+  }
+  private clearNavigation() {
+    this.navigationSerial++;
+    this.navigation = undefined; this.handlers.navigation?.(undefined);
+  }
+  private async prepareNavigation() {
+    if (!this.snapshot || this.session?.role !== 'editor' || this.disposed) return;
+    const key = `${this.session.id}:${this.snapshot.epoch}:${this.snapshot.revision}`;
+    if (this.preparedKey === key) return;
+    this.preparedKey = key; this.navigationDeck = undefined;
+    try {
+      const deck = await this.get<NavigationDeck>('/navigation');
+      if (this.disposed || this.preparedKey !== key || deck.revision !== this.snapshot.revision || deck.epoch !== this.snapshot.epoch) return;
+      this.navigationDeck = deck;
+    } catch {
+      // Canonical publication remains available; a later snapshot retries preloading.
+      if (this.preparedKey === key) this.preparedKey = '';
+    }
+  }
+  private receiveViewer(message: IncomingMessage) {
+    if (message.channel !== this.session?.channel || message.sequence <= this.viewerSequence) return;
+    this.viewerSequence = message.sequence;
+    if (message.type === 'publish') this.latestPublication = message;
+    else if (this.latestPublication?.revision === message.revision)
+      this.latestPublication = { ...this.latestPublication, sequence: message.sequence, build: message.build, holdIds: message.holdIds };
+    else return;
+    this.handlers.viewer(this.latestPublication!);
+  }
+  navigate(action: 'next' | 'previous' | 'select', slideId?: string) {
+    if (!this.snapshot) return Promise.reject(new Error('Project handshake is not ready'));
+    const target = navigationTarget(this.snapshot, this.navigationDeck, this.navigation, action, slideId);
+    if (!target) {
+      if (this.snapshot.mode === 'present' && !this.navigationDeck) return this.command({ type: action, slideId });
+      return Promise.resolve();
+    }
+    if (target.preview) target.preview.channel = this.session.channel;
+    const previousId = this.navigation?.slideId ?? this.snapshot.selectedId;
+    const epoch = this.snapshot.epoch;
+    const batch = this.navigationBatch;
+    const serial = ++this.navigationSerial;
+    this.navigation = target; this.handlers.navigation?.(target);
+    const input = previousId === target.slideId && action !== 'select'
+      ? { type: 'build' as const, value: target.build }
+      : { type: 'select' as const, slideId: target.slideId };
+    const pending = this.navigationTail.catch(() => {}).then(async () => {
+      if (this.disposed || this.snapshot?.epoch !== epoch || this.snapshot.revision !== target.revision || batch !== this.navigationBatch)
+        throw new Error('Navigation cancelled because the deck, session, or a previous command changed');
+      const result = await this.sendCommand(input, epoch);
+      if (serial === this.navigationSerial) this.clearNavigation();
+      return result;
+    }).catch(async error => {
+      if (batch === this.navigationBatch) this.navigationBatch++;
+      if (serial === this.navigationSerial) {
+        this.clearNavigation();
+        // Restore the authoritative viewer even if a stale SSE update had been suppressed.
+        if (this.latestPublication) this.handlers.viewer({ ...this.latestPublication });
+        void this.refresh().catch(() => {});
+      }
+      throw error;
+    });
+    this.navigationTail = pending;
+    return pending;
+  }
   async get<T>(path: string): Promise<T> { return json<T>(`${this.base}${path}`, { headers: this.headers() }); }
   async post<T>(path: string, body?: unknown): Promise<T> { return json<T>(`${this.base}${path}`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(body ?? {}) }); }
-  async command(input: Omit<Command, 'id' | 'epoch'>) {
-    if (!this.snapshot) throw new Error('Project handshake is not ready');
-    const result = await this.post<{ snapshot: Snapshot; result?: unknown }>('/commands', { ...input, id: crypto.randomUUID(), epoch: this.snapshot.epoch });
+  private async sendCommand(input: Omit<Command, 'id' | 'epoch'>, epoch: number) {
+    const result = await this.post<{ snapshot: Snapshot; result?: unknown; viewer?: IncomingMessage }>('/commands', { ...input, id: crypto.randomUUID(), epoch });
+    if (result.viewer) this.receiveViewer(result.viewer);
     this.applySnapshot(result.snapshot); return result;
   }
+  async waitForNavigation() { await this.navigationTail; }
+  async command(input: Omit<Command, 'id' | 'epoch'>) {
+    await this.navigationTail.catch(() => {});
+    if (!this.snapshot) throw new Error('Project handshake is not ready');
+    return this.sendCommand(input, this.snapshot.epoch);
+  }
   async input(input: Omit<Utterance, 'id' | 'epoch'>) {
+    await this.navigationTail;
     if (!this.snapshot) throw new Error('Project handshake is not ready');
     return this.post<Receipt>('/input', { ...input, id: crypto.randomUUID(), epoch: this.snapshot.epoch });
   }
   async audio(chunk: AudioInput) {
+    await this.navigationTail;
     return json<Receipt>(`${this.base}/audio`, { method: 'POST', headers: this.headers({
       'Content-Type': 'application/octet-stream', 'X-Input-Id': chunk.id, 'X-Epoch': String(chunk.epoch),
       'X-Slide-Id': chunk.slideId, 'X-Start-Ms': String(chunk.startMs), 'X-End-Ms': String(chunk.endMs), 'X-Audio-Sequence': String(chunk.sequence),
@@ -82,7 +170,7 @@ export class ProjectConnection {
   async refresh() {
     if (this.session.role === 'editor') this.applySnapshot(await this.get<Snapshot>('/state'));
     const view = await this.viewer();
-    if (view.message) this.handlers.viewer(view.message);
+    if (view.message) this.receiveViewer(view.message);
     this.handlers.blackout(view.blackout);
   }
   private connectEvents() {
@@ -92,7 +180,7 @@ export class ProjectConnection {
       void this.recover();
     };
     this.events.onerror = () => {
-      if (!this.disposed) { this.handlers.connection('disconnected'); void this.recover(); }
+      if (!this.disposed) { this.clearNavigation(); this.navigationDeck = undefined; this.preparedKey = ''; this.handlers.connection('disconnected'); void this.recover(); }
     };
     const listen = (type: string, fn: (data: any) => void) => this.events!.addEventListener(type, event => {
       if (this.disposed) return;
@@ -104,7 +192,7 @@ export class ProjectConnection {
       try { fn(JSON.parse(message.data)); } catch (error) { this.handlers.error(String(error)); }
     });
     listen('snapshot', data => this.applySnapshot(data));
-    listen('viewer', data => this.handlers.viewer(data));
+    listen('viewer', data => this.receiveViewer(data));
     listen('blackout', data => this.handlers.blackout(typeof data === 'boolean' ? data : data.blackout));
     listen('receipt', data => this.handlers.receipt?.(data));
     listen('error', data => this.handlers.error(data.message ?? String(data)));
