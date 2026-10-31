@@ -9,6 +9,7 @@ The slide-generation subsystem scaffold for Talkdeck: a safe JSX data parser, pe
 - [Decision ledger](docs/DECISIONS.md): settled user choices and unresolved product questions.
 - [Improvement loop](docs/IMPROVEMENT_LOOP.md): real-model measurements, diagnosis, replay, and frozen comparisons.
 - [Five timed talks](fixtures/talks/README.md): speaking-pace inputs and evaluator-only expectations.
+- [Lucide icons](docs/LUCIDE_ICONS.md): dedicated Icon primitive, full-catalog agent search, and fixed-stroke styling requirements.
 
 ```sh
 npm ci

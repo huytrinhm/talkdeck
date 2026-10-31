@@ -179,6 +179,12 @@ A presentation revision requires zero Pending and no blocking errors anywhere, e
 
 ## Notes and assets integration
 
+Lucide icons have a dedicated planned `Icon` primitive and read-only full-catalog search/inspection tools, separate from
+generic Image assets. Inherit effective text color with an optional theme-token override; preserve the catalog's stroke
+width/geometry. See [Lucide icon handoff](docs/LUCIDE_ICONS.md) for schema, rendering, tooling, and test requirements.
+This is a documented requirement, not implemented access: the current parser does not yet recognize Icon, and no Lucide
+package/catalog/search endpoints are installed. Implement them in the plan before advertising availability.
+
 read_speaker_notes is a read capability, not a semantic proof of completeness. It supplies cleaned notes plus original
 transcript for the editing agent to compare. Prompt instructions restrict cleanup to fillers, false starts, and redundant
 repetition. Do not implement semantic heuristics as runtime blockers after the user's decision to make editorial rules

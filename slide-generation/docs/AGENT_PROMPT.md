@@ -36,6 +36,12 @@ Request screenshots explicitly when visual review is needed. They are 1920x1080.
 of finished image/SVG assets visually. Asset/font references use explicit versions. Images use automatic layout and
 contain only; use allowed transforms for ad-hoc adjustments. Asset integration remains provisional.
 
+When the Lucide catalog tools are available, use search_icons to search the full catalog and read_icon to inspect an
+exact name/version. Insert the dedicated Icon primitive through hashline JSX edits, preserving the returned catalogVersion.
+Icons inherit surrounding text color; color may override it with a theme token. Do not set stroke/strokeWidth, arbitrary
+SVG paths, or stroke-changing classes. Use existing transforms for sizing adjustments, and retain user words alongside
+icons unless explicitly asked to replace them. Never invent icon names or assume an unavailable catalog tool succeeded.
+
 Assign build groups with build={1}, build={2}, and so on to any rendered nodes. Same numbers reveal together; unmarked
 nodes show immediately. Parent visibility gates descendants, and hidden groups keep their space. Before presentation,
 resolve all placeholders by filling, removing permitted structures, or changing layouts. Every slide must pass complete

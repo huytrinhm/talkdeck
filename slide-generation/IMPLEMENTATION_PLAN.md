@@ -14,6 +14,7 @@ Read, in order:
 6. `docs/IMPROVEMENT_LOOP.md` — the required seven-step measurement and improvement process.
 7. `fixtures/talks/README.md` and the five JSON fixtures — timed talks, expectations, and replay rules.
 8. `docs/AGENT_PROMPT.md` — editing-agent instructions; version and log the actual prompt used in every live run.
+9. `docs/LUCIDE_ICONS.md` — dedicated Icon primitive, full-catalog discovery, and fixed-stroke color inheritance.
 
 The task is to complete the slide generation/manipulation/rendering subsystem and then improve it using real-model,
 real-system evidence. Do not stop after unit tests or a visually plausible screenshot. Do not run paid model trials as
@@ -199,10 +200,16 @@ Dependencies: P4. This milestone renders but does not certify layouts.
    changing the user's words. Implement only the agreed normalizations; unreadable overrides refuse later validation.
 6. Supply embed-ready self-contained asset/font bytes. Contain only, automatic boxes; no explicit crop/size API. Require
    sanitized SVG from the resolver boundary and reject missing versions. Keep the provider contract provisional.
+7. Implement dedicated Lucide Icon support per docs/LUCIDE_ICONS.md: extend the parser/schema registry, pin the static SVG
+   catalog, provide read-only search_icons/read_icon over the full catalog, and render trusted inline SVG with inherited
+   text color or a theme-token override. Reject unknown names/versions and all stroke customization, including class-based
+   bypasses. Keep exact catalog versions in rendering/replay manifests and retain upstream license notices.
 
 Tests: every primitive's DOM/attributes/context; font/asset version pinning; inline markup injection; generated CSS token
 coverage; nested surfaces; frame exclusion/page numbering; scale-floor boundaries and cumulative transforms. Compare
-Hono output semantics deterministically, then inspect a representative 1920x1080 gallery. Exit: real HTML/CSS plus shared
+Hono output semantics deterministically; add full-catalog search/pagination, icon name/version failures, inherited/overridden
+color on nested surfaces, fixed-stroke enforcement, and client/server icon identity checks. Inspect a representative
+1920x1080 gallery. Exit: real HTML/CSS plus shared
 font bytes, not a fake renderer. Document which renderer guarantees remain pending.
 
 ## P6 — Mandatory browser checks and screenshot feedback
