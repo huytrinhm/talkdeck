@@ -1,5 +1,12 @@
 # Deck/session contract
 
+> Consolidated on 2026-10-31 by explicit user instruction. This document preserves the legacy HTML scheduler/control
+> contracts and historical measurements; it does not describe a separate npm package anymore. Code is now under
+> `src/orchestration/`, tests under `test/orchestration/`, and original WAV/text fixtures under `fixtures/legacy/`.
+> The actual actor scheduler now also accepts the canonical JSX backend; see the [current host integration](../HOST_PORT.md)
+> and [package commands](../../README.md). Historical `runs/...` paths and test counts below retain their original
+> provenance and may not exist in a fresh checkout. They are not integrated five-talk results. Frontend work remains separate.
+
 This extends the single-slide contract. Frontend integration is explicitly out of
 scope for this change; APIs implement the controls for later frontend wiring.
 

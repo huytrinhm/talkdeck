@@ -1,48 +1,66 @@
 # @talkdeck/slide-generation
 
-Canonical JSX slide generation/editing for Talkdeck: hashline transactions, Hono/Tailwind rendering, mandatory Chromium checks, durable evidence and a sandboxed viewer.
+Talkdeck's combined generation and orchestration package: persistent Fast/Slow actors, canonical JSX/hashline editing,
+Hono/Tailwind rendering, mandatory Chromium validation, durable source evidence and a sandboxed viewer. The user
+approved consolidation on 2026-10-31. There is one package manifest and lockfile; the previous orchestration package
+now lives under `src/orchestration/`, with tests in `test/orchestration/` and historical fixtures in `fixtures/legacy/`.
 
-- [Specification](SPEC.md): agreed behavior and provisional asset boundaries.
-- [Technical documentation](TECHNICAL.md): architecture, implementation rules, integration seams, and remaining work.
-- [Agent editing instructions](docs/AGENT_PROMPT.md): prompt rules for the editing agent.
-- [Implementation plan](IMPLEMENTATION_PLAN.md): start here when taking over; milestones, tests, and integration gates.
-- [Decision ledger](docs/DECISIONS.md): settled user choices and unresolved product questions.
-- [Improvement loop](docs/IMPROVEMENT_LOOP.md): real-model measurements, diagnosis, replay, and frozen comparisons.
-- [Five timed talks](fixtures/talks/README.md): speaking-pace inputs and evaluator-only expectations.
-- [Lucide icons](docs/LUCIDE_ICONS.md): dedicated Icon primitive, full-catalog agent search, and fixed-stroke styling requirements.
+- [Specification](SPEC.md) and [implementation plan](IMPLEMENTATION_PLAN.md): behavior, milestones and acceptance gates.
+- [Technical documentation](TECHNICAL.md) and [host integration](docs/HOST_PORT.md): current architecture and boundaries.
+- [Decision ledger](docs/DECISIONS.md): settled choices; do not reopen them.
+- [Agent instructions](docs/AGENT_PROMPT.md) and [Lucide icons](docs/LUCIDE_ICONS.md): editing and dedicated-icon contracts.
+- [Improvement loop](docs/IMPROVEMENT_LOOP.md) and [five timed talks](fixtures/talks/README.md): measurement and comparison.
+- [Headless evidence](src/headless/README.md): actual viewer frames, recording, audits and reports.
+- [Orchestration history](docs/orchestration/HANDOFF.md): preserved scheduler/control contracts and historical measurements.
+
+From this directory:
 
 ```sh
 npm ci
+npx playwright install chromium
 npm run check
 npm test
 npm start
 ```
 
-The development server listens on `127.0.0.1:8875` and stores canonical source under `.artifacts/decks/default/`.
-`npm test` includes real Chromium integration tests. Successful edits require complete browser validation; unavailable
-checks refuse. The existing orchestration/frontend integration and five-talk live-model qualification remain unfinished.
-Work only in this directory on master; fetch and rebase before every push.
+`npm start` runs the private canonical editing service on `127.0.0.1:8875`, storing source under
+`.artifacts/decks/default/`. Tests include real Chromium checks and real actor-to-canonical-backend integration with
+deterministic model responses. Browser permissions work. A product frontend is unnecessary for the headless runner;
+frontend integration remains separate. No placeholder control UI is introduced; the headless runner uses real actors,
+canonical tools and the packaged iframe.
 
-For model commands, source credentials in the shell; application code reads environment variables only:
+For a paid timed run, source credentials in the shell. Application code reads only process environment:
 
 ```sh
 set -a
 source ./.env
 set +a
-npm run smoke:generation
+npm run headless:run -- --fixture fixtures/talks/edit-heavy.json --out .artifacts/runs/edit-heavy-baseline-1 --repetition 1 --max-calls 200 --max-input-tokens 2000000 --max-output-tokens 100000
 ```
 
-The smoke makes at most eight real Responses requests, each capped at 8,000 output tokens. It uses `FAST_MODEL`
-(default `gpt-6-luna`), Fast mode (`service_tier: "fast"`), and `OPENAI_API_KEY` or `OPENAI_KEY`. It checks one exact-content slide through real tools, mandatory
-browser validation and the packaged viewer. It records provider usage and replay cassettes; it is not the five-talk
-actor-host evaluation. [First recorded result](docs/rounds/subsystem-smoke-2026-10-31.md).
+This runs the actual actor scheduler through the canonical backend and packaged headless viewer at fixture pace.
+Use a new output directory for every run. The run records input, model/tool bodies, source/check/render states, routing,
+viewer acknowledgments, PNG/video, final slide JPEGs, audit and `review.md`. Exact native content checks are automated;
+unsupported semantic/design checks remain explicit manual-review misses. This command is a runner, not evidence of a
+completed five-talk qualification. The consolidated live pilot and repeated frozen-baseline comparison have not yet
+been completed.
 
-All live inference requests use Fast mode per the user's instruction. The request tier is recorded in new run manifests;
-the exact provider response records the tier actually served. Historical recordings retain their original settings.
+Responses requests use `service_tier: "fast"`; provider records distinguish requested and actually returned tiers.
+The Decisions endpoint exposes no `service_tier` field, so its policy is recorded as `endpoint-default`, without an
+unsupported field or header. Model defaults are Luna for Fast/Decisions and Sol for Slow/specialists; environment
+variables `FAST_MODEL`, `DECISION_MODEL`, `SLOW_MODEL` and `SPECIALIST_MODEL` override them. Shared budgets reserve
+capacity before concurrent calls. Missing usage remains unknown and charged conservatively. Asset integration stays
+provisional.
 
-`npm run eval:talks -- --help` describes the actual-host adapter required for timed runs. Replay, freeze, compare and
-report commands are also available as `eval:replay`, `eval:freeze`, `eval:compare` and `eval:report`. Output stays under
-`.artifacts/`. Replays have no live-model fallback; a frozen export alone is not a measured baseline.
+`npm run smoke:generation` is the smaller direct model-to-tools smoke, capped at eight requests and 8,000 output tokens
+per request. Its [recorded result](docs/rounds/subsystem-smoke-2026-10-31.md) predates the combined host and must not be
+reported as the integrated timed loop.
 
-`.env` is ignored and must remain untracked. See [host integration](docs/HOST_PORT.md),
-[browser checks](docs/BROWSER_CHECKS.md), and [viewer integration](src/viewer/README.md).
+`eval:talks` supports an explicitly supplied host module; `eval:replay`, `eval:freeze`, `eval:compare` and `eval:report`
+provide recording/replay/comparison foundations. Use `-- --help` with those commands. Replay has no live fallback;
+a frozen export alone is not a measured baseline. Historical HTML fixture/server paths remain explicitly available
+as `legacy:fixture` and `legacy:server`; see [legacy commands](docs/orchestration/README.md).
+
+Work on master with focused commits; fetch/rebase origin/master and run checks before every push. Never force-push.
+`.env` and `.artifacts/` stay ignored. Current changes remain inside this consolidated directory; historical move commits
+necessarily remove the previous package paths. Frontend files are outside this work.

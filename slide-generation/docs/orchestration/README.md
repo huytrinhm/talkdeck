@@ -1,18 +1,24 @@
 # Talkdeck orchestration
 
-Deck-level, talk-first generation using **OpenAI only**. Runtime implementation,
-package dependencies and run logs live in this directory. The root `.env`,
-`test-fixture.txt` and `test-fixture.wav` are read-only inputs to the runtime.
+> Consolidated on 2026-10-31 by explicit user instruction. This document preserves the legacy HTML scheduler/control
+> contracts and historical measurements; it does not describe a separate npm package anymore. Code is now under
+> `src/orchestration/`, tests under `test/orchestration/`, and original WAV/text fixtures under `fixtures/legacy/`.
+> The actual actor scheduler now also accepts the canonical JSX backend; see the [current host integration](../HOST_PORT.md)
+> and [package commands](../../README.md). Historical `runs/...` paths and test counts below retain their original
+> provenance and may not exist in a fresh checkout. They are not integrated five-talk results. Frontend work remains separate.
+
+Deck-level, talk-first generation using **OpenAI only**. Runtime code lives under `src/orchestration/` inside the combined package. Dependencies use the single root manifest/lockfile;
+run output defaults to `.artifacts/legacy-runs/`. Original text/WAV inputs live under `fixtures/legacy/`.
 The five-slide fixture exercises explicit navigation and persistent sessions.
 See [DECK-CONTRACT.md](DECK-CONTRACT.md) for navigation, pause and structure semantics.
 Frontend integration is not part of this change.
 
 ## Developer handoff
 
-Start with [HANDOFF.md](docs/HANDOFF.md), then the
-[product idea](docs/PRODUCT-IDEA.md) and
-[design decisions](docs/DESIGN-DECISIONS.md). These distinguish implemented
-behavior from future work and document the unconnected JSX generation backend.
+Start with [HANDOFF.md](HANDOFF.md), then the
+[product idea](PRODUCT-IDEA.md) and
+[design decisions](DESIGN-DECISIONS.md). These preserve historical behavior and measurements.
+The [current host integration](../HOST_PORT.md) describes the implemented canonical backend.
 
 ## Run
 
@@ -20,24 +26,24 @@ Tested with Node.js 24. See [VERIFICATION.md](VERIFICATION.md) for test evidence
 and measured latency limitations.
 
 ```sh
-cd orchestration
+# From slide-generation/
 npm ci
 npx playwright install chromium
 npm run check
-npm test
-npm run fixture             # Real WAV -> live STT -> Decisions -> Fast/Slow -> slide
-npm run fixture -- --text   # Optional paced text replay, not an audio integration test
-npx tsx src/fixture-deck.ts # Five-slide WAV, explicit next/jump, pause/resume
-npx tsx src/fixture-deck.ts --assets # Also request specialist image/component integration
-npx tsx src/audit-deck.ts runs/<deck-run> # Rendered five-slide content/control audit
-npx tsx src/smoke-assets.ts # Real Flare + deterministic specialist/component smoke
-npm start                  # Local HTTP/SSE API on 127.0.0.1:8787
-npm run audit -- runs/<run> # Fixture content/lifecycle checks
-npm run replay-publications -- runs/<run> # Recorded edits through current publisher
+npm run test:orchestration
+node --import tsx src/orchestration/fixture.ts             # Real WAV -> live STT -> Decisions -> Fast/Slow -> slide
+node --import tsx src/orchestration/fixture.ts --text   # Optional paced text replay, not an audio integration test
+node --import tsx src/orchestration/fixture-deck.ts # Five-slide WAV, explicit next/jump, pause/resume
+node --import tsx src/orchestration/fixture-deck.ts --assets # Also request specialist image/component integration
+node --import tsx src/orchestration/audit-deck.ts .artifacts/legacy-runs/<deck-run> # Rendered five-slide content/control audit
+node --import tsx src/orchestration/smoke-assets.ts # Real Flare + deterministic specialist/component smoke
+npm run legacy:server      # Legacy HTTP/SSE API on 127.0.0.1:8787
+node --import tsx src/orchestration/audit-fixture.ts .artifacts/legacy-runs/<run> # Fixture content/lifecycle checks
+node --import tsx src/orchestration/replay-publications.ts .artifacts/legacy-runs/<run> # Recorded edits through current publisher
 ```
 
-Credentials: `OPENAI_API_KEY` or `OPENAI_KEY`, from environment or `../.env`.
-No key is sent to a browser or written to run logs. Fixture commands make paid API
+Credentials: `OPENAI_API_KEY` or `OPENAI_KEY`, from process environment only. Source `.env` in the shell
+with `set -a`, `source ./.env`, then `set +a`; code never reads it. No key is sent to a browser or written to run logs. Fixture commands make paid API
 calls. Defaults are `gpt-live-transcribe`, `gpt-6-luna` for Decisions/Fast,
 `gpt-6-sol` for Slow/specialists, and **`gpt-image-2.5-flare`** for the specialist
 `image_generate` tool (PNG; low/medium/high quality and square/landscape/portrait sizes).
@@ -47,10 +53,9 @@ Override with `TRANSCRIPTION_MODEL`, `DECISION_MODEL`, `FAST_MODEL`, `SLOW_MODEL
 `REPLAY_SPEED=1` is real-time playback, higher values are accelerated stress tests.
 Fast uses Luna, `service_tier: "fast"`, and reasoning `none`. Slow uses Sol,
 `service_tier: "fast"`, and reasoning `medium`. Specialists retain Sol with low
-reasoning and an unspecified service tier. A direct Luna probe
+reasoning and now also request Fast tier. Decisions records its endpoint-default policy because its API does not expose a tier field. A direct Luna probe
 accepted and served `fast`; `ultrafast` returned HTTP 400 (invalid service tier).
-Model
-requests have bounded network retries. The fixture verifies API connectivity
+The current provider path disables hidden SDK retries and records each request attempt. The fixture verifies API connectivity
 before sending audio and reports failure if its final transcript cannot be evaluated.
 
 ## Architecture
@@ -315,7 +320,7 @@ not establish visual or semantic quality of a generated presentation.
 
 ## Five-slide narration fixture
 
-The root `test-fixture-5-slides.txt` expands the fictional library pilot into
+`fixtures/legacy/test-fixture-5-slides.txt` expands the fictional library pilot into
 problem framing, workflow/trial setup, results, staffing/limitations, and a
 bounded extension. It deliberately includes a same-slide sample-size correction
 and a correction on slide 4 to the satisfaction figure spoken on slide 3.
@@ -325,14 +330,14 @@ from measured results.
 Generate the matching audio with:
 
 ```sh
-cd orchestration
-npx tsx src/generate-five-slide-fixture.ts
+# From slide-generation/
+node --import tsx src/orchestration/generate-five-slide-fixture.ts
 ```
 
 This uses OpenAI TTS with `TTS_MODEL` / `TTS_VOICE` overrides (defaults:
-`gpt-4o-mini-tts` / `alloy`). It writes root `test-fixture-5-slides.wav` and
-`test-fixture-5-slides.json`, preserving the original single-slide fixtures.
-Unchanged per-slide audio is cached under ignored `runs/five-slide-tts/` to
+`gpt-4o-mini-tts` / `alloy`). It writes `fixtures/legacy/test-fixture-5-slides.wav` and
+`fixtures/legacy/test-fixture-5-slides.json`, preserving the original single-slide fixtures.
+Unchanged per-slide audio is cached under ignored `.artifacts/legacy-tts/` to
 avoid repeat generation charges.
 
 The WAV is mono, 24 kHz, 16-bit PCM, with 1.2 seconds of silence between slides.

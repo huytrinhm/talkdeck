@@ -1,5 +1,12 @@
 # Specification verification
 
+> Consolidated on 2026-10-31 by explicit user instruction. This document preserves the legacy HTML scheduler/control
+> contracts and historical measurements; it does not describe a separate npm package anymore. Code is now under
+> `src/orchestration/`, tests under `test/orchestration/`, and original WAV/text fixtures under `fixtures/legacy/`.
+> The actual actor scheduler now also accepts the canonical JSX backend; see the [current host integration](../HOST_PORT.md)
+> and [package commands](../../README.md). Historical `runs/...` paths and test counts below retain their original
+> provenance and may not exist in a fresh checkout. They are not integrated five-talk results. Frontend work remains separate.
+
 Current scope includes the original single-slide behavior, Decision-gated Slow
 activation, and the deck extension described in [DECK-CONTRACT.md](DECK-CONTRACT.md).
 Earlier live evidence below is historical; it does not by itself verify the newer
@@ -51,10 +58,10 @@ instructions were tightened based on that evidence.
   The actual WAV produced **286 transcript revisions**, all evaluated/dispatched,
   **six publications** and three rejected stale conflicts. Both agents finished
   idle; the final renderer returned no diagnostics.
-- `npm run audit -- runs/2026-10-31T03-38-59-543Z`: **14/14 checks passed**.
+- `node --import tsx src/orchestration/audit-fixture.ts runs/2026-10-31T03-38-59-543Z`: **14/14 checks passed**.
   The PNG was visually inspected: three correct comparisons, corrected sample and
   rating, process diagram, staffing caveat, recommendation, no clipping.
-- `npm run replay-publications -- runs/2026-10-31T03-38-59-543Z`:
+- `node --import tsx src/orchestration/replay-publications.ts runs/2026-10-31T03-38-59-543Z`:
   **nine recorded edit attempts replayed with identical outcomes and final source**
   through the final merge/renderer code.
 - Root fixture files are unchanged. No frontend or other contributors' files were
@@ -176,8 +183,8 @@ retaining the same Fast/Slow histories across manual navigation.
 Reproduce/audit with:
 
 ```sh
-REPLAY_SPEED=4 npx tsx src/fixture-deck.ts
-npx tsx src/audit-deck.ts runs/deck-2026-10-31T04-44-47-738Z
+REPLAY_SPEED=4 node --import tsx src/orchestration/fixture-deck.ts
+node --import tsx src/orchestration/audit-deck.ts runs/deck-2026-10-31T04-44-47-738Z
 ```
 
 The earlier `runs/deck-2026-10-31T04-42-06-843Z/` was deliberately stopped after
@@ -196,7 +203,7 @@ The final PNG was inspected. This smoke run deliberately uses deterministic
 model choreography, not an LLM's autonomous asset-selection judgment.
 
 ```sh
-npx tsx src/smoke-assets.ts
+node --import tsx src/orchestration/smoke-assets.ts
 ```
 
 The audio run and asset smoke are separate checks; the audio run did not invoke

@@ -1,64 +1,68 @@
-# JSX host integration proposal
+# Canonical host integration
 
-`src/host/port.ts` defines a proposed port; no neighboring package implements it yet. Inspection at baseline
-`dae4a82` found `orchestration/src/runtime.ts` constructs its HTML Publisher inside the runtime constructor.
-A renderer injection cannot replace that publisher or its tools. This remains decision O02's integration blocker.
+The user approved consolidating orchestration and slide generation into one package on 2026-10-31. The earlier O02
+blocker—no injection point in the separate HTML runtime—is superseded by the implemented backend boundary. The actual
+actor scheduler now accepts the canonical JSX backend. Deterministic integration tests exercise real actor/tool loops,
+durable canonical edits, control boundaries and requested screenshots; headless tests exercise the real packaged viewer.
+This is implementation evidence, not a completed five-talk live-model qualification.
 
-The orchestration owner must bind read_source/edit_source to the canonical engine, preserve immutable inference
-contexts, record incoming utterances before model scheduling, and subscribe to accepted publications. Target slide IDs
-must come from real host context/model routing, never fixture aliases. Input receipt means durable preservation;
-it cannot wait for inference. Publication is distinct from browser paint and settlement.
+## Implemented path
 
-A contract example is: deliver an utterance with a stable ID and a discovered slide ID; receive a durable receipt;
-read source with an inference/tool causal ID; edit using that issued snapshot; publish only the accepted revision;
-acknowledge the publication ID after DOM application and a paint opportunity. Forward clock offset and uncertainty.
-The host must preserve intermediate failures and never treat a publication timestamp as proof of visible content.
+1. `src/orchestration/backend.ts` defines `GenerationBackend` and `GenerationPolicy`. `SlideRuntime` accepts an injected
+   backend; omitting it retains the explicit legacy HTML mode. One selected backend owns a deck's mutations.
+2. `src/host/jsx-backend.ts` adapts the canonical engine and unified tool registry. Actor contexts capture immutable
+   revision/control epochs, real selected/working slide IDs and source notes. The JSX agent instructions replace legacy
+   HTML editing policy. Only an explicit `screenshot` call adds images to model context.
+3. `src/headless/evaluation-host.ts` exports `createEvaluationHost`. It constructs the real scheduler, canonical backend,
+   recorded provider adapters and `HeadlessRecordingSession`. Inputs are durably retained before queued routing and
+   inference. Exact utterances also enter canonical Prompt evidence with stable IDs and actual slide attribution.
+4. The input controller recognizes explicit new/create-slide and return/go-back commands in the spoken input. It uses
+   real titles/identities, never fixture aliases or assertions. This harness behavior follows the user's authorization;
+   it does not grant model tools authority to move the user's selection.
+5. `GenerationSession` subscribes to accepted canonical revisions and sends private-editor or readiness-gated audience
+   render artifacts. `HeadlessViewer` mounts the packaged opaque iframe, validates sender/channel/payload, measures the
+   browser clock mapping, and records actual applied/painted/settled acknowledgments, frames and video.
+6. `scripts/headless-run.ts` uses the absolute paced driver, preserves final silence and bounded drain, then exports
+   canonical source, readiness, final slide JPEGs, recorded provider/tool evidence, audits and review links.
 
-The frontend owner must mount the packaged viewer when P8 is available, authenticate its channel, forward actual
-acknowledgments, and resynchronize after reconnect. Speaker notes, source JSX, and transcripts stay in the private
-editing API. Audience publications contain only render artifacts. Assets remain an injected versioned resolver.
+The host preserves existing actor lifecycle and Decision gates; it does not create an imitation scheduler. Pause and
+history epochs invalidate stale tools. Fast is scoped to its actual working slide; Slow handles broader edits.
+Canonical undo/redo retains source evidence and runs through checked commits. Specialist asset integration remains
+provisional rather than silently reusing a legacy HTML asset contract.
 
-`capabilities()` defaults to the bare engine's conservative availability. The wired local runtime reports installed
-rendering, browser and commit services separately from document readiness. Trace records link reads, edits and input;
-the publication adapter records actual viewer acknowledgments. The timed driver requires an injected real host.
+## Evidence and limits
 
-## Implemented adapter and required owner hooks
+`test/orchestration/backend.test.ts` checks the injected scheduling boundary. `test/jsx-backend.integration.test.ts`
+exercises the canonical adapter with real browser validation. `test/headless-viewer.test.ts` verifies actual iframe
+transport, editor/audience captures, retargeting, refusal and state evidence. `test/headless-models.test.ts` verifies
+provider bodies, Fast requests, budget accounting and recorded replay without paid requests. `test/headless-audit.test.ts`
+contains negative controls for wrong labels, offscreen/Pending/incoherent frames, correction windows and raw retention.
 
-`createLocalRuntime` now supplies the real engine, Hono renderer, mandatory Chromium validation, durable repository,
-input inbox and unified tool registry. `src/host/session.ts` packages publication and acknowledgment handling as
-`GenerationSession`; it is a host adapter, not a replacement actor scheduler. The caller supplies a real selected slide
-ID, channel, publication transport and recorder. Readiness is checked against the exact published source; presentation
-refuses a deck with errors/Pending. Browser acknowledgments require a matching issued publication and measured clock
-bridge. Raw source, notes and transcripts never enter its publication payload.
+Durable receipt, canonical commit, publication, browser paint, sampled correct content and animation settlement are
+separate milestones. Final offscreen JPEGs and final readiness cannot manufacture earlier visible success. Input-only
+metadata commits record exact source with checks explicitly marked unperformed; they do not repeat browser checks for
+unchanged public artifacts. Edit commits retain actual check/render evidence. Unsupported design and semantic audits
+remain manual-review misses. Intermediate counting frames stay recorded under settled decision D56.
 
-The orchestration owner still must wire four concrete sites (inspected at the pinned repository revision):
+No product frontend is required for headless measurement. A future frontend must use `mountViewer` with its opaque
+sandbox/channel checks, forward actual acknowledgments and resynchronize after reconnect. Notes, transcript and source
+JSX stay private; audience payloads contain only render artifacts. Application mode/practice/feedback policies remain
+separate product work.
 
-1. `src/runtime.ts:76`: replace unconditional old `new Publisher(...)` with an injected generation backend, retaining
-   legacy behavior only for legacy mode. The JSX mode must subscribe to canonical committed revisions/watermarks.
-2. The inference-boundary observation near `runtime.ts:313–365`: capture an immutable canonical source/tool context;
-   use this package's `docs/AGENT_PROMPT.md`. Remove the old single-slide/narration-only policy for JSX mode. Do not send
-   automatic screenshots; call the explicit screenshot tool only when requested by the model.
-3. Tool definition/dispatch near `runtime.ts:370–410`: register `runtime.tools.definitions()` and route calls through
-   `runtime.tools.invoke(name,args)`; remove old edit/view_slide mutation handling in JSX mode. Keep the actual actor
-   lifecycle, immutable inference history and speech scheduling; no new layout-decider API.
-4. Trusted input routing: retain every utterance via `session.deliverUtterance` before inference. The owner must supply
-   stable utterance IDs and real slide attribution, including the transition from a new-slide command to its created
-   slide. Never use timed-fixture target aliases for routing. Wire frontend selection and viewer acknowledgments through
-   `GenerationSession`; require the opaque sandbox/channel checks in `mountViewer` before forwarding acknowledgments.
-
-The current neighboring runtime has no such injection hook. No neighboring files were modified. These are integration
-requirements, not a claim that the old host is connected. Direct bounded model-to-tools smoke runs are labeled subsystem
-smoke tests and do not qualify the real actor-host five-talk evaluation.
-
-Credentials for any new subsystem model runner are environment-only. The user explicitly requested shell sourcing:
+## Credentials and provider policy
 
 ```sh
 set -a
 source ./.env
 set +a
-# Run the selected subsystem command in this shell.
+npm run headless:run -- --fixture fixtures/talks/edit-heavy.json --out .artifacts/runs/edit-heavy-baseline-1
 ```
 
-`.env` is already ignored by slide-generation/.gitignore. No code in this subsystem parses or reads that file. Credentials
-must never enter requests recorded on disk, manifests, source or viewer messages. Root verified model access and one
-16-token Responses inference on 2026-10-31; those connectivity results do not establish generation quality.
+All application credentials come from environment variables; no code parses `.env`. Responses requests explicitly use
+Fast service tier. Decisions does not expose that field in its API schema, so it records `endpoint-default` rather than
+sending an unsupported parameter. Requested and returned tiers, exact bodies, errors and usage are separate evidence.
+A missing returned tier or usage is not inferred as a successful Fast request or zero consumption.
+
+The consolidated live pilot, five-talk repetitions, frozen functioning baseline comparison and separately verified
+refactoring passes remain required. Historical standalone subsystem smokes and legacy HTML fixtures keep their original
+provenance; neither is relabeled as a completed integrated measurement.

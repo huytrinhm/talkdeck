@@ -2,8 +2,10 @@
 
 `SPEC.md` is the behavior contract. The subsystem now has a working canonical-source → Hono/Tailwind → Chromium checks
 → durable commit path, exercised by real-browser integration tests. The packaged viewer also has real Chromium tests.
-The existing orchestration/frontend host is **not yet connected**. The five timed-talk qualification, frozen live-model
-comparison and improvement/refactoring rounds are unfinished. Passing subsystem tests does not establish those results.
+The actual actor scheduler is now connected through an injected canonical JSX backend in this consolidated package.
+A real headless iframe records viewer acknowledgments and frames without a product frontend. The consolidated live pilot,
+five timed-talk qualification, frozen live-model comparison and improvement/refactoring rounds remain unfinished.
+Passing integration tests does not establish those measured results.
 
 Read `AGENTS.md`, `IMPLEMENTATION_PLAN.md`, `docs/DECISIONS.md`, `docs/LUCIDE_ICONS.md` and
 `docs/IMPROVEMENT_LOOP.md` when continuing. Historical pause checkpoints are under `docs/continuation/`; their browser
@@ -12,8 +14,10 @@ permission blockers were removed by the subsequent permission restart.
 ## Development and scope
 
 Work directly on master, keep all changes under slide-generation/, and make focused additional commits. Before every
-push fetch/rebase origin/master, run relevant checks, then push. Never force-push. Neighboring host changes belong to
-its owner; see `docs/HOST_PORT.md` for the concrete injection points.
+push fetch/rebase origin/master, run relevant checks, then push. Never force-push. On 2026-10-31 the user explicitly
+authorized merging the previous orchestration package here, superseding the earlier ownership boundary for that move.
+There is one package manifest/lockfile: `src/orchestration/`, `test/orchestration/`, `fixtures/legacy/`, and
+`docs/orchestration/` hold its moved code and history. Current changes stay here; frontend work remains separate.
 
 ```sh
 npm ci
@@ -39,7 +43,7 @@ set +a
 `.env` is ignored and untracked. Subsystem code must not read or parse it, record credentials, or put them in browser
 messages. Model access and a 16-token Responses inference succeeded after sourcing on 2026-10-31. A subsequent bounded
 direct generation smoke passed using six real requests, real edits/checks and the packaged viewer; see
-`docs/rounds/subsystem-smoke-2026-10-31.md`. This does not establish five-talk qualification or actor-host integration.
+`docs/rounds/subsystem-smoke-2026-10-31.md`. This does not establish five-talk qualification; it predates the now-tested actor-host adapter.
 
 ## Implementation map
 
@@ -53,8 +57,9 @@ direct generation smoke passed using six real requests, real edits/checks and th
 | browser | mandatory measured overflow/overlap/wrap/contrast/floors/shape checks, bounded pool, JPEG captures | See quantitative policies and unsupported measurement cases in docs/BROWSER_CHECKS.md |
 | engine/storage | normalized validated CAS commit, revisioned reads, durable inbox, restart recovery, input/edit races | Single process; host owns stable input/slide attribution |
 | tools/API | unified edit_source plus source/notes/library/palette/icons/render/check/screenshot/readiness tools | No legacy specialized mutation tools |
-| viewer | sandbox/CSP/channel protocol, fixed canvas, builds, retargeted motion, exact settlement, acknowledgments | Frontend host must mount/forward actual publications/acks |
-| host/evaluation | typed host port, publication adapter, timed driver, recording, transaction/response replay and comparison foundations | Actual actor-host wiring and repeated live-talk qualification unfinished |
+| viewer | sandbox/CSP/channel protocol, fixed canvas, builds, retargeted motion, exact settlement, headless acknowledgments/video | Product frontend wiring remains separate |
+| orchestration | Persistent real Fast/Slow actor scheduler, Decision gates, backend injection, canonical JSX tool/context adapter and control epochs | Live quality and provisional specialist assets require measurement |
+| headless/evaluation | Real packaged iframe, durable input routing, bounded recorded providers, paced driver, audits/reports, replay and comparison foundations | Integrated live pilot, repeated five-talk runs and human semantic/design qualification unfinished |
 
 ## Canonical source and safe data language
 
@@ -145,17 +150,36 @@ requested target value. Reduced-motion support remains explicitly deferred.
 
 ## Verification and remaining work
 
-The final combined implementation run passed 185 individual tests, including real renderer/browser/viewer/runtime
+The historical standalone implementation run passed 185 individual tests, including real renderer/browser/viewer/runtime
 integration. Focused real tests cover successful durable edits, overflow refusal/rollback, archive deletion, reload,
 actual JPEG dimensions, composited contrast, font/image failures, timeouts/crashes, sandbox messages, interrupted motion,
 reparenting and build changes. The exact output is `.artifacts/environment/final-implementation-suite.tap`; use current results rather
 than treating this count as permanent. Artifacts live under ignored `.artifacts/`.
 
-`GenerationSession` is a publication/ack adapter, not an actor scheduler. Existing orchestration still constructs its old
-HTML Publisher and old tool/prompt context; see `docs/HOST_PORT.md`. No adjacent files have been edited to hide that gap.
-Direct live model-to-tools smoke results must be labeled separately from actual actor-host integration.
+`GenerationSession` remains a publication/ack adapter. The actual `SlideRuntime` is under `src/orchestration/` and accepts
+`GenerationBackend`; `JsxBackend` binds its immutable inference contexts and role-scoped tools to the canonical engine.
+`createEvaluationHost` connects that scheduler, recorded providers, durable input routing and `HeadlessRecordingSession`.
+Explicit new-slide/return commands control harness selection from actual input, never evaluator aliases. The legacy HTML
+publisher remains available only as an explicit alternate backend. See `docs/HOST_PORT.md`.
 
-Still required: wire the real host and frontend owners; run paced five-talk fixtures with complete visible histories and
-real model/tool recording; diagnose individual failures; replay actual responses without network fallback; compare a
-frozen functioning baseline with repeated candidate runs; then perform separately verified refactoring passes. No full
-qualification, latency target, cost improvement or completed improvement-loop claim is made yet.
+The consolidated tests cover injected actor scheduling, canonical checked edits and control boundaries, requested-only
+screenshots, real editor/audience iframe frames and video, typed model records, shared budgets and offline provider
+replay. The 185-test artifact above is the historical standalone implementation run; it is not the current consolidated
+suite count or live-loop evidence. Use fresh check/test output for the current tree.
+
+`npm run headless:run -- --fixture fixtures/talks/edit-heavy.json --out .artifacts/runs/edit-heavy-baseline-1` runs the
+actual integrated timed path after shell-sourcing credentials. Responses uses Fast tier; Decisions exposes no service-tier
+parameter and explicitly records its endpoint-default policy. Raw requests, returned tiers, provider errors, missing
+usage and replay records remain distinct. Unknown usage remains conservatively charged, not fabricated as zero.
+
+Every canonical revision has exact source evidence. Input-only transcript/notes commits record checks as unperformed and
+renders as empty because public visuals are unchanged; edit commits record real checks and renders. Visible-frame audits
+require actual sampled content in the current slide, coherent publication identity and the correct time window. Final
+readiness and offscreen final JPEGs cannot substitute for visible latency. Unsupported semantic/design assertions remain
+manual-review misses. Reports include coverage/censoring and link the original PNG/video and final slide gallery.
+
+Still required: run the integrated live pilot and all five paced talks with complete histories; diagnose individual
+failures; replay recorded responses without live fallback; compare a frozen functioning baseline with repeated candidate
+runs; then perform separately verified refactoring passes. Frontend integration can proceed separately and is not a
+headless-run prerequisite. No full qualification, latency target, cost improvement or completed improvement-loop claim
+is made yet.

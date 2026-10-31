@@ -1,5 +1,12 @@
 # Talkdeck: product idea and intended workflow
 
+> Consolidated on 2026-10-31 by explicit user instruction. This document preserves the legacy HTML scheduler/control
+> contracts and historical measurements; it does not describe a separate npm package anymore. Code is now under
+> `src/orchestration/`, tests under `test/orchestration/`, and original WAV/text fixtures under `fixtures/legacy/`.
+> The actual actor scheduler now also accepts the canonical JSX backend; see the [current host integration](../HOST_PORT.md)
+> and [package commands](../../README.md). Historical `runs/...` paths and test counts below retain their original
+> provenance and may not exist in a fresh checkout. They are not integrated five-talk results. Frontend work remains separate.
+
 Handoff snapshot: 2026-10-31. This records the product discussion, not a claim that
 all features below are implemented. See [the developer handoff](HANDOFF.md) for
 current code and [the decision record](DESIGN-DECISIONS.md) for runtime contracts.
@@ -70,8 +77,7 @@ Not implemented here: feedback proposals/approval, practice and presentation mod
 policies, timestamped audio rewind, polished speaker-note generation, pointer or
 sketch grounding, speculative next-slide preparation, or component search.
 
-The separately developed [slide-generation subsystem](../../slide-generation/README.md)
-now provides a canonical JSX engine and its own notes/source, rendering, validation,
-and viewer contracts. Those capabilities are not yet wired into the orchestration
-actors. Its newer decisions must be reconciled during integration, not confused
-with features already running through this package.
+After the user-authorized consolidation, the [combined package](../../README.md) connects these actual actors to the
+canonical JSX engine, notes/source contracts, validation and packaged headless viewer through an injected backend.
+That integration is tested with deterministic models and real Chromium; integrated live pilot/five-talk qualification
+remain unfinished. The broader product features above are not implied by that implementation.

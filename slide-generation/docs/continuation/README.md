@@ -1,4 +1,21 @@
-# Current continuation — 2026-10-31, after permission restart
+# Current continuation — 2026-10-31, consolidated headless integration
+
+The user explicitly authorized merging orchestration into slide-generation on 2026-10-31. One package now owns
+`src/orchestration/`, `test/orchestration/`, `fixtures/legacy/` and `docs/orchestration/`. Earlier separate-package scope and
+missing-injection blockers below are historical. Current architecture and commands: [README](../../README.md),
+[host integration](../HOST_PORT.md), and [headless evidence](../../src/headless/README.md).
+
+The actual actor scheduler accepts `JsxBackend`; deterministic integration tests exercise canonical checked edits and
+control boundaries. The real packaged iframe runs headlessly with actual acknowledgments, frames, clock mapping and
+video. Recorded provider adapters enforce shared budgets and explicit Fast Responses requests; Decisions has no supported
+service-tier parameter and records endpoint-default policy. Code reads shell-sourced environment only.
+
+The integrated live pilot has not yet completed. Next: freeze a clean functioning baseline, run a bounded pilot and
+inspect each failure, then execute the five timed talks with repetitions, replay recorded evidence and compare. Human
+semantic/design review and separately verified refactors remain required. Never count deterministic tests, the historical
+direct smoke, or legacy HTML measurements as that completed loop.
+
+## Previous continuation — after permission restart
 
 Work on master, only under slide-generation/. Fetch/rebase origin/master, check, then push; never force-push.
 The historical pause below is retained for diagnosis and is **superseded** by this update and TECHNICAL.md.
@@ -26,7 +43,7 @@ client and capability additions. Exact output: `.artifacts/environment/final-imp
 The timed driver, recording, replay, audit and frozen-comparison foundations are under src/evaluation/. They accept an
 injected real host; they do not manufacture an actor scheduler. GenerationSession is the publication/ack adapter.
 
-**Remaining blocker:** the neighboring orchestration runtime still hardcodes its old HTML Publisher, prompt and tools.
+**Historical blocker, now superseded by the consolidation above:** the neighboring orchestration runtime still hardcodes its old HTML Publisher, prompt and tools.
 It has no injection hook for the new engine. See `docs/HOST_PORT.md` for the four concrete integration sites and the tested
 adapter. No neighboring files have been modified. The user has been asked which owner will wire the integration; no
 answer has authorized changing scope. Continue independent in-scope work, but do not call the direct smoke an integrated

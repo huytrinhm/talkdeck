@@ -1,6 +1,13 @@
 # Orchestration design decisions
 
-Snapshot: 2026-10-31. Scope: `orchestration/`, currently backed by its original HTML
+> Consolidated on 2026-10-31 by explicit user instruction. This document preserves the legacy HTML scheduler/control
+> contracts and historical measurements; it does not describe a separate npm package anymore. Code is now under
+> `src/orchestration/`, tests under `test/orchestration/`, and original WAV/text fixtures under `fixtures/legacy/`.
+> The actual actor scheduler now also accepts the canonical JSX backend; see the [current host integration](../HOST_PORT.md)
+> and [package commands](../../README.md). Historical `runs/...` paths and test counts below retain their original
+> provenance and may not exist in a fresh checkout. They are not integrated five-talk results. Frontend work remains separate.
+
+Historical snapshot: 2026-10-31 before consolidation. Original scope: `orchestration/`, backed by its original HTML
 publisher. This records user-requested behavior and implementation choices, not a
 new global specification for the independently developed JSX subsystem. Later
 explicit user instructions take precedence. Keep superseded choices documented.
@@ -35,7 +42,7 @@ explicit user instructions take precedence. Keep superseded choices documented.
 | Image tool | `gpt-image-2.5-flare` | N/A | Not set by adapter |
 
 Fast/Slow settings reflect this thread's explicit requests. A prior probe accepted
-`fast` and rejected `ultrafast`; see [verification](../VERIFICATION.md). The
+`fast` and rejected `ultrafast`; see [verification](VERIFICATION.md). The
 slide-generation workstream subsequently recorded a broader Fast-mode instruction
 in its decision D57. This table describes actual orchestration code, not a claim
 that it already implements that broader policy. Reconcile supported endpoint
@@ -55,20 +62,20 @@ current overload policies, not product promises of 200 ms model latency.
 The original publisher uses self-contained 1280x720 HTML/CSS/SVG, exact-match
 `edit(old,new)`, conservative three-way merge, and actual source/PNG observations.
 It includes the latest two distinct observations in model input and suppresses
-numeric animation. This remains the working backend in this package.
+numeric animation. This remains available as explicit legacy mode in the consolidated package.
 
-The newer [JSX specification](../../slide-generation/SPEC.md) instead defines
+The newer [JSX specification](../../SPEC.md) instead defines
 canonical JSX/hashline transactions, a 1920x1080 canvas, explicit screenshot
 requests, strict primitive/layout rules, and bounded Stat animation. Its engine
 owns source validation and commit. These are different contracts, not two
-interchangeable renderers. See [integration work](HANDOFF.md#integration-with-slide-generation)
-for the missing adapter. Do not introduce a second source of truth or run both
+interchangeable renderers. See [integration work](HANDOFF.md#historical-integration-gaps-at-7ca6bde)
+for the historical requirements; [the current host port](../HOST_PORT.md) documents the implemented adapter. Do not introduce a second source of truth or run both
 mutation interfaces against one live deck.
 
 ## Proposed next work — not yet implemented or approved as a detailed contract
 
-1. Connect the actor scheduler to the canonical JSX engine through an explicit
-   backend boundary, preserving scheduling and cancellation semantics.
+1. Completed after this snapshot: connect the actual actor scheduler to the canonical JSX engine through the explicit
+   backend boundary. Live measured qualification still remains.
 2. Add feedback proposals with explanation, affected slides, preview, and
    accept/reject/revise; revalidate before accepting a stale proposal.
 3. Enforce build/practice/present mutation permissions in runtime code, including
