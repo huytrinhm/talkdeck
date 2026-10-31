@@ -1,0 +1,603 @@
+{
+  "schemaVersion": 1,
+  "id": "motion-builds-v1",
+  "title": "Motion, interruption and build rehearsal",
+  "purpose": "Eight-slide timed model-edit diagnostic for add/remove/reorder/reparent/movement/size/color, bounded Stat corrections, interruption bursts, navigation crossfades and equal-group build authoring. Source build attributes do not establish audience reveal visibility; controlled browser coverage is specified separately in docs/quality/MOTION.md.",
+  "initialContext": "This is a fictional motion rehearsal. Create and edit slides from the exact spoken requests. Preserve item identities when moving or reparenting existing content, and retain original input in notes. Use the bundled font. Do not invent claims or values. Explicit new-slide and return instructions control selection. Use the existing viewer motion; do not author custom scripts or add animation instructions as slide text. Bounded Stat counting is permitted animation under D56: intermediate digits are not factual claims, and each completed transition must end at its exact requested target. Requests to assign build groups author source grouping; audience next/build controls are separate host actions.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 2.8,
+    "postTalkObservationMs": 12000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "motion-builds-v1-001",
+      "startMs": 1000,
+      "endMs": 7786,
+      "kind": "utterance",
+      "text": "Create a slide titled Arrival. Add two separate text items, Alpha and Beta. Keep their identities stable when editing.",
+      "targetAlias": "arrival",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-002",
+      "startMs": 11786,
+      "endMs": 15001,
+      "kind": "utterance",
+      "text": "Add Gamma after Beta. Leave Alpha and Beta unchanged.",
+      "targetAlias": "arrival",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "motion-builds-v1-003",
+      "startMs": 18001,
+      "endMs": 22644,
+      "kind": "utterance",
+      "text": "Remove Beta from the visible slide. Keep its original words in the notes.",
+      "targetAlias": "arrival",
+      "silenceAfterMs": 3500
+    },
+    {
+      "id": "motion-builds-v1-004",
+      "startMs": 26144,
+      "endMs": 30073,
+      "kind": "utterance",
+      "text": "New slide titled Reorder. Show three separate items: One, Two, Three.",
+      "targetAlias": "reorder",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-005",
+      "startMs": 34073,
+      "endMs": 38002,
+      "kind": "utterance",
+      "text": "Move Three before One. Keep the same items and exact wording.",
+      "targetAlias": "reorder",
+      "silenceAfterMs": 3500
+    },
+    {
+      "id": "motion-builds-v1-006",
+      "startMs": 41502,
+      "endMs": 44360,
+      "kind": "utterance",
+      "text": "Move Two before Three. Preserve the existing identities.",
+      "targetAlias": "reorder",
+      "silenceAfterMs": 3500
+    },
+    {
+      "id": "motion-builds-v1-007",
+      "startMs": 47860,
+      "endMs": 55361,
+      "kind": "utterance",
+      "text": "New slide titled Handoff. Make two groups labeled Planned and Complete. Put Approval under Planned. Keep the groups side by side.",
+      "targetAlias": "handoff",
+      "silenceAfterMs": 4500
+    },
+    {
+      "id": "motion-builds-v1-008",
+      "startMs": 59861,
+      "endMs": 65219,
+      "kind": "utterance",
+      "text": "Move the existing Approval item into Complete. Do not duplicate it or change its words.",
+      "targetAlias": "handoff",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-009",
+      "startMs": 69219,
+      "endMs": 76720,
+      "kind": "utterance",
+      "text": "New slide titled Focus. Put Focus item below the title toward the left. Use ordinary body text and the default theme.",
+      "targetAlias": "focus",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-010",
+      "startMs": 80720,
+      "endMs": 87506,
+      "kind": "utterance",
+      "text": "Move Focus item toward the right, make it larger, and change its color to the accent. Keep its words.",
+      "targetAlias": "focus",
+      "silenceAfterMs": 3500
+    },
+    {
+      "id": "motion-builds-v1-011",
+      "startMs": 91006,
+      "endMs": 96006,
+      "kind": "utterance",
+      "text": "Move Focus item back toward the left. Keep its larger size and accent color.",
+      "targetAlias": "focus",
+      "silenceAfterMs": 3500
+    },
+    {
+      "id": "motion-builds-v1-012",
+      "startMs": 99506,
+      "endMs": 106292,
+      "kind": "utterance",
+      "text": "New slide titled Counter. Show 40% as one Stat labeled Completion. This is a fictional rehearsal, not a forecast.",
+      "targetAlias": "counter",
+      "silenceAfterMs": 4500
+    },
+    {
+      "id": "motion-builds-v1-013",
+      "startMs": 110792,
+      "endMs": 114364,
+      "kind": "utterance",
+      "text": "Correct Completion to 42%. Keep the same Stat and label.",
+      "targetAlias": "counter",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "motion-builds-v1-014",
+      "startMs": 117364,
+      "endMs": 118079,
+      "kind": "utterance",
+      "text": "Correction: 41.5%.",
+      "targetAlias": "counter",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "motion-builds-v1-015",
+      "startMs": 118079,
+      "endMs": 118794,
+      "kind": "utterance",
+      "text": "Correction: 41.6%.",
+      "targetAlias": "counter",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-016",
+      "startMs": 122794,
+      "endMs": 129223,
+      "kind": "utterance",
+      "text": "New slide titled Interruptions. Put a single item labeled Marker toward the left. Use the existing accent color.",
+      "targetAlias": "interruptions",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-017",
+      "startMs": 133223,
+      "endMs": 134295,
+      "kind": "utterance",
+      "text": "Move Marker right.",
+      "targetAlias": "interruptions",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "motion-builds-v1-018",
+      "startMs": 134295,
+      "endMs": 135367,
+      "kind": "utterance",
+      "text": "Move Marker left.",
+      "targetAlias": "interruptions",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "motion-builds-v1-019",
+      "startMs": 135367,
+      "endMs": 141796,
+      "kind": "utterance",
+      "text": "Move Marker to the center below the title. Make its color the normal foreground and preserve its words.",
+      "targetAlias": "interruptions",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "motion-builds-v1-020",
+      "startMs": 145796,
+      "endMs": 153654,
+      "kind": "utterance",
+      "text": "New slide titled Build pairs. Show Plan, Check, Deliver, Review as four separate items in that order. Keep the title immediately visible.",
+      "targetAlias": "pairs",
+      "silenceAfterMs": 4500
+    },
+    {
+      "id": "motion-builds-v1-021",
+      "startMs": 158154,
+      "endMs": 167083,
+      "kind": "utterance",
+      "text": "Assign Plan and Check to build group one. Assign Deliver and Review to build group two. Equal groups reveal together; reserve each item’s final space.",
+      "targetAlias": "pairs",
+      "silenceAfterMs": 4500
+    },
+    {
+      "id": "motion-builds-v1-022",
+      "startMs": 171583,
+      "endMs": 176941,
+      "kind": "utterance",
+      "text": "New slide titled Finale. Show this exact sentence: Every transition ends at the requested state.",
+      "targetAlias": "finale",
+      "silenceAfterMs": 4500
+    },
+    {
+      "id": "motion-builds-v1-023",
+      "startMs": 181441,
+      "endMs": 184656,
+      "kind": "utterance",
+      "text": "Return to Arrival. Keep its two remaining items unchanged.",
+      "targetAlias": "arrival",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "motion-builds-v1-024",
+      "startMs": 187156,
+      "endMs": 189656,
+      "kind": "utterance",
+      "text": "Return to Finale. Keep the sentence unchanged.",
+      "targetAlias": "finale",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "motion-builds-v1-025",
+      "startMs": 192156,
+      "endMs": 195014,
+      "kind": "utterance",
+      "text": "Return to Counter. Keep Completion at exactly 41.6%.",
+      "targetAlias": "counter",
+      "silenceAfterMs": 2500
+    },
+    {
+      "id": "motion-builds-v1-026",
+      "startMs": 197514,
+      "endMs": 201443,
+      "kind": "utterance",
+      "text": "Return to Finale. Finish without further layout changes or invented content.",
+      "targetAlias": "finale",
+      "silenceAfterMs": 12000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "motion-builds-v1-a001",
+      "triggerEventId": "motion-builds-v1-001",
+      "targetAlias": "arrival",
+      "kind": "visible_exact",
+      "texts": [
+        "Alpha",
+        "Beta"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a002",
+      "triggerEventId": "motion-builds-v1-002",
+      "targetAlias": "arrival",
+      "kind": "ordered_text",
+      "texts": [
+        "Alpha",
+        "Beta",
+        "Gamma"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a003",
+      "triggerEventId": "motion-builds-v1-003",
+      "targetAlias": "arrival",
+      "kind": "visible_absent",
+      "texts": [
+        "Beta"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a004",
+      "triggerEventId": "motion-builds-v1-003",
+      "targetAlias": "arrival",
+      "kind": "source_retained",
+      "texts": [
+        "Beta"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a005",
+      "triggerEventId": "motion-builds-v1-003",
+      "targetAlias": "arrival",
+      "kind": "ordered_text",
+      "texts": [
+        "Alpha",
+        "Gamma"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a006",
+      "triggerEventId": "motion-builds-v1-004",
+      "targetAlias": "reorder",
+      "kind": "ordered_text",
+      "texts": [
+        "One",
+        "Two",
+        "Three"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a007",
+      "triggerEventId": "motion-builds-v1-005",
+      "targetAlias": "reorder",
+      "kind": "ordered_text",
+      "texts": [
+        "Three",
+        "One",
+        "Two"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a008",
+      "triggerEventId": "motion-builds-v1-006",
+      "targetAlias": "reorder",
+      "kind": "ordered_text",
+      "texts": [
+        "Two",
+        "Three",
+        "One"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a009",
+      "triggerEventId": "motion-builds-v1-006",
+      "targetAlias": "reorder",
+      "kind": "unchanged_except",
+      "allowed": [
+        "positions/order of existing items"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a010",
+      "triggerEventId": "motion-builds-v1-007",
+      "targetAlias": "handoff",
+      "kind": "visible_exact",
+      "texts": [
+        "Planned",
+        "Complete",
+        "Approval"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a011",
+      "triggerEventId": "motion-builds-v1-008",
+      "targetAlias": "handoff",
+      "kind": "relative_position",
+      "text": "Approval",
+      "relation": "within the Complete group, below its label",
+      "other": "Complete"
+    },
+    {
+      "id": "motion-builds-v1-a012",
+      "triggerEventId": "motion-builds-v1-008",
+      "targetAlias": "handoff",
+      "kind": "unchanged_except",
+      "allowed": [
+        "parent group and position of Approval"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a013",
+      "triggerEventId": "motion-builds-v1-009",
+      "targetAlias": "focus",
+      "kind": "visible_exact",
+      "texts": [
+        "Focus item"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a014",
+      "triggerEventId": "motion-builds-v1-010",
+      "targetAlias": "focus",
+      "kind": "style_target",
+      "text": "Focus item",
+      "change": "larger type and accent color"
+    },
+    {
+      "id": "motion-builds-v1-a015",
+      "triggerEventId": "motion-builds-v1-011",
+      "targetAlias": "focus",
+      "kind": "relative_position",
+      "text": "Focus item",
+      "relation": "below the title toward the left",
+      "other": "Focus"
+    },
+    {
+      "id": "motion-builds-v1-a016",
+      "triggerEventId": "motion-builds-v1-011",
+      "targetAlias": "focus",
+      "kind": "unchanged_except",
+      "allowed": [
+        "position of Focus item"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a017",
+      "triggerEventId": "motion-builds-v1-012",
+      "targetAlias": "counter",
+      "kind": "number_exact",
+      "value": "40%",
+      "label": "Completion"
+    },
+    {
+      "id": "motion-builds-v1-a018",
+      "triggerEventId": "motion-builds-v1-013",
+      "targetAlias": "counter",
+      "kind": "correction",
+      "old": "40%",
+      "new": "42%",
+      "label": "Completion"
+    },
+    {
+      "id": "motion-builds-v1-a019",
+      "triggerEventId": "motion-builds-v1-014",
+      "targetAlias": "counter",
+      "kind": "correction",
+      "old": "42%",
+      "new": "41.5%",
+      "label": "Completion"
+    },
+    {
+      "id": "motion-builds-v1-a020",
+      "triggerEventId": "motion-builds-v1-015",
+      "targetAlias": "counter",
+      "kind": "correction",
+      "old": "41.5%",
+      "new": "41.6%",
+      "label": "Completion"
+    },
+    {
+      "id": "motion-builds-v1-a021",
+      "triggerEventId": "motion-builds-v1-015",
+      "targetAlias": "counter",
+      "kind": "source_retained",
+      "texts": [
+        "40%",
+        "42%",
+        "41.5%",
+        "41.6%"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a022",
+      "triggerEventId": "motion-builds-v1-016",
+      "targetAlias": "interruptions",
+      "kind": "visible_exact",
+      "texts": [
+        "Marker"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a023",
+      "triggerEventId": "motion-builds-v1-017",
+      "targetAlias": "interruptions",
+      "kind": "relative_position",
+      "text": "Marker",
+      "relation": "toward the right, below the title",
+      "other": "Interruptions"
+    },
+    {
+      "id": "motion-builds-v1-a024",
+      "triggerEventId": "motion-builds-v1-018",
+      "targetAlias": "interruptions",
+      "kind": "relative_position",
+      "text": "Marker",
+      "relation": "toward the left, below the title",
+      "other": "Interruptions"
+    },
+    {
+      "id": "motion-builds-v1-a025",
+      "triggerEventId": "motion-builds-v1-019",
+      "targetAlias": "interruptions",
+      "kind": "relative_position",
+      "text": "Marker",
+      "relation": "centered below the title",
+      "other": "Interruptions"
+    },
+    {
+      "id": "motion-builds-v1-a026",
+      "triggerEventId": "motion-builds-v1-019",
+      "targetAlias": "interruptions",
+      "kind": "style_target",
+      "text": "Marker",
+      "change": "normal foreground color"
+    },
+    {
+      "id": "motion-builds-v1-a027",
+      "triggerEventId": "motion-builds-v1-020",
+      "targetAlias": "pairs",
+      "kind": "ordered_text",
+      "texts": [
+        "Plan",
+        "Check",
+        "Deliver",
+        "Review"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a028",
+      "triggerEventId": "motion-builds-v1-021",
+      "targetAlias": "pairs",
+      "kind": "build_groups",
+      "groups": [
+        [
+          "Plan",
+          "Check"
+        ],
+        [
+          "Deliver",
+          "Review"
+        ]
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a029",
+      "triggerEventId": "motion-builds-v1-021",
+      "targetAlias": "pairs",
+      "kind": "unchanged_except",
+      "allowed": [
+        "build grouping; unrevealed items keep their final geometry"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a030",
+      "triggerEventId": "motion-builds-v1-022",
+      "targetAlias": "finale",
+      "kind": "visible_exact",
+      "texts": [
+        "Every transition ends at the requested state."
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a031",
+      "triggerEventId": "motion-builds-v1-023",
+      "targetAlias": "arrival",
+      "kind": "ordered_text",
+      "texts": [
+        "Alpha",
+        "Gamma"
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a032",
+      "triggerEventId": "motion-builds-v1-024",
+      "targetAlias": "finale",
+      "kind": "visible_exact",
+      "texts": [
+        "Every transition ends at the requested state."
+      ]
+    },
+    {
+      "id": "motion-builds-v1-a033",
+      "triggerEventId": "motion-builds-v1-025",
+      "targetAlias": "counter",
+      "kind": "number_exact",
+      "value": "41.6%",
+      "label": "Completion"
+    },
+    {
+      "id": "motion-builds-v1-a034",
+      "triggerEventId": "motion-builds-v1-026",
+      "targetAlias": "deck",
+      "kind": "no_churn",
+      "scope": "all slides after this final instruction"
+    },
+    {
+      "id": "motion-builds-v1-a035",
+      "triggerEventId": "motion-builds-v1-026",
+      "targetAlias": "deck",
+      "kind": "presentation_ready"
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 8,
+    "slideOrder": [
+      "arrival",
+      "reorder",
+      "handoff",
+      "focus",
+      "counter",
+      "interruptions",
+      "pairs",
+      "finale"
+    ],
+    "allUserSourceRetained": true,
+    "presentationReady": true,
+    "noInventedOrDuplicatedClaims": true,
+    "noInventedMetrics": true,
+    "correctedValuesOnlyVisible": true,
+    "noUnrequestedChangesDuringPauses": true
+  }
+}
