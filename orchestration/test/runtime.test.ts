@@ -45,6 +45,11 @@ test("Fast coalesces speech while busy; passive speech never wakes Slow; same se
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "dispatch";
@@ -83,12 +88,17 @@ test("Fast coalesces speech while busy; passive speech never wakes Slow; same se
     await rt.close();
   }
 });
-test("Fast publication wakes Slow; active Slow gets one followup for unseen publication, never for its own", async () => {
+test("Decision-approved Fast publication wakes Slow; active Slow gets one gated followup, never for its own", async () => {
   const slowFirst = deferred<ModelResult>();
   let slowCalls = 0;
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -140,6 +150,11 @@ test("mailboxes queue without waking and followups wake once and retain history"
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -181,6 +196,11 @@ test("Slow waits for private specialist result; artifacts do not publish themsel
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -234,6 +254,11 @@ test("delegate enforces two active specialists and shutdown releases waiting par
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -278,6 +303,11 @@ test("recognition corrections do not automatically mutate an already displayed c
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "dispatch";
@@ -313,6 +343,11 @@ test("failed inference releases actor and explicit followup can recover", async 
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -343,6 +378,11 @@ test("only Slow introduces private artifacts; Fast may reuse them after publicat
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -392,6 +432,11 @@ test("fresh dispatched speech renews the work budget during a continuous Fast ac
     renderer,
     autoTick: false,
     maxSteps: 2,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "dispatch";
@@ -439,6 +484,11 @@ test("Slow consumes a required child result that completed during its final infe
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -481,6 +531,11 @@ test("a specialist failure observed and handled by Slow does not fail the comple
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -524,6 +579,11 @@ test("settle waits for an active parent to observe a child failure instead of re
   const rt = await SlideRuntime.create({
     renderer,
     autoTick: false,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";
@@ -569,6 +629,11 @@ test("work without fresh input still obeys the configured step bound", async () 
     renderer,
     autoTick: false,
     maxSteps: 2,
+    slowDecider: {
+      async evaluate() {
+        return "wake";
+      },
+    },
     decider: {
       async evaluate() {
         return "hold";

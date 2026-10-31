@@ -1,9 +1,17 @@
 /** Public orchestration API. All versions/watermarks are runtime bookkeeping. */
 export { SlideRuntime, type RuntimeOptions } from "./src/runtime.js";
-export { Publisher, type Edit, type EditResult } from "./src/publisher.js";
+export {
+  Publisher,
+  type Edit,
+  type EditResult,
+  type SlideRecord,
+  type DeckSnapshot,
+  type StructureResult,
+  type HistoryResult,
+} from "./src/publisher.js";
 export { AssetStore } from "./src/assets.js";
 export { ChromiumRenderer } from "./src/renderer.js";
-export { OpenAIDecider, OpenAIModel } from "./src/openai.js";
+export { OpenAIDecider, OpenAISlowDecider, OpenAIModel } from "./src/openai.js";
 export {
   LiveTranscription,
   TranscriptAccumulator,
@@ -22,6 +30,8 @@ export type {
   ModelInput,
   ModelResult,
   Decider,
+  SlowDecider,
+  SlowDecisionInput,
   DecisionInput,
   Renderer,
   Rendered,

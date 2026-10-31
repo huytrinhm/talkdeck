@@ -6,7 +6,7 @@ import { clientFromEnv, models } from "./config.js";
 import { FileLog } from "./log.js";
 import { AssetStore } from "./assets.js";
 import { ChromiumRenderer } from "./renderer.js";
-import { OpenAIDecider, OpenAIModel } from "./openai.js";
+import { OpenAIDecider, OpenAISlowDecider, OpenAIModel } from "./openai.js";
 import { SlideRuntime } from "./runtime.js";
 import { LiveTranscription, readWav } from "./transcription.js";
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -35,6 +35,7 @@ const runtime = await SlideRuntime.create({
   log,
   model: new OpenAIModel(client, selected, log),
   decider: new OpenAIDecider(client, selected.decision, log),
+  slowDecider: new OpenAISlowDecider(client, selected.decision, log),
   renderer: new ChromiumRenderer(assets),
   context:
     "Create one slide explaining a fictional campus library locker pickup pilot for a student audience. Narration is the sole source of factual claims.",

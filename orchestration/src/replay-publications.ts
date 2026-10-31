@@ -40,6 +40,7 @@ try {
     }
     if (row.type === "inference") {
       branches.set(row.id, {
+        historyEpoch: publisher.historyEpoch,
         id: row.id,
         agent: row.agent,
         role: row.role,

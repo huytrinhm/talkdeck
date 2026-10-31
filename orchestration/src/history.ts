@@ -34,6 +34,7 @@ export class History {
             type: "input_text",
             text: JSON.stringify({
               observation: o.id,
+              slideId: o.slideId,
               source: o.source,
               geometry: o.geometry,
               diagnostics: o.diagnostics,

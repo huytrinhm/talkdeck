@@ -1,0 +1,113 @@
+{
+  "title": "Library locker pickup: from pilot to a bounded extension",
+  "syntheticAudio": true,
+  "fictionalScenario": true,
+  "model": "gpt-4o-mini-tts",
+  "voice": "alloy",
+  "instructions": "Read the provided narration verbatim in natural English as one educator giving a clear, conversational presentation. Use a steady, unhurried pace. Keep the same calm voice throughout. Preserve all numbers, qualifications and spoken self-corrections exactly as written. Do not add an introduction, conclusion, slide number or heading. Pause briefly between paragraphs.",
+  "audio": "test-fixture-5-slides.wav",
+  "script": "test-fixture-5-slides.txt",
+  "sampleRate": 24000,
+  "channels": 1,
+  "bitsPerSample": 16,
+  "gapMs": 1200,
+  "durationMs": 230000,
+  "scriptSha256": "09afabf67838493a5cb42d6b1a678a02348519cd4ccdd65296db819f140bd188",
+  "audioSha256": "95414412d0bcb1300a7d5a9f2ebc96b88e108d90c0424ffac256c16b598c8972",
+  "boundaryContract": "Each slide starts at startSample. endSample excludes the 1200 ms inter-slide silence. Headings are not spoken. Boundaries are test metadata used by fixture-deck.ts to drive explicit slide navigation; speech itself is not a navigation command.",
+  "expectedFinalFacts": {
+    "signedUp": 60,
+    "completed": 48,
+    "nonCompleters": 12,
+    "trialWeeks": 2,
+    "collectionMinutes": {
+      "before": 20,
+      "after": 5,
+      "saved": 15,
+      "reductionPercent": 75
+    },
+    "successfulFirstVisitPercent": {
+      "before": 80,
+      "after": 95,
+      "increasePercentagePoints": 15
+    },
+    "satisfactionOutOfFive": {
+      "before": 3.2,
+      "after": 4.4
+    },
+    "extraStaffMinutesPerDay": 30,
+    "illustrativeScenario": {
+      "collectionsPerDay": 10,
+      "studentMinutesSaved": 150,
+      "netMinutesSaved": 120,
+      "measuredVolume": false
+    },
+    "recommendation": "One-month extension limited to high-demand textbooks; proposed thresholds are not observed outcomes."
+  },
+  "correctionCases": [
+    {
+      "spokenInSlide": 2,
+      "targetSlide": 2,
+      "incorrect": "60 completed",
+      "corrected": "60 signed up; 48 completed"
+    },
+    {
+      "spokenInSlide": 4,
+      "targetSlide": 3,
+      "incorrect": "4.6 satisfaction",
+      "corrected": "4.4 satisfaction; baseline 3.2 unchanged"
+    }
+  ],
+  "slides": [
+    {
+      "number": 1,
+      "title": "A faster way to collect library books",
+      "text": "Imagine you have ten minutes between classes and need one textbook from the campus library. You already know the title, but you still have to find the shelf, check that the copy is there, and take it to the desk. In our fictional campus pilot, the usual collection took twenty minutes on average. The problem was not discovering what to read. It was getting a known book into your hands.\n\nWe tried a small change: reserve the book online and collect it from a locker. Today I will explain how the trial worked, what improved, what it cost the staff, and what we should test next.",
+      "suggestedLayout": "Problem framing / before-and-after concept",
+      "startSample": 0,
+      "endSample": 794400,
+      "startMs": 0,
+      "endMs": 33100
+    },
+    {
+      "number": 2,
+      "title": "How the pickup pilot worked",
+      "text": "Here is the journey. First, a student reserves an available textbook online. Second, a library staff member retrieves it from the shelf and places it in a pickup locker. Third, the student receives a collection code and picks up the book. Reserve, prepare, collect. The student no longer searches the shelves, but someone still does that work.\n\nWe ran the pilot for two weeks, using high-demand textbooks. Sixty students completed the trial. Actually, let me correct that: sixty signed up, and forty-eight completed it. The results on the next slide refer to those forty-eight completers, not everyone who registered. This was a small operational pilot, not a randomized study.",
+      "suggestedLayout": "Three-step process + trial cohort",
+      "startSample": 823200,
+      "endSample": 1896000,
+      "startMs": 34300,
+      "endMs": 79000
+    },
+    {
+      "number": 3,
+      "title": "What changed for students",
+      "text": "The clearest improvement was collection time. The usual process averaged twenty minutes. Locker pickup averaged five minutes. That is fifteen minutes saved per collection, or a seventy-five percent reduction.\n\nTwo other measures improved. Successful first visits rose from eighty percent to ninety-five percent, an increase of fifteen percentage points. Satisfaction rose from three point two to four point six out of five.\n\nThose are three different measures: minutes, a percentage, and a rating. They tell a consistent story about convenience, but they should not be treated as interchangeable scores. The headline is faster collection, with fewer unsuccessful trips. Remember that these results describe the forty-eight people who completed the trial.",
+      "suggestedLayout": "Three comparison panels with distinct units",
+      "startSample": 1924800,
+      "endSample": 3044400,
+      "startMs": 80200,
+      "endMs": 126850
+    },
+    {
+      "number": 4,
+      "title": "The staffing trade-off and the limits",
+      "text": "Before the costs, I need to correct a number from the results slide. The final satisfaction rating was four point four, not four point six. The baseline was still three point two out of five. The time and first-visit figures are unchanged.\n\nLibrary staff spent an additional thirty minutes each day preparing reserved books. At ten collections a day, saving fifteen minutes per collection would save students one hundred and fifty minutes in total. Subtracting the extra staff time gives a net time saving of two hours a day. That is an illustrative scenario, not a measured daily collection volume, and student time is not a substitute for staff capacity.\n\nWe also do not know why twelve students did not complete the trial. A short pilot with volunteers cannot establish how this would work across the whole campus.",
+      "suggestedLayout": "Staffing scenario + limitations",
+      "startSample": 3073200,
+      "endSample": 4228800,
+      "startMs": 128050,
+      "endMs": 176200
+    },
+    {
+      "number": 5,
+      "title": "A bounded extension, with a decision at the end",
+      "text": "My recommendation is a one-month extension, still limited to high-demand textbooks. We should not expand to the whole library yet.\n\nIn week one, confirm locker capacity, staff ownership, and the measurement plan. In weeks two and three, run the service and record collection times, successful first visits, daily staff preparation time, and missed pickups. In week four, review the results and decide whether to expand, adjust, or stop.\n\nHere are proposed decision thresholds, not results we have already achieved: average collection time at or below five minutes, successful first visits at or above ninety-five percent, and additional staff preparation time at or below thirty minutes a day.\n\nThe pilot suggests that faster access is possible. The next step is to find out whether that improvement holds without creating an unsustainable workload for the people running the library.",
+      "suggestedLayout": "Four-week timeline + decision thresholds",
+      "startSample": 4257600,
+      "endSample": 5520000,
+      "startMs": 177400,
+      "endMs": 230000
+    }
+  ]
+}

@@ -10,6 +10,7 @@ export interface Correction {
   after: string;
 }
 export interface Speech {
+  slideId?: string;
   revision: number;
   text: string;
   receivedAt: number;
@@ -29,6 +30,8 @@ export interface Geometry {
   height: number;
 }
 export interface Observation {
+  historyEpoch?: number;
+  slideId?: string;
   id: string;
   source: string;
   screenshot: Buffer;
@@ -57,6 +60,20 @@ export interface Decider {
     signal: AbortSignal,
   ): Promise<"dispatch" | "hold">;
 }
+export interface SlowDecisionInput {
+  current: Observation;
+  lastObservedFastWatermark: number;
+  speech: Speech | null;
+  messages: Message[];
+  context: string;
+  deck?: unknown;
+}
+export interface SlowDecider {
+  evaluate(
+    input: SlowDecisionInput,
+    signal: AbortSignal,
+  ): Promise<"wake" | "hold">;
+}
 export interface ModelInput {
   agent: string;
   role: Role;
@@ -72,6 +89,7 @@ export interface Model {
   infer(input: ModelInput): Promise<ModelResult>;
 }
 export interface Message {
+  targetSlideId?: string;
   kind?: "specialist_completion";
   id: string;
   from: string;
@@ -80,6 +98,9 @@ export interface Message {
   artifacts?: string[];
 }
 export interface Task {
+  kind?: "edit_comment";
+  id?: string;
+  slideId?: string;
   task: string;
   facts: string;
 }

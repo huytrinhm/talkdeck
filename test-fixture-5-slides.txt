@@ -1,0 +1,37 @@
+# Slide 1: A faster way to collect library books
+
+Imagine you have ten minutes between classes and need one textbook from the campus library. You already know the title, but you still have to find the shelf, check that the copy is there, and take it to the desk. In our fictional campus pilot, the usual collection took twenty minutes on average. The problem was not discovering what to read. It was getting a known book into your hands.
+
+We tried a small change: reserve the book online and collect it from a locker. Today I will explain how the trial worked, what improved, what it cost the staff, and what we should test next.
+
+# Slide 2: How the pickup pilot worked
+
+Here is the journey. First, a student reserves an available textbook online. Second, a library staff member retrieves it from the shelf and places it in a pickup locker. Third, the student receives a collection code and picks up the book. Reserve, prepare, collect. The student no longer searches the shelves, but someone still does that work.
+
+We ran the pilot for two weeks, using high-demand textbooks. Sixty students completed the trial. Actually, let me correct that: sixty signed up, and forty-eight completed it. The results on the next slide refer to those forty-eight completers, not everyone who registered. This was a small operational pilot, not a randomized study.
+
+# Slide 3: What changed for students
+
+The clearest improvement was collection time. The usual process averaged twenty minutes. Locker pickup averaged five minutes. That is fifteen minutes saved per collection, or a seventy-five percent reduction.
+
+Two other measures improved. Successful first visits rose from eighty percent to ninety-five percent, an increase of fifteen percentage points. Satisfaction rose from three point two to four point six out of five.
+
+Those are three different measures: minutes, a percentage, and a rating. They tell a consistent story about convenience, but they should not be treated as interchangeable scores. The headline is faster collection, with fewer unsuccessful trips. Remember that these results describe the forty-eight people who completed the trial.
+
+# Slide 4: The staffing trade-off and the limits
+
+Before the costs, I need to correct a number from the results slide. The final satisfaction rating was four point four, not four point six. The baseline was still three point two out of five. The time and first-visit figures are unchanged.
+
+Library staff spent an additional thirty minutes each day preparing reserved books. At ten collections a day, saving fifteen minutes per collection would save students one hundred and fifty minutes in total. Subtracting the extra staff time gives a net time saving of two hours a day. That is an illustrative scenario, not a measured daily collection volume, and student time is not a substitute for staff capacity.
+
+We also do not know why twelve students did not complete the trial. A short pilot with volunteers cannot establish how this would work across the whole campus.
+
+# Slide 5: A bounded extension, with a decision at the end
+
+My recommendation is a one-month extension, still limited to high-demand textbooks. We should not expand to the whole library yet.
+
+In week one, confirm locker capacity, staff ownership, and the measurement plan. In weeks two and three, run the service and record collection times, successful first visits, daily staff preparation time, and missed pickups. In week four, review the results and decide whether to expand, adjust, or stop.
+
+Here are proposed decision thresholds, not results we have already achieved: average collection time at or below five minutes, successful first visits at or above ninety-five percent, and additional staff preparation time at or below thirty minutes a day.
+
+The pilot suggests that faster access is possible. The next step is to find out whether that improvement holds without creating an unsustainable workload for the people running the library.

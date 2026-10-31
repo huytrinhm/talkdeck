@@ -1,3 +1,4 @@
+import { abortable } from "./abortable.js";
 import type { Decider, Speech, Log } from "./types.js";
 import { errorMessage, silentLog } from "./types.js";
 export class SpeechGate {
@@ -10,6 +11,7 @@ export class SpeechGate {
   private backoffUntil = 0;
   private failures = 0;
   private closed = false;
+  private paused = false;
   constructor(
     private decider: Decider,
     private dispatch: (speech: Speech) => void,
@@ -17,6 +19,7 @@ export class SpeechGate {
     private log: Log = silentLog,
     readonly maxInFlight = 8,
     readonly deadlineMs = 30000,
+    readonly slideId?: string,
   ) {}
   get inFlight() {
     return this.controllers.size;
@@ -37,12 +40,19 @@ export class SpeechGate {
       this.latest.revision === (this.lastDispatched?.revision ?? 0)
     )
       this.firstUndispatchedAt = now;
-    this.latest = { revision, text, receivedAt: now, corrections };
+    this.latest = {
+      revision,
+      text,
+      receivedAt: now,
+      corrections,
+      ...(this.slideId ? { slideId: this.slideId } : {}),
+    };
     this.log.write("transcript", { speech: this.latest });
   }
   async tick(now = performance.now()) {
     if (
       this.closed ||
+      this.paused ||
       !this.latest ||
       (!this.latest.text.trim() && !this.latest.corrections.length) ||
       this.latest.revision === (this.lastDispatched?.revision ?? 0) ||
@@ -59,16 +69,19 @@ export class SpeechGate {
       this.deadlineMs,
     );
     try {
-      const result = await this.decider.evaluate(
-        {
-          speech,
-          lastDispatched: structuredClone(this.lastDispatched),
-          undispatchedAgeMs: now - this.firstUndispatchedAt,
-          context: this.context,
-        },
+      const result = await abortable(
+        this.decider.evaluate(
+          {
+            speech,
+            lastDispatched: structuredClone(this.lastDispatched),
+            undispatchedAgeMs: now - this.firstUndispatchedAt,
+            context: this.context,
+          },
+          controller.signal,
+        ),
         controller.signal,
       );
-      if (this.closed || controller.signal.aborted) return;
+      if (this.closed || this.paused || controller.signal.aborted) return;
       this.failures = 0;
       // New append-only words are still pending. Any correction invalidates the evaluated snapshot.
       if (
@@ -88,7 +101,7 @@ export class SpeechGate {
         this.dispatch(speech);
       }
     } catch (e) {
-      if (!this.closed) {
+      if (!this.closed && !this.paused && !controller.signal.aborted) {
         this.failures++;
         this.backoffUntil =
           performance.now() +
@@ -99,6 +112,25 @@ export class SpeechGate {
       clearTimeout(timeout);
       this.controllers.delete(controller);
     }
+  }
+  /** Preserve speech, but do not replay old narration after a user history action. */
+  suppressCurrent() {
+    for (const c of this.controllers) c.abort();
+    this.lastDispatched = structuredClone(this.latest);
+    this.lastEvaluatedRevision = this.latest?.revision ?? 0;
+    this.backoffUntil = 0;
+    this.failures = 0;
+  }
+  restoreNarration(speech: Speech) {
+    this.latest = structuredClone(speech);
+    this.suppressCurrent();
+  }
+  pause() {
+    this.paused = true;
+    for (const c of this.controllers) c.abort();
+  }
+  resume() {
+    this.paused = false;
   }
   close() {
     this.closed = true;

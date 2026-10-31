@@ -19,6 +19,7 @@ export class FileLog implements Log {
     writeFileSync(join(this.directory, `${o.id}.png`), o.screenshot);
     this.write("observation", {
       id: o.id,
+      slideId: o.slideId,
       geometry: o.geometry,
       diagnostics: o.diagnostics,
       fastWatermark: o.fastWatermark,
