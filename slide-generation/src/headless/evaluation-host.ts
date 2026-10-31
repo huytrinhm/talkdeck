@@ -17,7 +17,7 @@ import type { DeliveredInput } from '../evaluation/driver.js';
 import type { EvaluationClock } from '../evaluation/clock.js';
 import { nodes, parseSource, textContent } from '../parser.js';
 import { childNodes } from '../schema.js';
-import { navigationCommand, namedInputTarget } from './input-routing.js';
+import { navigationCommand, namedInputTarget, requestedTitle, routingTitles } from './input-routing.js';
 export { navigationCommand } from './input-routing.js';
 
 /** Error text is diagnostic, not raw evidence; authentication details never enter logs. */
@@ -67,6 +67,7 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
   const providers = createRecordedModels(clientFromEnv(), recorder, { models: selectedModels,
     limits: { maxCalls: options.budget.maxCalls, maxOutputTokensPerCall: options.budget.maxTokens, ...options.limits } });
   const routes: { utteranceId: string; slideId: string; retainedAtMs: number }[] = [];
+  const pendingTitles = new Map<string, string>();
   const errors: string[] = [], operations: unknown[] = [];
   let recordTail: Promise<void> = Promise.resolve();
   const log: Log = {
@@ -136,14 +137,16 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
           if (seed) backend.requestedTitles.set(backend.selectedId, command.title);
           else { const created = await backend.createSlide(command.title); operations.push({ kind: 'create', title: command.title, slideId: created.id, sourceSha256: local.engine.state().revision }); }
         } else if (command?.type === 'select') {
-          const matching = backend.list().filter(s => s.title.toLowerCase() === command.title.toLowerCase());
+          const matching = [...new Set(routingTitles(backend.list(), pendingTitles).filter(s => s.title.toLowerCase() === command.title.toLowerCase()).map(s => s.id))];
           if (matching.length !== 1) throw new Error(`Explicit navigation target is not unique: ${command.title}`);
-          await actors.selectSlide(matching[0].id);
+          await actors.selectSlide(matching[0]);
           operations.push({ kind: 'navigate', slideId: backend.selectedId, sourceSha256: local.engine.state().revision });
         }
-        const targetId = command ? backend.selectedId : namedInputTarget(input.text, backend.list()) ?? backend.selectedId;
+        const targetId = command ? backend.selectedId : namedInputTarget(input.text, routingTitles(backend.list(), pendingTitles)) ?? backend.selectedId;
         const utterance = { id: input.id, text: input.text, deliveredAtMs: input.deliveredAtMs, slideId: targetId };
         await actors.deliverUtterance(utterance);
+        const rename = requestedTitle(input.text);
+        if (rename) pendingTitles.set(targetId, rename);
         routes.push({ utteranceId: input.id, slideId: utterance.slideId, retainedAtMs: receipt.retainedAtMs });
         operations.push({ kind: 'input', input: utterance, sourceSha256: local.engine.state().revision });
       }).catch(error => { errors.push(`Routing ${input.id}: ${safeHeadlessError(error)}`); }).finally(() => { routingPending--; });
