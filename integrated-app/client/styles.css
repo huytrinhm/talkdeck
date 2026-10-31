@@ -18,3 +18,5 @@
 .slide-thumbnail-item{position:relative;flex-shrink:0}.filmstrip .thumbnail-delete{position:absolute;top:4px;right:4px;z-index:2;opacity:0;pointer-events:none;background:#191919e8;color:#eee;border:1px solid #555;transition:opacity .12s}.slide-thumbnail-item:hover .thumbnail-delete,.slide-thumbnail-item:focus-within .thumbnail-delete{opacity:1;pointer-events:auto}.filmstrip .thumbnail-delete:hover{background:#653139;color:#fff}.filmstrip .thumbnail-delete:disabled{opacity:0;pointer-events:none}@media(hover:none){.filmstrip .thumbnail-delete:not(:disabled){opacity:1;pointer-events:auto}}
 
 @media(max-width:760px){.voice-toolbar{grid-template-columns:minmax(0,1fr) auto}.voice-capture{grid-column:1;grid-row:1}.voice-actions{grid-column:2;grid-row:1}.voice-actions button{font-size:10px;padding:6px}.generation-status{grid-column:1/-1;grid-row:2;text-align:center}}
+/* Provisional ASR stays grey until its durable transcript arrives. */
+.transcript .transcript-phrase p{color:#f5f5f5}.transcript .transcript-phrase.interim p{color:#888}

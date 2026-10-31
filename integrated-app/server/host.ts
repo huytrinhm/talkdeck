@@ -1,3 +1,4 @@
+import { TranscriptPreview } from './transcript-preview.js';
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
@@ -96,7 +97,7 @@ export class ProjectOwner {
   private imageCache = new Map<string, Promise<Uint8Array>>();
   private live = new Map<
     string,
-    { transcriber: LiveTranscription; finals: string[] }
+    { transcriber: LiveTranscription; finals: string[]; pending?: TranscriptPreview }
   >();
   private unsubscribe: (() => void)[] = [];
   private commandTrace?: ReturnType<typeof serverNavigationTrace>;
@@ -217,6 +218,9 @@ export class ProjectOwner {
         thumbnail: `/api/projects/${this.data.project.id}/slides/${s.id}/image?revision=${local.engine.state().revision}`,
       })),
       transcripts: this.data.transcripts.filter((t) => t.epoch === this.data.epoch),
+      pendingTranscripts: [...this.live.values()].flatMap(live => live.pending &&
+        live.pending.epoch === this.data.epoch && !this.data.transcripts.some(t => t.id === live.pending!.id)
+        ? [live.pending.snapshot()] : []),
       materials: this.data.materials,
       practiceId: this.data.practiceId,
       actors: actors.statuses().map((s) => ({
@@ -833,6 +837,7 @@ export class ProjectOwner {
                 write: (type, data) => {
                   this.providers.record({ type, ...data });
                   const event = data.event as any;
+                  if (event && this.live.get(a.dto.id)?.pending?.event(event)) this.broadcastSnapshot();
                   if (
                     event?.type ===
                     "conversation.item.input_audio_transcription.completed"
@@ -851,6 +856,8 @@ export class ProjectOwner {
           let failure: unknown;
           try {
             live.finals.length = 0;
+            live.pending = new TranscriptPreview(input.id, input.epoch, input.slideId);
+            this.broadcastSnapshot();
             live.transcriber.append(pcm);
             await live.transcriber.commit();
             text = live.finals.join(" ").trim();
@@ -895,6 +902,10 @@ export class ProjectOwner {
         await this.save();
         this.broadcastSnapshot();
         throw error;
+      } finally {
+        const live = this.live.get(a.dto.id);
+        if (live?.pending?.id === input.id) delete live.pending;
+        this.broadcastSnapshot();
       }
     });
   }

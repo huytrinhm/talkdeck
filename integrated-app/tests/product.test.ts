@@ -227,3 +227,35 @@ test('explicit slide deletion selects a neighbor, retains evidence, deduplicates
     assert.equal(reloaded.selectedId, original);
   } finally { await host.close(); await rm(f.directory, {recursive:true,force:true}); }
 });
+
+test('audio preview remains provisional until retained final text replaces it without duplication', async () => {
+  const f = await setup();
+  let release!: () => void, started!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const entered = new Promise<void>(resolve => { started = resolve; });
+  try {
+    const p = await project(f.host, 'Transcript preview');
+    const owner = await f.host.store.open(p.id);
+    await command(f.host, p, { type: 'mode', mode: 'talk', input: 'audio' });
+    const current = owner.snapshot();
+    const live: any = { finals: [], transcriber: {
+      append() {
+        live.pending.event({ type: 'conversation.item.input_audio_transcription.delta', item_id: 'i', delta: 'Fourty' });
+        owner.broadcastSnapshot(); started();
+      },
+      async commit() { await pending; live.pending.event({ type: 'conversation.item.input_audio_transcription.completed', item_id: 'i', transcript: 'Forty people.' }); live.finals.push('Forty people.'); },
+      close() {},
+    } };
+    (owner as any).live.set(p.session.id, live);
+    const input = { id: 'audio-preview', epoch: current.epoch, slideId: current.selectedId, sequence: 0, startMs: 0, endMs: 1000 };
+    const completing = owner.audio(owner.sessions.get(p.session.id)!, input, Buffer.alloc(48000));
+    await entered;
+    assert.equal(owner.snapshot().pendingTranscripts?.[0].text, 'Fourty');
+    assert.equal(owner.snapshot().transcripts.length, 0);
+    assert(!owner.runtime.local.engine.readDocument().source.includes('Fourty'));
+    release(); await completing;
+    assert.deepEqual(owner.snapshot().pendingTranscripts, []);
+    assert.deepEqual(owner.snapshot().transcripts.map(t => t.text), ['Forty people.']);
+    assert.equal(owner.snapshot().transcripts[0].id, input.id);
+  } finally { release?.(); await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
+});
