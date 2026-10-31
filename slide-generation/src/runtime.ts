@@ -15,12 +15,13 @@ import type { ToolServices } from './tools.js';
 import { ToolRegistry } from './tools.js';
 import { Trace } from './telemetry/trace.js';
 
-export interface RuntimeOptions { directory: string; assets?: AssetResolver; browser?: BrowserPoolOptions; trace?: Trace }
+export interface RuntimeOptions { directory: string; storageRoot?: string; assets?: AssetResolver; browser?: BrowserPoolOptions; trace?: Trace }
 /** Local subsystem runtime. This is not a replacement for the orchestration actor scheduler. */
 export async function createLocalRuntime(options: RuntimeOptions) {
   const packageRoot = fileURLToPath(new URL('../', import.meta.url));
-  const directory = resolve(options.directory), local = relative(packageRoot, directory);
-  if (local.startsWith('..') || isAbsolute(local)) throw new Error('Deck storage must remain inside slide-generation/');
+  const storageRoot = options.storageRoot ? resolve(options.storageRoot) : packageRoot;
+  const directory = resolve(options.directory), local = relative(storageRoot, directory);
+  if (local.startsWith('..') || isAbsolute(local)) throw new Error('Deck storage must remain inside its configured storage root');
   const repository = new FileDeckRepository(resolve(directory, 'deck.json'));
   const initial = await repository.initialize(createDeck());
   const renderer = new HonoSlideRenderer({ assets: options.assets });

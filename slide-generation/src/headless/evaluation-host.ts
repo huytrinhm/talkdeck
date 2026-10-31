@@ -1,7 +1,6 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createLocalRuntime } from '../runtime.js';
 import { JsxBackend } from '../host/jsx-backend.js';
 import { SlideRuntime } from '../orchestration/runtime.js';
@@ -19,6 +18,7 @@ import { nodes, parseSource, textContent } from '../parser.js';
 import { childNodes } from '../schema.js';
 import { navigationCommand, namedInputTarget, requestedTitle, routingTitles } from './input-routing.js';
 import { loadDesignSkills } from '../design/skills.js';
+import { loadGenerationInstructions } from '../host/instructions.js';
 export { navigationCommand } from './input-routing.js';
 
 /** Error text is diagnostic, not raw evidence; authentication details never enter logs. */
@@ -43,10 +43,8 @@ export interface HeadlessHostOptions {
   limits?: Partial<ProviderLimits>;
 }
 export async function createEvaluationHost(options: HeadlessHostOptions) {
-  const { recorder } = options, root = fileURLToPath(new URL('../../', import.meta.url));
-  const basePrompt = await readFile(join(root, 'docs/AGENT_PROMPT.md'), 'utf8');
-  const specification = await readFile(join(root, 'SPEC.md'), 'utf8');
-  const instructions = `${basePrompt}\n\n${specification}`;
+  const { recorder } = options;
+  const { instructions } = await loadGenerationInstructions();
   const designSkills = await loadDesignSkills();
   const local = await createLocalRuntime({ directory: join(recorder.directory, 'runtime') });
   let cleanupRecording: HeadlessRecordingSession | undefined, cleanupActors: SlideRuntime | undefined;

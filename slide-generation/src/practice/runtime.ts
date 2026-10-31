@@ -1,7 +1,8 @@
 import { resolve, relative, isAbsolute } from "node:path";
-import { readFile } from "node:fs/promises";
+import { loadGenerationInstructions } from "../host/instructions.js";
 import { fileURLToPath } from "node:url";
 import OpenAI from "openai";
+export { OpenAI };
 import { createLocalRuntime } from "../runtime.js";
 import { JsxBackend } from "../host/jsx-backend.js";
 import { SlideRuntime } from "../orchestration/runtime.js";
@@ -20,6 +21,10 @@ import { loadDesignSkills } from "../design/skills.js";
 
 export interface PracticeRuntimeOptions {
   directory: string;
+  storageRoot?: string;
+  context?: string;
+  onSelection?(slideId: string): void | Promise<void>;
+  log?: ActorOptions["log"];
   client?: OpenAI;
   reviewer?: Reviewer;
   transcriber?: Transcriber;
@@ -29,28 +34,34 @@ export interface PracticeRuntimeOptions {
 export async function createPracticeRuntime(options: PracticeRuntimeOptions) {
   const root = fileURLToPath(new URL("../../", import.meta.url));
   const directory = resolve(options.directory),
-    localPath = relative(root, directory);
+    localPath = relative(
+      options.storageRoot ? resolve(options.storageRoot) : root,
+      directory,
+    );
   if (localPath.startsWith("..") || isAbsolute(localPath))
-    throw new Error("Practice storage must remain inside slide-generation/");
+    throw new Error(
+      "Practice storage must remain inside its configured storage root",
+    );
   if ((!options.actors || !options.reviewer) && !options.client)
     throw new Error("Supply a client or explicit actor/reviewer adapters");
   const local = await createLocalRuntime({
     directory: joinPath(directory, "deck"),
+    storageRoot: options.storageRoot,
   });
   let actors: SlideRuntime | undefined;
   try {
-    const instructions = await readFile(
-      new URL("../../docs/AGENT_PROMPT.md", import.meta.url),
-      "utf8",
-    );
+    const { instructions } = await loadGenerationInstructions();
     const backend = new JsxBackend(local, {
       instructions,
+      onSelection: options.onSelection,
       designSkills: await loadDesignSkills(),
     });
     const selected = models();
     actors = await SlideRuntime.create({
       backend,
       client: options.client,
+      context: options.context,
+      log: options.log,
       ...(options.actors ?? {
         model: new OpenAIModel(options.client!, selected),
         decider: new OpenAIDecider(options.client!, selected.decision),
