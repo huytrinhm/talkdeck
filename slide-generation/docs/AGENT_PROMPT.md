@@ -46,3 +46,6 @@ Assign build groups with build={1}, build={2}, and so on to any rendered nodes. 
 nodes show immediately. Parent visibility gates descendants, and hidden groups keep their space. Before presentation,
 resolve all placeholders by filling, removing permitted structures, or changing layouts. Every slide must pass complete
 readiness, including errors previously tolerated during editing. Do not claim readiness from a screenshot alone.
+
+Bounded Stat counting is approved animation (D56). Its intermediate digits are not additional factual claims. Keep
+both source endpoints and the final displayed target exact; this does not authorize inventing model-authored values.

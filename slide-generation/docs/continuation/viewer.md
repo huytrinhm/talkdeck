@@ -68,3 +68,20 @@ old and requested target claims. This remains the existing unresolved fidelity/p
 policy choice was made. A focused live demo and recorded frames must be built before asking the user to choose whether
 tweened digits count as invented claims or should be replaced by exact target digits plus nonnumeric motion. No demo,
 recorded numeric evidence, or numeric-faithfulness claim exists yet.
+
+## Resume outcome (2026-10-31, full-access environment)
+
+The initial defects above were addressed and the viewer now has a real Chromium regression suite in
+`test/viewer.test.ts`. Twelve tests pass, including renderer font compatibility, build commands during motion,
+resource supersession/rollback, nested zoom/translate and reparenting at early/mid/late progress, exact final DOM,
+opaque-origin/CSP checks and numeric precision/bounds. Controlled resource-wait tests delay the genuine browser
+font-ready promise; they do not substitute passing browser measurements.
+
+Actual screenshot review identified an additional duplicate-content bug: an exiting parent snapshot retained its
+reparented child. The runtime now strips retained descendants from exit clones, and the suite asserts visible words
+are not duplicated. Corrected sample: `.artifacts/viewer-runs/motion-EshZxa/retarget-140.png` (with video and samples).
+
+Root obtained decision D56 resolving O01: bounded intermediate digits count as animation, not factual claims.
+The original `.artifacts/viewer-o01/` evidence remains frozen; all subsequent runs use unique artifact directories.
+See `src/viewer/README.md` for the final protocol and remaining host/qualification boundary. No viewer commit was made
+by the subagent; root owns integration and focused commits.

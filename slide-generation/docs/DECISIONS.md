@@ -78,7 +78,7 @@ story. There is no evidence that this subsystem achieves them. Treat them as tar
 
 | ID | Trigger / question | Current boundary |
 |---|---|---|
-| O01 | Approved Stat counting vs latest “never invented numbers”: do intermediate tweened digits count as invented user-visible claims? | Keep this visible as a tension. Build/replay a focused example, present evidence/options, and get the user's answer before claiming full numeric faithfulness. Options include retaining bounded counting as decoration, or showing exact target digits while animating an ornament/transition. Do not silently disable the approved behavior or silently exempt it from audits. |
+| O01 (resolved by D56) | Approved Stat counting vs “never invented numbers” | User explicitly chose bounded counting on 2026-10-31; intermediate digits are animation rather than factual claims. See D56 and the preserved evidence/question below. |
 | O02 | Exact host API hooks and ownership for JSX publication, multi-slide attribution, frontend bridge | Integration contract with neighboring owners remains unconfirmed. Do not assume current RuntimeOptions can replace Publisher/tools. Work within scope and document missing hooks. |
 | O03 | Asset/font provider API and selected licensed bundled font | Provisional by explicit request. Use an injected versioned resolver; do not lock a provider/storage/cropping contract prematurely. Routine selection can be documented unless it adds a real product constraint. |
 
@@ -101,3 +101,31 @@ Status: open | accepted | superseded
 
 Keep unanswered choices open. If a later user response changes a decision, preserve the older row as superseded and link
 the replacement. A prior answer is persistent authorization; do not reopen it merely because another agent takes over.
+
+## O01 evidence and pending question — 2026-10-31
+
+The real Chromium viewer demonstration in [O01-stat-counting](rounds/implementation/cases/O01-stat-counting.md)
+showed `$12.5 million` and `$12.6 million` between source `$12.4 million` and corrected target `$12.7 million`.
+This is controlled viewer evidence, not a live-model evaluation. The exact question/options are preserved in that case.
+Asked whether to show exact target digits immediately with nonnumeric motion (recommended under D49), or retain bounded
+counting and explicitly treat intermediate digits as animation. User answer: pending. O01 remains open; D32 unchanged.
+
+## D56 — bounded Stat counting is animation (2026-10-31)
+
+Evidence: [O01 viewer case](rounds/implementation/cases/O01-stat-counting.md), including real Chromium intermediate
+screenshots/video and sampled digits. Controlled viewer demonstration; not a live-model/talk result.
+
+Question (exact): “The browser demo confirms open decision O01: animating a correction from ‘$12.4 million’ to
+‘$12.7 million’ briefly displays ‘$12.5 million’ and ‘$12.6 million.’ How should Stat updates behave?”
+
+Options: show exact target digits immediately with nonnumeric motion (recommended under the previous unresolved
+fidelity interpretation); or retain bounded counting and treat intermediate digits as animation rather than claims.
+
+User answer (verbatim): **“Keep bounded counting; treat intermediate digits as animation rather than factual claims.”**
+
+Result: retain D32's bounded Stat counting. The transient interpolation is explicitly an animation exception to the
+numeric-claim audit, not permission for the model to invent numbers. Source endpoints must remain exact; interpolation
+must stay bounded and settle on the exact requested target. Preserve intermediate frames in recordings. First-correct
+visible latency still requires the requested exact value, not a merely intermediate number.
+
+Resolves O01; clarifies D49 without relaxing substantive source fidelity. SPEC.md and agent guidance updated. Accepted.

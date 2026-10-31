@@ -349,7 +349,9 @@ Keep all specified animations: same-parent FLIP movement/resizing, color transit
 morphs/view transitions, numeric Stat counting, and slide-key crossfades. Spring motion retargets from current visual
 position and velocity when subsequent validated states arrive; do not queue obsolete target states. Only movement may
 overshoot. Clamp sizes, colors, opacity, and Stat interpolation to their valid ranges/endpoints. Nonnumeric Stat strings
-transition as text. Once settled, remove transient wrappers/styles so the DOM matches posted HTML, apart from explicit
+transition as text. Per D56, intermediate bounded counting digits are animation rather than factual claims; preserve
+exact source endpoints and record intermediate frames. This exception does not permit invented model-authored numbers.
+Visible-correct timing requires the exact requested target value to appear. Once settled, remove transient wrappers/styles so the DOM matches posted HTML, apart from explicit
 presentation hold state managed by the viewer. Reduced-motion support is deferred, including a full motion policy.
 
 ### 9.3 Server
