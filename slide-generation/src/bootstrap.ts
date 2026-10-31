@@ -15,6 +15,7 @@ export function createDeck(): DeckDocument {
   <Slide id="n10" version={1} freeForm={{ reason: 'Initial composition' }}>
     <Transcript id="n11" />
     <SpeakerNotes id="n12" />
+
   </Slide>
   <Archive id="n13" />
 </Deck>` };

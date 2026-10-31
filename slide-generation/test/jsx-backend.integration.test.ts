@@ -302,3 +302,23 @@ test('canonical paused navigation creates one stable slide and undo/redo archive
     assert.equal(calls, 0);
   } finally { await f.close(); }
 });
+
+test('initial and newly created slides retain a visual insertion boundary across incoming speech', async () => {
+  const f = await setup({ async infer() { return call('finish', {}); } });
+  try {
+    f.runtime.pause();
+    for (const slideId of ['n10', (await f.backend.createSlide('Second')).id]) {
+      const read = f.local.engine.readSource(slideId), last = read.lines.at(-1)!;
+      assert.match(last.text, /<\/Slide>/);
+      assert.equal(read.lines.at(-2)!.text, '');
+      for (let i = 0; i < 3; i++) await f.backend.deliverUtterance({ id: `${slideId}-${i}`, slideId,
+        text: `Exact sentence ${i}, including its qualifier.`, deliveredAtMs: i + 1 });
+      const result = await f.local.engine.edit({ edits: [{ snapshotId: read.snapshotId, nodeId: slideId, op: 'insert_before',
+        startLine: last.number, hashes: [last.hash], text: '<Text role="title">Visible content</Text>' }] });
+      assert.equal(result.accepted, true);
+      const notes = f.local.engine.readSpeakerNotes(slideId).notes;
+      assert.equal(notes, [0, 1, 2].map(i => `Exact sentence ${i}, including its qualifier.`).join('\n'));
+      assert.match(f.local.engine.readSource(slideId).lines.map(l => l.text).join('\n'), /Visible content/);
+    }
+  } finally { await f.close(); }
+});
