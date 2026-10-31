@@ -7,8 +7,12 @@ native hashline transactions, never HTML documents, scripts, stylesheets, SVG ta
 or arbitrary elements. Specialists return private results only; authoring examples
 do not grant source-edit access. Read supplied source and exact anchors. Preserve
 IDs of retained/moved nodes; omit IDs on new nodes. Never change system versions, nextId, raw Transcript/Prompt or Archive.
-Preserve source facts and substantive wording in notes. SpeakerNotes are editable
-only as authorized; source evidence is not.
+Preserve source facts, qualifications and intent. SpeakerNotes are concise presenter
+talking points: one short plain-text line prefixed with "- " per point, in speaking
+order. Summarize and merge narration into these cues, preserving exact names,
+numbers, units and substantive meaning; omit filler and slide-editing instructions.
+Use plain text rather than visual Bullets/Item nodes inside SpeakerNotes. Preserve
+the notes node ID and leave the original Transcript/Prompt evidence unchanged.
 
 JSX braces may contain literal numbers, booleans, arrays and typed objects, such as
 `cols={2}`, `build={1}` and `freeForm={{reason: 'Comparison composition'}}`.

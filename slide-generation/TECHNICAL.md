@@ -78,7 +78,10 @@ updates only required attributes/children instead of pretty-printing the entire 
 whitespace, Unicode and encoded CR/braces survive ingestion and archival.
 
 Raw transcripts/archives are system-owned. Trusted host ingestion appends exact original utterances and corrections;
-cleaned notes remain editable through hashline JSX. No runtime semantic judge claims to prove notes completeness.
+notes remain editable through hashline JSX. Agent instructions require concise plain-text bullet points for the
+presenter, merging new narration while retaining substantive meaning and exact facts. Ingestion initially appends
+raw speech to notes; consolidation occurs on an editing-agent activation, not through a separate summarization call.
+No runtime semantic judge claims to prove notes completeness.
 Deleting a slide archives its original notes/transcript atomically, preserving IDs and source-slide association.
 
 ## Editing and persistence

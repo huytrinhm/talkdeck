@@ -80,9 +80,12 @@ Keep authored and derived-ID namespaces disjoint. Runtime expansion does not ins
 
 ## 3. Notes, transcripts, and archives
 
-Every slide maintains cleaned speaker notes and the unaltered original user prompts. Notes preserve substantive
-original wording; only fillers, false starts, and redundant repetition may be removed. Do not paraphrase facts,
-qualifications, or intent. Raw transcripts are system-owned append-only evidence, including corrections as new events.
+Every slide maintains concise presenter talking points and the unaltered original user prompts. Notes use one short
+plain-text bullet ("- ") per point in speaking order. Agents may summarize and combine narration, removing fillers,
+false starts, redundant repetition and editing instructions, while preserving distinct substantive points, exact
+names/numbers/units, qualifications and intent. New speech is merged into the relevant points rather than left as
+appended raw prose. This permission applies to notes, not to independently requested visible slide content.
+Raw transcripts are system-owned append-only evidence, including corrections as new events.
 Notes are agent-editable JSX text, kept alongside slides and returned by `read_speaker_notes(slideId)` together with
 the raw transcript and revision, enabling the agent to verify completeness.
 
