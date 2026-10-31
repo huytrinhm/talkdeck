@@ -31,6 +31,14 @@ contracts and races using real Chromium with explicitly fake provider adapters.
 `npm run build` creates the browser bundle. Runtime browser validation remains
 mandatory for canonical edits and prepared proposals.
 
+Project image uploads (PNG, JPEG, WebP and self-contained SVG) are registered with
+immutable content-hash versions and supplied to the canonical renderer through
+its asset resolver. The project brief includes their exact `Image` references for
+generation actors. Context shows image previews and availability for slides.
+Existing image uploads are registered when a project opens; unsafe SVGs or invalid
+image signatures stay unavailable for slides. Other files retain their existing
+text-context or reference-only behavior. Assets remain project-scoped across restarts.
+
 ## Hosting
 
 The public ChatGPT Site is https://talkdeck-integrated.thintulip.chatgpt.site.

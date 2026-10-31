@@ -235,6 +235,16 @@ export function createProductApp(
       throw new ProductError("material", "Expected a file");
     return c.json(await owner.material(file), 201);
   });
+  app.get('/api/projects/:project/materials/:material/image', async (c) => {
+    const { owner } = await ownerAndSession(c, true);
+    const asset = await owner.materialImage(c.req.param('material'));
+    return new Response(new Uint8Array(asset.bytes), { headers: {
+      'Content-Type': asset.mediaType,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "sandbox; default-src 'none'; img-src data:; style-src 'unsafe-inline'",
+    } });
+  });
   app.all("/api/projects/:project/practice/*", async (c) => {
     const { owner } = await ownerAndSession(c, true);
     const path = c.req.path.slice(c.req.path.indexOf("/practice"));

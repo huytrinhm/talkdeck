@@ -24,6 +24,8 @@ import { LiveTranscription } from "../../slide-generation/src/orchestration/tran
 import { models } from "../../slide-generation/src/orchestration/config.js";
 import { ProductProviders, safeError } from "./providers.js";
 import { serverNavigationTrace } from './tracing.js';
+import { ProjectImages } from './images.js';
+import { resolveImage } from '../../slide-generation/src/render/assets.js';
 import type {
   Command,
   NavigationDeck,
@@ -101,6 +103,7 @@ export class ProjectOwner {
   >();
   private unsubscribe: (() => void)[] = [];
   private commandTrace?: ReturnType<typeof serverNavigationTrace>;
+  private images!: ProjectImages;
   private timer?: ReturnType<typeof setInterval>;
   private error?: string;
   private closed = false;
@@ -112,6 +115,8 @@ export class ProjectOwner {
   ) {}
   async initialize() {
     await mkdir(this.directory, { recursive: true });
+    this.images = new ProjectImages(join(this.directory, 'materials'), this.data.project.id, () => this.data.materials);
+    await this.images.restore();
     this.providers = new ProductProviders(
       join(this.directory, "providers.jsonl"),
       () => this.broadcastSnapshot(),
@@ -119,6 +124,7 @@ export class ProjectOwner {
     this.runtime = await this.factory({
       directory: join(this.directory, "runtime"),
       storageRoot: resolve(this.directory, "..", ".."),
+      assets: this.images,
       client: this.providers.client,
       context: this.data.project.context,
       onSelection: async (id) => {
@@ -428,6 +434,9 @@ export class ProjectOwner {
       ...this.data.materials
         .filter((m) => m.text)
         .map((m) => `Source material ${m.name} (${m.id}):\n${m.text}`),
+      ...this.data.materials.filter(m => m.asset).map(m =>
+        `Uploaded image ${JSON.stringify(m.name)} (${m.mime}). Available for slide authoring: <Image asset={${JSON.stringify(m.asset)}} alt=${JSON.stringify(m.name)} />. Use this exact asset reference when the user asks for this image; do not substitute or regenerate it.`,
+      ),
     ].join("\n\n");
   }
   private async updateBrief(context: string) {
@@ -971,17 +980,29 @@ export class ProjectOwner {
         status: supported ? "extracted" : "reference-only",
         ...(supported ? { text: bytes.toString("utf8") } : {}),
       };
+      try { await this.images.register(material, bytes); }
+      catch (error) {
+        throw new ProductError('image_invalid', error instanceof Error ? error.message : 'Image could not be registered', 400);
+      }
       if (material.text && material.text.length > 100000)
         throw new ProductError(
           "material_large",
           "Text context exceeds100000 characters; bytes remain retained",
         );
       this.data.materials.push(material);
+      // Persist the version mapping before canonical source can refer to the image.
+      await this.save();
       await this.updateBrief(this.contextText());
       await this.save();
       this.broadcastSnapshot();
       return material;
     });
+  }
+  async materialImage(id: string) {
+    const material = this.data.materials.find(item => item.id === id);
+    if (!material?.asset) throw new ProductError('image_missing', 'Image is not available', 404);
+    await resolveImage(material.asset, this.images);
+    return this.images.resolve(material.asset);
   }
   async navigationDeck(): Promise<NavigationDeck> {
     const trace = serverNavigationTrace(randomUUID(), 'prepare-navigation', this.data.project.id);

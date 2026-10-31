@@ -13,8 +13,10 @@ export interface Material {
   name: string;
   bytes: number;
   mime: string;
-  status: "extracted" | "reference-only";
+  status: "extracted" | "reference-only" | "image-ready";
   text?: string;
+  asset?: { id: string; version: string };
+  imageError?: string;
 }
 export interface Transcript {
   id: string;
@@ -132,6 +134,8 @@ export type ServerEvent = {
  * Practice audio sequences start at zero per recording. Talk/Present chunks are finalized independently using live ASR; durable IDs prevent paid retry.
  * GET /api/projects/:project/slides/:slide/image?revision=... -> canonical JPEG
  * POST /api/projects/:project/materials FormData file -> Material (bytes retained, supported text extracted)
+ * Uploaded PNG/JPEG/WebP/self-contained SVG images include immutable asset references for canonical Image nodes.
+ * GET /api/projects/:project/materials/:material/image -> registered image bytes (editor only).
  * POST /api/projects/:project/practice/:id/finish|retry|cancel|pause|resume and proposal routes proxy existing PracticeService.
  * GET /api/projects/:project/practice/:id -> existing PracticeRecord (images/diff/version)
  * POST /api/projects/:project/practice/:id/request-change {slideId,prompt}

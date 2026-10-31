@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
-import { FileText, Upload, X } from 'lucide-react';
+import { FileText, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { Button } from '../../frontend/src/components/ui/button';
 import type { Material } from '../shared/protocol';
 
-export function AssetUploads({ files = [], materials = [], disabled, onFiles, onRemove }: {
+export function AssetUploads({ files = [], materials = [], disabled, onFiles, onRemove, imageUrl }: {
   files?: File[]; materials?: Material[]; disabled?: boolean;
   onFiles: (files: File[]) => void; onRemove?: (index: number) => void;
+  imageUrl?: (material: Material) => string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false), [error, setError] = useState('');
@@ -29,7 +30,7 @@ export function AssetUploads({ files = [], materials = [], disabled, onFiles, on
     </div>
     {error && <p className="asset-error" role="alert">{error}</p>}
     {(files.length > 0 || materials.length > 0) && <ul className="asset-list">
-      {materials.map(material => <li key={material.id}><FileText /><div><strong>{material.name}</strong><small>{size(material.bytes)} · {material.status === 'extracted' ? 'Text available as context' : 'Saved as a reference file'}</small></div></li>)}
+      {materials.map(material => <li key={material.id}>{material.asset ? imageUrl ? <img className="asset-preview" src={imageUrl(material)} alt={material.name} loading="lazy" /> : <ImageIcon /> : <FileText />}<div><strong>{material.name}</strong><small>{size(material.bytes)} · {material.status === 'image-ready' ? 'Available in slides' : material.status === 'extracted' ? 'Text available as context' : 'Saved as a reference file'}</small>{material.imageError && <small className="asset-error">{material.imageError}</small>}</div></li>)}
       {files.map((file, index) => <li key={`${file.name}-${file.lastModified}-${index}`}><FileText /><div><strong>{file.name}</strong><small>{size(file.size)} · Ready to upload</small></div>{onRemove && <Button type="button" variant="ghost" size="icon-xs" disabled={disabled} aria-label={`Remove ${file.name}`} onClick={() => onRemove(index)}><X /></Button>}</li>)}
     </ul>}
   </section>;
