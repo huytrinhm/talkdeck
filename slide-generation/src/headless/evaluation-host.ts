@@ -17,6 +17,8 @@ import type { DeliveredInput } from '../evaluation/driver.js';
 import type { EvaluationClock } from '../evaluation/clock.js';
 import { nodes, parseSource, textContent } from '../parser.js';
 import { childNodes } from '../schema.js';
+import { navigationCommand, namedInputTarget } from './input-routing.js';
+export { navigationCommand } from './input-routing.js';
 
 /** Error text is diagnostic, not raw evidence; authentication details never enter logs. */
 export function safeHeadlessError(error: unknown): string {
@@ -38,14 +40,6 @@ export interface HeadlessHostOptions {
   initialContext: string;
   budget: { maxCalls: number; maxTokens: number; serviceTier?: string };
   limits?: Partial<ProviderLimits>;
-}
-/** Explicit user commands only. Never accepts fixture aliases or evaluator assertions. */
-export function navigationCommand(text: string): { type: 'new' | 'select'; title: string } | undefined {
-  const create = text.match(/^(?:new|create)\s+(?:(?:a|an|the)\s+)?(?:(?:opening|closing|section|temporary)\s+)?slide\s+titled\s+(.+?)(?:[.!?]|$)/i);
-  if (create) return { type: 'new', title: create[1].trim().replace(/^["“]|["”]$/g, '') };
-  const select = text.match(/^(?:go back|return)\s+to\s+(.+?)(?:[.!?]|$)/i);
-  if (select) return { type: 'select', title: select[1].trim().replace(/^["“]|["”]$/g, '') };
-  return undefined;
 }
 export async function createEvaluationHost(options: HeadlessHostOptions) {
   const { recorder } = options, root = fileURLToPath(new URL('../../', import.meta.url));
@@ -98,7 +92,7 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
   await writeFile(join(recorder.directory, 'configuration.json'), evidenceJson({ source: 'real-actor-jsx-headless', models: selectedModels,
     toolSchemaSha256: lineHash(JSON.stringify(local.tools.definitions())), initialDependencies: initialArtifact.dependencies,
     providerLimits: providers.budget.snapshot().limits, promptSha256: lineHash(instructions), instructions,
-    navigation: 'Only explicit new/create-slide and return/go-back commands in the actual text; no evaluator metadata.' }));
+    navigation: 'Explicit new/create-slide, return/go-back navigation, and On <live title>, editing targets in actual words; no evaluator metadata.' }));
   let arrivalSequence = 0, routingPending = 0, routingTail: Promise<void> = Promise.resolve(), closed = false, finishing: Promise<any> | undefined;
   let finalReadiness: Awaited<ReturnType<typeof local.engine.readiness>> | undefined, readinessAtMs: number | undefined;
   const finalSlides: { slideId: string; path: string }[] = [];
@@ -147,7 +141,8 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
           await actors.selectSlide(matching[0].id);
           operations.push({ kind: 'navigate', slideId: backend.selectedId, sourceSha256: local.engine.state().revision });
         }
-        const utterance = { id: input.id, text: input.text, deliveredAtMs: input.deliveredAtMs, slideId: backend.selectedId };
+        const targetId = command ? backend.selectedId : namedInputTarget(input.text, backend.list()) ?? backend.selectedId;
+        const utterance = { id: input.id, text: input.text, deliveredAtMs: input.deliveredAtMs, slideId: targetId };
         await actors.deliverUtterance(utterance);
         routes.push({ utteranceId: input.id, slideId: utterance.slideId, retainedAtMs: receipt.retainedAtMs });
         operations.push({ kind: 'input', input: utterance, sourceSha256: local.engine.state().revision });
