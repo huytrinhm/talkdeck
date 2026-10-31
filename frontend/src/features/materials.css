@@ -1,0 +1,240 @@
+.materials {
+  min-width: 0;
+}
+.materials-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.materials-heading h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.add-sources {
+  border-radius: 999px !important;
+  white-space: nowrap;
+}
+.materials-empty {
+  font-size: 12px;
+  line-height: 1.7;
+  max-width: 300px;
+  margin-top: 22px;
+}
+.source-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.source-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid #353c47;
+  border-radius: 6px;
+  padding: 5px;
+}
+.source-row:hover {
+  background: #29323e;
+}
+.source-open {
+  background: none;
+  border: 0;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 10px;
+  padding: 8px;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+}
+.source-open > svg {
+  width: 21px;
+  height: 21px;
+  color: #a6c9f5;
+  flex: none;
+}
+.source-open > span {
+  min-width: 0;
+}
+.source-open strong {
+  display: block;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.source-open small {
+  display: block;
+  font-size: 11px;
+  color: #aab5c5;
+  margin-top: 5px;
+}
+.source-dialog {
+  width: min(600px, calc(100vw - 32px)) !important;
+}
+.source-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #191d23;
+  border-radius: 6px;
+  margin: 20px 0;
+}
+.source-tabs button {
+  flex: 1;
+  border: 0;
+  background: none;
+  color: #aab5c5;
+  padding: 9px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.source-tabs button[data-state="active"] {
+  background: #303a49;
+  color: #edf1f7;
+}
+.source-drop {
+  border: 1px dashed #59677c;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 230px;
+  padding: 28px;
+  text-align: center;
+}
+.source-drop > svg {
+  color: #a6c9f5;
+  width: 28px;
+  height: 28px;
+}
+.source-drop p {
+  margin: 16px 0 0;
+}
+.source-drop p.muted {
+  margin: 7px 0 22px;
+  font-size: 12px;
+}
+.source-text-editor {
+  display: grid;
+  gap: 10px;
+}
+.source-text-editor label {
+  font-size: 12px;
+  font-weight: 500;
+}
+.source-title {
+  height: 48px !important;
+  padding: 10px !important;
+  box-sizing: border-box;
+  line-height: 26px !important;
+}
+.source-title:focus {
+  outline-offset: -3px !important;
+}
+.source-code {
+  border: 1px solid #46546a !important;
+  background: #171e28 !important;
+  color: #e6edf6 !important;
+  border-radius: 5px;
+  padding: 14px !important;
+  font:
+    13px/1.75 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace !important;
+  min-height: 230px;
+  resize: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  width: 100%;
+  box-sizing: border-box;
+}
+.source-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+}
+.source-preview-dialog {
+  width: min(850px, calc(100vw - 32px)) !important;
+  max-height: 85dvh;
+  overflow: auto;
+}
+.source-preview-dialog > .muted {
+  font-size: 12px;
+}
+.source-readonly {
+  min-height: 0;
+  max-height: 55dvh;
+  overflow: auto;
+}
+.source-table-preview {
+  margin-top: 24px;
+}
+.source-table-preview h3 {
+  font-size: 14px;
+}
+.source-table-scroll {
+  overflow: auto;
+  max-height: 45dvh;
+  border: 1px solid #46546a;
+  border-radius: 5px;
+}
+.source-table-scroll table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font:
+    12px/1.6 ui-monospace,
+    SFMono-Regular,
+    monospace;
+}
+.source-table-scroll th,
+.source-table-scroll td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #353c47;
+  text-align: left;
+  white-space: pre-wrap;
+  min-width: 100px;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+.source-table-scroll th {
+  position: sticky;
+  top: 0;
+  background: #29323e;
+  color: #a6c9f5;
+}
+.source-table-preview > .muted {
+  font-size: 11px;
+}
+.source-image {
+  display: block;
+  max-width: 100%;
+  max-height: 55dvh;
+  margin: 20px auto;
+  object-fit: contain;
+}
+.material-reference-message {
+  font-size: 13px;
+  color: #aab5c5;
+  line-height: 1.7;
+  padding: 30px 0;
+}
+.form-error {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #ffb5ad;
+  overflow-wrap: anywhere;
+}
