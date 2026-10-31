@@ -11,7 +11,7 @@ import { runMetricsSchema, summarizeObservations } from '../src/evaluation/metri
 import { lineHash } from '../src/hashline.js';
 import { safeHeadlessError } from '../src/headless/evaluation-host.js';
 import type { createEvaluationHost as CreateEvaluationHost } from '../src/headless/evaluation-host.js';
-import { auditHeadless, buildCreationEvidence } from '../src/headless/audit.js';
+import { auditHeadless, buildCreationEvidence, type AuditHeadlessInput } from '../src/headless/audit.js';
 import { renderMarkdownReport } from '../src/headless/report.js';
 import type { models as Models } from '../src/orchestration/config.js';
 import { verifyFrozenBaseline, type FrozenBaseline } from '../src/evaluation/freeze.js';
@@ -20,8 +20,8 @@ import { HeadlessViewer } from '../src/headless/viewer.js';
 import { createHash } from 'node:crypto';
 
 const { values } = parseArgs({ options: { fixture: { type: 'string' }, out: { type: 'string' }, repetition: { type: 'string' },
-  frozen: { type: 'string' }, 'verify-only': { type: 'boolean' }, 'max-calls': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'max-output-tokens': { type: 'string' } }, strict: true });
-if (!values.fixture || !values.out) throw new Error('Usage: headless-run --fixture FILE --out NEW_ARTIFACT_DIR [--repetition N] [--max-calls N] [--frozen DIRECTORY] [--verify-only]');
+  recover: { type: 'boolean' }, frozen: { type: 'string' }, 'verify-only': { type: 'boolean' }, 'max-calls': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'max-output-tokens': { type: 'string' } }, strict: true });
+if (!values.fixture || !values.out) throw new Error('Usage: headless-run --fixture FILE --out NEW_ARTIFACT_DIR [--repetition N] [--max-calls N] [--frozen DIRECTORY] [--verify-only] [--recover]');
 const root = fileURLToPath(new URL('../', import.meta.url)), requestedFixture = resolve(values.fixture), outputContainer = resolve(values.out);
 const outputRelative = relative(join(root, '.artifacts'), outputContainer);
 if (!outputRelative || outputRelative.startsWith('..') || isAbsolute(outputRelative)) throw new Error('Run output must be inside current slide-generation/.artifacts');
@@ -33,6 +33,11 @@ const evaluatorFiles = ['src/headless/audit.ts', 'src/headless/report.ts', 'src/
 const evaluatorSha256 = lineHash(JSON.stringify(await Promise.all(evaluatorFiles.sort().map(async file => [file, lineHash(await readFile(join(root, file), 'utf8'))]))));
 const observerSha256 = lineHash(await readFile(join(root, 'src/headless/viewer.ts'), 'utf8'));
 const harness = { observerSha256, sourceSha: harnessSourceSha, dirty: harnessDirty, runnerSha256: lineHash(await readFile(fileURLToPath(import.meta.url), 'utf8')), evaluatorSha256 };
+// Recovery only reads completed evidence; it never constructs a host or calls a provider.
+if (values.recover) {
+  if (values.frozen || values['verify-only']) throw new Error('--recover cannot be combined with --frozen or --verify-only');
+  await recoverReports(outputContainer, requestedFixture);
+} else {
 let generationRoot = root, runDirectory = outputContainer, fixturePath = requestedFixture, frozen: FrozenBaseline | undefined;
 async function executionInventory(directory: string, prefix = ''): Promise<FrozenBaseline['files']> {
   const files: FrozenBaseline['files'] = [];
@@ -108,19 +113,20 @@ try {
   // Preserve paced-delivery evidence before readiness or screenshot exports can fail.
   await atomicWrite(join(recorder.directory, 'driver-result.json'), JSON.stringify({ ...run,
     errors: run.errors.map(safeHeadlessError), inputs: run.inputs.map(input => ({ ...input, ...(input.error ? { error: safeHeadlessError(input.error) } : {}) })) }, null, 2));
-  const facts = await host.finish(), evidence = host.finalEvidence();
-  const creationEvidence = buildCreationEvidence(JSON.parse(await readFile(join(recorder.directory, 'initial.json'), 'utf8')),
-    JSON.parse(await readFile(join(recorder.directory, 'commits.json'), 'utf8')), JSON.parse(await readFile(join(recorder.directory, 'operations.json'), 'utf8')));
-  const audit = auditHeadless({ fixture, run, creationEvidence, frames: evidence.frames, routes: host.routes, source: evidence.source,
-    readiness: evidence.readiness!, readinessAtMs: evidence.readinessAtMs, readinessEvidence: evidence.readinessEvidence });
-  const metrics = runMetricsSchema.parse({ schemaVersion: 1, fixtureId: fixture.id, repetition: Number(values.repetition ?? 1), pace: 1,
-    provenance: 'real-system', observations: audit.observations, inputCount: fixture.events.length,
-    retainedInputCount: run.inputs.filter(input => input.outcome === 'retained').length, termination: run.termination, ...facts,
-    recordingComplete: facts.recordingComplete && run.recordingComplete });
-  await recorder.summary('metrics.json', metrics); await recorder.summary('audit.json', audit.audit);
-  await writeFile(join(recorder.directory, 'review.md'), renderMarkdownReport({ fixture, run, observations: audit.observations,
-    audit: audit.audit, model: { calls: facts.modelCalls, inputTokens: facts.inputTokens, outputTokens: facts.outputTokens, costUsd: null,
-      servedTiers: [...new Set(host.providers.records().map(r => r.returnedTier ?? 'unknown'))] }, finalSlides: host.finalSlides, viewerGalleryPath: 'viewer-gallery.html' }));
+  let finishFailure: ReturnType<typeof errorEvidence> | undefined;
+  try { await host.finish(); } catch (error) {
+    finishFailure = errorEvidence(error); failed('finalization', error);
+    try { await atomicWrite(join(recorder.directory, 'finalization-error.json'), JSON.stringify(finishFailure, null, 2)); }
+    catch (exportError) { failed('finalization error export', exportError); }
+  }
+  const evidence = host.finalEvidence(), budget = host.providers.budget.snapshot();
+  const facts = { recordingComplete: !finishFailure && !host.errors.length && !recorder.failures.length && !host.backend.recordingFailures.length,
+    finalReady: evidence.readiness?.complete ? evidence.readiness.ready : null,
+    modelCalls: budget.calls, inputTokens: budget.observedInputTokens, outputTokens: budget.observedOutputTokens, costUsd: null };
+  const { audit, metrics } = await produceReports({ directory: recorder.directory, fixture, run,
+    evidence, routes: host.routes, facts, finalSlides: host.finalSlides,
+    servedTiers: [...new Set(host.providers.records().map(r => r.returnedTier ?? 'unknown'))],
+    failures: finishFailure ? [finishFailure] : [], writeJson: (name, data) => recorder.summary(name, data) });
   if (run.termination !== 'settled') failed('driver', `Run terminated: ${run.termination}`);
   if (!metrics.recordingComplete || !facts.finalReady) failed('final checks', `Recording complete: ${metrics.recordingComplete}; ready: ${facts.finalReady}`);
   for (const error of host.errors) failed('host', error);
@@ -138,4 +144,90 @@ try {
   try { await recorder.flush(); } catch (error) { failed('final recorder flush', error); }
 }
 
+}
+
+}
+
+function errorEvidence(error: unknown): { name: string; message: string; stack?: string; causes?: unknown[] } {
+  return { name: error instanceof Error ? error.name : typeof error, message: safeHeadlessError(error),
+    ...(error instanceof Error && error.stack ? { stack: safeHeadlessError(error.stack) } : {}),
+    ...(error instanceof AggregateError ? { causes: error.errors.map(errorEvidence) } : {}),
+    ...(error instanceof Error && error.cause ? { causes: [errorEvidence(error.cause)] } : {}) };
+}
+type Facts = Pick<ReturnType<typeof runMetricsSchema.parse>, 'recordingComplete' | 'finalReady' | 'modelCalls' | 'inputTokens' | 'outputTokens' | 'costUsd'>;
+async function produceReports(input: {
+  directory: string; fixture: AuditHeadlessInput['fixture']; run: AuditHeadlessInput['run'];
+  evidence: { source: string; frames: AuditHeadlessInput['frames']; readiness?: AuditHeadlessInput['readiness']; readinessAtMs?: number; readinessEvidence?: string };
+  routes: AuditHeadlessInput['routes']; facts: Facts; finalSlides: { slideId: string; path: string }[]; servedTiers: string[]; failures: unknown[];
+  writeJson: (name: 'metrics.json' | 'audit.json', data: unknown) => Promise<void>;
+}) {
+  const limitations: string[] = [];
+  let creationEvidence: ReturnType<typeof buildCreationEvidence> = [];
+  try {
+    creationEvidence = buildCreationEvidence(JSON.parse(await readFile(join(input.directory, 'initial.json'), 'utf8')),
+      JSON.parse(await readFile(join(input.directory, 'commits.json'), 'utf8')), JSON.parse(await readFile(join(input.directory, 'operations.json'), 'utf8')));
+  } catch (error) { limitations.push(`Creation evidence unavailable: ${safeHeadlessError(error)}`); }
+  const { evidence, facts, fixture, run } = input;
+  const audit = auditHeadless({ fixture, run, creationEvidence, frames: evidence.frames, routes: input.routes, source: evidence.source,
+    readiness: evidence.readiness ?? { complete: false, ready: false },
+    readinessAtMs: evidence.readinessAtMs, readinessEvidence: evidence.readinessEvidence });
+  if (!evidence.readiness) {
+    limitations.push('Final readiness was not measured; finalReady is unknown. No readiness or screenshot evidence was synthesized.');
+    audit.audit.finalChecks.presentationReady = { outcome: 'manual-review', reason: 'Final readiness unavailable after finalization failure', evidence: [] };
+  }
+  audit.audit.limitations.push(...limitations);
+  const metrics = runMetricsSchema.parse({ schemaVersion: 1, fixtureId: fixture.id, repetition: Number(values.repetition ?? 1), pace: 1,
+    provenance: 'real-system', observations: audit.observations, inputCount: fixture.events.length,
+    retainedInputCount: run.inputs.filter(record => record.outcome === 'retained').length, termination: run.termination, ...facts,
+    recordingComplete: facts.recordingComplete && run.recordingComplete && limitations.length === 0 });
+  const review = renderMarkdownReport({ fixture, run: { ...run, recordingComplete: metrics.recordingComplete }, observations: audit.observations,
+    audit: audit.audit, model: { calls: facts.modelCalls, inputTokens: facts.inputTokens, outputTokens: facts.outputTokens, costUsd: facts.costUsd,
+      servedTiers: input.servedTiers }, finalSlides: input.finalSlides, viewerGalleryPath: 'viewer-gallery.html' })
+    + `\nFinal readiness: ${facts.finalReady === null ? 'unknown' : facts.finalReady}.\n`
+    + (input.failures.length ? `\nFinalization/recovery errors (original evidence retained):\n\n\`\`\`json\n${JSON.stringify(input.failures, null, 2)}\n\`\`\`\n` : '')
+    + limitations.map(text => `\n- ${text}\n`).join('');
+  // A failed audit/review write must not prevent independent metrics from surviving.
+  const written = await Promise.allSettled([input.writeJson('metrics.json', metrics), input.writeJson('audit.json', audit.audit),
+    writeFile(join(input.directory, 'review.md'), review, { flag: 'wx' })]);
+  const errors = written.flatMap(result => result.status === 'rejected' ? [result.reason] : []);
+  if (errors.length) throw new AggregateError(errors, 'Partial run report export failed');
+  return { audit, metrics };
+}
+async function recoverReports(directory: string, fixtureFile: string) {
+  const readJson = async (name: string) => JSON.parse(await readFile(join(directory, name), 'utf8'));
+  for (const name of ['metrics.json', 'audit.json', 'review.md', 'recovery.json']) {
+    try { await lstat(join(directory, name)); } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue; throw error;
+    }
+    throw new Error(`Recovery refuses to replace existing ${name}; retain the original report`);
+  }
+  const originalManifest = await readJson('manifest.json');
+  if (originalManifest.fixtureSha256 !== lineHash(await readFile(fixtureFile, 'utf8'))) throw new Error('Recovery fixture differs from recorded fixture');
+  const fixture = await loadFixture(fixtureFile), run = await readJson('driver-result.json') as AuditHeadlessInput['run'];
+  // Require the original runner to have finished cleanup; do not race an active recorder.
+  const originalFailure = await readJson('failure.json');
+  const optional = async (name: string) => { try { return await readJson(name); } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined; throw error;
+  } };
+  const budget = await optional('provider-statistics.json'), readiness = await optional('final/readiness.json');
+  const source = await readFile(join(directory, 'final/deck.jsx'), 'utf8');
+  const frames: AuditHeadlessInput['frames'][number][] = [];
+  for (const name of await readdir(join(directory, 'viewer'))) if (name.endsWith('.json')) {
+    const value = await readJson(`viewer/${name}`); if ('content' in value && 'evidence' in value && 'atMs' in value) frames.push(value);
+  }
+  frames.sort((a, b) => a.atMs - b.atMs);
+  const finalSlides = (await readdir(join(directory, 'final'))).filter(name => /^slide-.+\.jpg$/.test(name))
+    .map(name => ({ slideId: name.slice(6, -4), path: `final/${name}` }));
+  const modelRecords = await Promise.all((await readdir(join(directory, 'model'))).filter(name => name.endsWith('.json')).map(name => readJson(`model/${name}`)));
+  const facts: Facts = { recordingComplete: false, finalReady: readiness?.complete ? readiness.ready : null,
+    modelCalls: budget?.calls ?? null, inputTokens: budget?.observedInputTokens ?? null, outputTokens: budget?.observedOutputTokens ?? null, costUsd: null };
+  const recovery = { recoveredAt: new Date().toISOString(), harness, originalManifestSha256: lineHash(await readFile(join(directory, 'manifest.json'), 'utf8')),
+    mode: 'offline-evidence-only', paidCalls: 0, originalFailure };
+  await writeFile(join(directory, 'recovery.json'), JSON.stringify(recovery, null, 2), { flag: 'wx' });
+  await produceReports({ directory, fixture, run, evidence: { source, frames, readiness, readinessAtMs: readiness?.atMs,
+    readinessEvidence: readiness ? 'final/readiness.json' : undefined }, routes: await readJson('routes.json'), facts, finalSlides,
+    servedTiers: [...new Set(modelRecords.map(record => String(record.returnedTier ?? 'unknown')))], failures: [originalFailure],
+    writeJson: (name, data) => writeFile(join(directory, name), JSON.stringify(data, null, 2), { flag: 'wx' }) });
+  console.log(JSON.stringify({ event: 'recovered-failed-run', directory, ...facts, paidCalls: 0 }));
+  process.exitCode = 1; // Producing a report never turns this failed trial into a successful run.
 }
