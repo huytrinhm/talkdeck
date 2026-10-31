@@ -86,3 +86,9 @@ retained canonical evidence is preserved. Runtime source/transaction validation
 continues to use the shared backend. Public Site version2 contains the new UI.
 The production build passed; focused product contracts cover View on reopening
 and restart, absence of persisted mode, and refusal of removed API capabilities.
+
+## Toolbar and navigation update
+
+Moved usage and View/Talk/Practice beside Present in the top bar. Removed the extra mode-toolbar panel and generation pause/resume button. Selected slides scroll into view in the filmstrip. A focused product test confirms Add selects the newly created canonical slide and publishes that same identity.
+
+Publication now reuses browser measurements for exact artifact/dependency matches, without changing authoring/review validation. Four real-Chromium host session tests passed, including dependency-only invalidation and failed-check retry. Product navigation regression passed; Previous plus Next took 95 ms through the local API. An isolated Chromium UI run confirmed Add selected and rendered slide 2, toolbar placement, no page errors, and Previous took 120 ms locally. These timings exclude the public Site tunnel. No paid model calls were used. Client build and both package type checks passed. Screenshot: `.artifacts/navigation-toolbar.png`.

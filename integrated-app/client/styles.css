@@ -10,3 +10,7 @@
 .slide-stage{container-type:size}.slide-stage .canonical-viewer{width:min(100cqw,calc(100cqh * 16 / 9));height:auto;max-height:none}.input-mode-select{font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:7px;color:var(--muted-foreground)}
 
 .explicit-edit-toggle{margin-top:10px;font-size:10px}.rehearsal-evidence{margin:0 0 18px;border-left:2px solid #777;padding:5px 14px;color:var(--muted-foreground)}.rehearsal-evidence small{font-size:10px}.rehearsal-evidence p{font-size:12px;margin:8px 0 0}.request-change select{font-size:11px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:5px;max-width:100%}
+
+/* Workspace controls share the top bar; the slide stage has no extra toolbar panel. */
+.workspace-top{height:auto;min-height:53px;flex-wrap:wrap;padding-top:7px;padding-bottom:7px}.workspace-top .usage{margin:0;font-size:10px;white-space:nowrap}.top-actions{flex-wrap:wrap;justify-content:flex-end}.top-actions .mode-tabs{border-right:1px solid var(--border);padding-right:8px;margin-right:3px}.mode-actions{margin-left:0}.mode-actions:empty{display:none}.sidebar-input:empty{display:none}.sidebar-input:not(:empty){padding:12px 12px 0}.sidebar-input select{width:100%}
+@media(max-width:760px){.workspace-top .usage{font-size:9px}.top-actions{width:100%;margin-left:0;justify-content:flex-start}.top-actions>button:nth-child(n){display:inline-flex;font-size:10px;gap:6px}.mode-actions{flex-wrap:wrap}}

@@ -140,3 +140,29 @@ test('practice seals once, keeps narration private, prepares exact diffs and acc
     assert.equal(reloaded.body.proposals[0].status, 'accepted', 'acceptance receipt remains available for the current review');
   } finally { await host.close(); await rm(f.directory, { recursive: true, force: true }); }
 });
+
+test('Add slide selects and publishes the created slide; subsequent navigation reuses browser evidence', async () => {
+  const f = await setup();
+  try {
+    const p = await project(f.host, 'Navigation');
+    const before = await state(f.host, p);
+    const added = await command(f.host, p, { type: 'add' });
+    assert.equal(added.status, 200, JSON.stringify(added.body));
+    const snapshot = added.body.snapshot as Snapshot;
+    assert.equal(snapshot.slides.length, before.slides.length + 1);
+    assert.equal(snapshot.selectedId, snapshot.slides.at(-1)!.id);
+    const view = await request(f.host, `${p.base}/viewer`, undefined, p.session);
+    assert.equal(view.body.message.slideId, snapshot.selectedId, 'new slide is the actual viewer publication');
+    const owner = await f.host.store.open(p.id);
+    const inspect = owner.runtime.local.browser.inspect.bind(owner.runtime.local.browser);
+    let checks = 0;
+    owner.runtime.local.browser.inspect = async artifact => { checks++; return inspect(artifact); };
+    const start = performance.now();
+    await command(f.host, p, { type: 'previous' });
+    assert.equal((await state(f.host, p)).selectedId, before.selectedId);
+    await command(f.host, p, { type: 'next' });
+    assert.equal((await state(f.host, p)).selectedId, snapshot.selectedId);
+    assert.equal(checks, 0, 'navigation must not reopen Chromium for the unchanged deck');
+    console.log(`Unchanged previous + next: ${Math.round(performance.now() - start)}ms (local API)`);
+  } finally { await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
+});
