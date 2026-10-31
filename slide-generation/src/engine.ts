@@ -1,3 +1,4 @@
+import { prepareCandidate } from './source/candidate.js';
 import { parseAndValidate } from './schema.js';
 import { randomUUID } from 'node:crypto';
 import { Trace } from './telemetry/trace.js';
@@ -7,7 +8,6 @@ import { SnapshotStore } from './hashline.js';
 import { nodeById, nodes, parseSource, textContent } from './parser.js';
 import { introducedErrors, ready, UnavailableValidation } from './validation.js';
 
-const protectedProps = ['version', 'born', 'layoutChanges', 'nextId', 'provenance'];
 export class SlideEngine {
   readonly snapshots = new SnapshotStore();
   private document: DeckDocument;
@@ -23,13 +23,14 @@ export class SlideEngine {
     return read;
   }
   readSpeakerNotes(slideId: string) {
-    const slide = nodeById(parseSource(this.document.source), slideId);
-    if (slide.tag !== 'Slide') throw new SourceError('not_slide', 'Expected a slide ID', slideId);
+    const root = parseSource(this.document.source);
+    const slide = [...nodes(root)].find(n => n.tag === 'ArchivedSlide' && n.props.slideId === slideId) ?? nodeById(root, slideId);
+    if (!['Slide', 'ArchivedSlide'].includes(slide.tag)) throw new SourceError('not_slide', 'Expected a slide ID', slideId);
     const children = slide.children.filter(child => typeof child !== 'string');
     const notes = children.find(child => child.tag === 'SpeakerNotes');
     const transcript = children.find(child => child.tag === 'Transcript');
     return {
-      slideId, version: slide.props.version,
+      slideId, version: slide.props.version, archived: slide.tag === 'ArchivedSlide',
       notes: notes ? textContent(notes) : '',
       transcript: transcript ? this.document.source.slice(transcript.start, transcript.end) : '',
     };
@@ -56,25 +57,8 @@ export class SlideEngine {
   private async transact(input: unknown) {
     const transaction = transactionSchema.parse(input);
     const current = this.document.source;
-    const candidate = this.snapshots.stage(current, transaction.edits);
-    const oldNodes = new Map([...nodes(parseSource(current))].filter(node => node.id).map(node => [node.id!, node]));
-    const newNodes = [...nodes(parseSource(candidate))];
-    for (const node of newNodes) {
-      const previous = node.id ? oldNodes.get(node.id) : undefined;
-      if (node.id && !previous) throw new SourceError('system_field', 'New nodes must omit system-assigned IDs', node.id);
-      if (previous && previous.tag !== node.tag) throw new SourceError('system_field', 'Cannot reuse an existing ID for a different tag', node.id);
-      for (const key of protectedProps) if (JSON.stringify(previous?.props[key]) !== JSON.stringify(node.props[key])) throw new SourceError('system_field', `Cannot edit system-managed ${key}`, node.id);
-    }
-    // Archive migration and ID allocation are deliberately not approximated. Until
-    // implemented, refuse operations needing them even with an injected validator.
-    if (newNodes.some(node => !node.id)) throw new SourceError('not_implemented', 'New-node ID allocation is not wired yet');
-    for (const previous of oldNodes.values()) {
-      if (['Transcript', 'Archive'].includes(previous.tag)) {
-        const node = newNodes.find(node => node.id === previous.id);
-        if (!node || candidate.slice(node.start, node.end) !== current.slice(previous.start, previous.end)) throw new SourceError('system_field', 'Raw transcripts and archives are system-owned', previous.id);
-      }
-      if (previous.tag === 'Slide' && !newNodes.some(node => node.id === previous.id)) throw new SourceError('not_implemented', 'Slide deletion requires the archival adapter', previous.id);
-    }
+    const staged = this.snapshots.stage(current, transaction.edits);
+    const candidate = prepareCandidate(current, staged).source;
     parseAndValidate(candidate);
     const baseline = await this.validation.check(current);
     const report = await this.validation.check(candidate);

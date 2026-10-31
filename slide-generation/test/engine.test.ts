@@ -20,10 +20,10 @@ test('system versions and raw transcripts cannot be modified', async () => {
   await assert.rejects(engine.edit({ edits: [{ snapshotId: read.snapshotId, nodeId: 'n10', startLine: 1, hashes: [read.lines[0].hash], op: 'replace', text: read.lines[0].text.replace('version={1}', 'version={2}') }] }), /system-managed version/);
   await assert.rejects(engine.edit(change(engine, 'n11', '<Transcript id="n11">Forged</Transcript>')), /system-owned/);
 });
-test('forged IDs and omitted IDs cannot pass the unfinished allocation boundary', async () => {
+test('forged IDs refuse and new-node candidates still require real validation', async () => {
   const engine = new SlideEngine(createDeck());
   await assert.rejects(engine.edit(change(engine, 'n2', '<Brief id="n2"><Text id="t99">New</Text></Brief>')), /omit system-assigned/);
-  await assert.rejects(engine.edit(change(engine, 'n2', '<Brief id="n2"><Text>New</Text></Brief>')), /ID allocation/);
+  await assert.rejects(engine.edit(change(engine, 'n10', engine.readSource('n10').lines.map(l => l.text).join('\n').replace('</Slide>', '<Text>New</Text></Slide>'))), /validation stages/);
 });
 test('browser crash leaves source unchanged and releases transaction queue', async () => {
   const validation: ValidationPipeline = { async check() { throw new Error('browser crashed'); } };

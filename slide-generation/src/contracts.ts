@@ -9,6 +9,9 @@ export interface SourceNode {
   children: (SourceNode | string)[];
   start: number;
   end: number;
+  openingEnd: number;
+  closingStart?: number;
+  attributes: Record<string, { start: number; end: number }>;
 }
 export interface DeckDocument { schemaVersion: 1; source: string }
 export interface Finding {

@@ -256,3 +256,16 @@ root replacements cannot smuggle siblings outside the selected node. Target the 
 Tests include inline siblings, multiline attributes, Unicode, and 40 deterministic disjoint-edit comparisons. Snapshots
 are engine-local, bounded, and not persistent; restart/eviction requires a fresh read. Transport idempotency and durable
 ownership/evidence lifecycle are still P3/P7 work. No edits commit yet.
+
+## P3 candidate transformations
+
+`src/source/` now provides formatting-preserving attribute/child surgery, monotonic ID allocation using canonical
+Deck.nextId, strict evidence/system ownership, deletion archival, and separate version advancement. Trusted ingestion
+candidates retain exact utterance strings (including whitespace, CR, braces, entities and Unicode), initialize notes
+without paraphrasing, append corrections, and reject conflicting duplicate utterance IDs. Deleting a slide archives its
+original notes/transcript exactly once with their IDs and source-slide association. Archived notes can be read.
+
+The engine now prepares these candidates, including new IDs, before structural and external validation. It still
+unconditionally refuses final publication: source normalization/expansion, mandatory browser checks, and durable commit
+are not connected. Pure candidate tests are not successful mutation or ingestion API claims. Ingestion is not exposed
+as an agent editing tool. Existing source uses lazy high-water migration on candidate creation; no whole-deck formatting.

@@ -48,6 +48,12 @@ function validateEntities(raw: string) {
     i += match[0].length - 1;
   }
 }
+function decodeEntities(raw: string): string {
+  validateEntities(raw);
+  const named: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+  return raw.replace(/&([^;]+);/g, (_, key: string) => key.startsWith('#')
+    ? String.fromCodePoint(parseInt(key.slice(key.startsWith('#x') ? 2 : 1), key.startsWith('#x') ? 16 : 10)) : named[key]);
+}
 export function parseSource(source: string): SourceNode {
   if (source.length > 2_000_000) throw new SourceError('source_limit', 'Source exceeds 2 MB');
   let ast: Ast;
@@ -66,21 +72,23 @@ export function parseSource(source: string): SourceNode {
     try {
     if (opening.name.type !== 'JSXIdentifier') fail(opening.name);
     const props: Record<string, Literal> = Object.create(null);
+    const attributes: SourceNode['attributes'] = Object.create(null);
     for (const attr of opening.attributes) {
       if (attr.type !== 'JSXAttribute' || attr.name.type !== 'JSXIdentifier' || !attr.value) fail(attr);
       const name = attr.name.name;
       if (forbiddenKeys.has(name) || Object.hasOwn(props, name)) fail(attr, 'duplicate or invalid attribute');
-      if (attr.value.type === 'Literal') validateEntities(source.slice(attr.value.start + 1, attr.value.end - 1));
-      props[name] = literal(attr.value.type === 'JSXExpressionContainer' ? attr.value.expression : attr.value);
+      attributes[name] = { start: attr.start, end: attr.end };
+      props[name] = attr.value.type === 'Literal' ? decodeEntities(source.slice(attr.value.start + 1, attr.value.end - 1)) : literal(attr.value.expression);
     }
     if (props.id !== undefined && (typeof props.id !== 'string' || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(props.id))) fail(opening, 'invalid authored id');
     const id = props.id as string | undefined;
     if (id && ids.has(id)) throw new SourceError('duplicate_id', `Duplicate ID ${id}`, id);
     if (id) ids.add(id);
     return {
-      tag: opening.name.name, id, props, start: node.start, end: node.end,
+      tag: opening.name.name, id, props, start: node.start, end: node.end, attributes,
+      openingEnd: opening.end, closingStart: node.closingElement?.start,
       children: node.children.map((child: Ast) => {
-        if (child.type === 'JSXText') { validateEntities(source.slice(child.start, child.end)); return child.value; }
+        if (child.type === 'JSXText') return decodeEntities(source.slice(child.start, child.end));
         return walk(child, depth + 1);
       }),
     };
