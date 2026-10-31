@@ -269,3 +269,16 @@ The engine now prepares these candidates, including new IDs, before structural a
 unconditionally refuses final publication: source normalization/expansion, mandatory browser checks, and durable commit
 are not connected. Pure candidate tests are not successful mutation or ingestion API claims. Ingestion is not exposed
 as an agent editing tool. Existing source uses lazy high-water migration on candidate creation; no whole-deck formatting.
+
+## P3 storage primitives
+
+`FileDeckRepository` stores only the versioned JSON source envelope using fsynced temporary files, atomic rename,
+and directory sync. CAS rejects stale revisions and serializes writers across repository objects for the same path in
+one process. Pending temporary files are never loaded as committed source. A directory-sync error after rename is a
+`DurabilityError` with `replacementOccurred=true`: callers must reload, not falsely claim rollback. Multi-process
+writers and path aliases/symlinks are unsupported; this is not a distributed repository.
+
+`EvidenceInbox` durably retains idempotent input before expensive work and preserves receipt order, including tied or
+out-of-order delivery timestamps. It survives restart and will clear an event only when the supplied committed source
+contains exactly that evidence. These storage primitives are tested on the actual filesystem but not wired to engine
+publication/host ingestion yet. Their existence does not enable the commit or live-host capability.
