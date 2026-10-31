@@ -99,3 +99,48 @@ test('deleting the selected slide publishes the surviving neighbor at the commit
     assert.doesNotMatch(sent.at(-1)!.html, /Keep this original source/);
   } finally { await backend.close(); await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
 });
+
+test('navigation reuses exact browser evidence but refreshes changed dependencies and never caches failures', async () => {
+  await mkdir('.artifacts/tests', { recursive: true });
+  const directory = await mkdtemp('.artifacts/tests/navigation-cache-');
+  const runtime = await createLocalRuntime({ directory: resolve(directory) });
+  const inspect = runtime.browser.inspect.bind(runtime.browser);
+  const render = runtime.renderer.render.bind(runtime.renderer);
+  let inspections = 0, dependencyVersion = 'one', fail = false;
+  runtime.browser.inspect = async artifact => {
+    inspections++;
+    if (fail) throw new Error('Fixture browser unavailable');
+    return inspect(artifact);
+  };
+  runtime.renderer.render = async (source, slideId) => {
+    const artifact = await render(source, slideId);
+    artifact.dependencies.push({ kind: 'renderer', id: 'fixture', version: dependencyVersion, sha256: dependencyVersion });
+    return artifact;
+  };
+  const sent: PublicationMessage[] = [];
+  const session = new GenerationSession(runtime.engine, runtime.tools, runtime.renderer, runtime.browser,
+    { channel: 'navigation_cache_channel', slideId: 'n10', send: m => { sent.push(m); }, record() {} });
+  try {
+    await session.selectSlide('n10');
+    const baseline = inspections;
+    await session.selectSlide('n10');
+    await session.selectSlide('n10', 'presentation');
+    assert.equal(inspections, baseline, 'unchanged navigation and mode reuse measured artifacts');
+    assert.equal(sent.length, 3);
+    dependencyVersion = 'two';
+    await session.selectSlide('n10');
+    assert.ok(inspections > baseline, 'dependency-only changes remeasure unchanged source');
+    const refreshed = inspections;
+    await runtime.browser.check(runtime.engine.readDocument().source);
+    assert.ok(inspections > refreshed, 'normal authoring checks remain fresh');
+    dependencyVersion = 'failure'; fail = true;
+    const published = sent.length;
+    await session.selectSlide('n10');
+    assert.equal(sent.length, published, 'failed validation cannot publish');
+    const failedInspections = inspections;
+    fail = false;
+    await session.selectSlide('n10');
+    assert.ok(inspections > failedInspections, 'failure is retried, never cached as success');
+    assert.equal(sent.length, published + 1);
+  } finally { await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
+});

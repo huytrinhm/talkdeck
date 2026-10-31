@@ -103,7 +103,7 @@ export class GenerationSession {
       if (committed && event.reason === 'input') return;
       try {
         const artifact = await this.renderer.render(event.document.source, slideId);
-        const report = await this.browser.check(event.document.source);
+        const report = await this.browser.check(event.document.source, { reusePublicationChecks: true });
         if (!report.complete) throw new SourceError('validation_unavailable', 'Publication checks did not complete');
         const presentationReady = ready(report);
         if (mode === 'presentation' && !presentationReady) throw new SourceError('presentation_blocked', 'Complete deck is not ready for presentation');

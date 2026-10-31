@@ -157,6 +157,12 @@ actual JPEG dimensions, composited contrast, font/image failures, timeouts/crash
 reparenting and build changes. The exact output is `.artifacts/environment/final-implementation-suite.tap`; use current results rather
 than treating this count as permanent. Artifacts live under ignored `.artifacts/`.
 
+Publication checks can reuse browser evidence for exactly matching rendered artifacts within a bounded,
+in-memory cache owned by the browser pipeline. Every lookup resolves the current render dependencies;
+HTML, CSS, source, fonts, asset/dependency digests, pending IDs, artifact key and check-policy versions
+participate in the key. Failed inspections are evicted. Normal authoring and practice validation stay
+fresh; only publication opts into reuse. This avoids remeasuring the entire unchanged deck on navigation.
+
 `GenerationSession` remains a publication/ack adapter. The actual `SlideRuntime` is under `src/orchestration/` and accepts
 `GenerationBackend`; `JsxBackend` binds its immutable inference contexts and role-scoped tools to the canonical engine.
 `createEvaluationHost` connects that scheduler, recorded providers, durable input routing and `HeadlessRecordingSession`.
