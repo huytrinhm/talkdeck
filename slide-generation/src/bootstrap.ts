@@ -1,8 +1,9 @@
+import { starterComposition } from './starter.js';
 import type { DeckDocument } from './contracts.js';
 
 /** Source-valid seed. Rendering readiness still requires the real validation pipeline. */
 export function createDeck(): DeckDocument {
-  return { schemaVersion: 1, source: `<Deck id="n1" version={1} nextId={14}>
+  return { schemaVersion: 1, source: `<Deck id="n1" version={1} nextId={16}>
   <Brief id="n2" />
   <Theme id="n3">
     <Token id="n4" name="--color-bg" value="#fafafa" />
@@ -15,7 +16,7 @@ export function createDeck(): DeckDocument {
   <Slide id="n10" version={1} freeForm={{ reason: 'Initial composition' }}>
     <Transcript id="n11" />
     <SpeakerNotes id="n12" />
-
+${starterComposition({ body: "n14", rule: "n15" })}
   </Slide>
   <Archive id="n13" />
 </Deck>` };

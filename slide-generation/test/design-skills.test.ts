@@ -1,3 +1,4 @@
+import { starterComposition } from '../src/starter.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
@@ -44,7 +45,8 @@ test("new authoring examples use actual native frame, motif, shape and slot synt
   assert(definition && instance);
   const inline = (tag: string) => authoring.match(new RegExp("`(<" + tag + "[^`]+/>)`"))![1];
   const base = createDeck().source.replace("</Theme>", `${inline("Frame")}${inline("Motif")}</Theme>`);
-  const defined = base.replace('<Library id="n9" />', `<Library id="n9">${definition}</Library>`)
+  // A registered Layout replaces the free-form starter, rather than mixing both.
+  const defined = base.replace(starterComposition({ body: 'n14', rule: 'n15' }), '').replace('<Library id="n9" />', `<Library id="n9">${definition}</Library>`)
     .replace('<SpeakerNotes id="n12" />', `<SpeakerNotes id="n12" />${instance}`);
   assert.equal(expandSource(allocateIds(defined).source).library[0].name, "Headline");
   const decorated = base.replace('<SpeakerNotes id="n12" />', `<SpeakerNotes id="n12" />${inline("Shape")}<Text>Exact content</Text>`);
