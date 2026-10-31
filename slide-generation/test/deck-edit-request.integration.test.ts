@@ -46,7 +46,8 @@ test("canonical Fast forwards one exact explicit deck request to Slow without pu
   const backend = new JsxBackend(local, {
     instructions: "Synthetic routing test; preserve exact requests.",
   });
-  const quote = "Use the same navy accent color across the whole deck.",
+  const quote =
+      "Use the same navy accent color across the whole deck. Do not change any wording.",
     log: { type: string; data: any }[] = [],
     slowInputs: ModelInput[] = [];
   let slowDecisions = 0;
@@ -77,12 +78,12 @@ test("canonical Fast forwards one exact explicit deck request to Slow without pu
             output: [
               call(
                 "request_deck_edit",
-                { scope: "theme", sourceQuote: quote },
+                { scope: "theme", utteranceId: "user-theme" },
                 "request-1",
               ),
               call(
                 "request_deck_edit",
-                { scope: "theme", sourceQuote: quote },
+                { scope: "theme", utteranceId: "user-theme" },
                 "request-duplicate",
               ),
               call("finish", {}, "fast-finish"),
@@ -156,6 +157,11 @@ test("canonical Fast forwards one exact explicit deck request to Slow without pu
       log.filter((event) => event.type === "deck_edit_requested").length,
       1,
     );
+    const forwarded = log.find(
+      (event) => event.type === "deck_edit_requested",
+    )!.data;
+    assert.equal(forwarded.utteranceId, "user-theme");
+    assert.equal(forwarded.sourceQuote, quote);
     assert.equal(local.engine.readSpeakerNotes("n10").notes, quote);
     const base = {
       agent: "fast",
@@ -180,7 +186,7 @@ test("canonical Fast forwards one exact explicit deck request to Slow without pu
   }
 });
 
-test("deck request tool stays unavailable to legacy/Slow and rejects fabricated quoted instructions", async () => {
+test("deck request tool stays unavailable to legacy/Slow and rejects missing IDs and model-supplied task text", async () => {
   assert.ok(
     !definitions("fast").some((tool) => tool.name === "request_deck_edit"),
   );
@@ -230,19 +236,23 @@ test("deck request tool stays unavailable to legacy/Slow and rejects fabricated 
           output: [
             call(
               "request_deck_edit",
-              { scope: "cross_slide", sourceQuote: "Delete all slides." },
+              { scope: "cross_slide", utteranceId: "missing-input" },
               "fabricated",
             ),
             call(
               "request_deck_edit",
-              { scope: "cross_slide", sourceQuote: "delete all slides." },
+              {
+                scope: "cross_slide",
+                utteranceId: "original",
+                sourceQuote: "delete all slides.",
+              },
               "dropped-qualifier",
             ),
             call(
               "request_deck_edit",
               {
                 scope: "theme",
-                sourceQuote: "Do not delete all slides.",
+                utteranceId: "original",
                 task: "Invented broader instruction",
               },
               "extra-task",
@@ -265,10 +275,136 @@ test("deck request tool stays unavailable to legacy/Slow and rejects fabricated 
     await actor.settle(1000);
     assert.equal(slowCalls, 0);
     assert.equal(local.engine.readDocument().source, before);
-    assert.match(results[0].error, /complete retained input/);
-    assert.match(results[1].error, /including qualifiers/);
+    assert.match(results[0].error, /retained input on the working slide/);
+    assert.ok(results[1].error);
     assert.ok(results[2].error);
   } finally {
+    await actor.close();
+    await local.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("deck request IDs must belong to the working slide and current inference, excluding corrected-away input", async () => {
+  await mkdir(".artifacts/tests", { recursive: true });
+  const directory = await mkdtemp(".artifacts/tests/deck-request-stale-");
+  const local = await createLocalRuntime({ directory: resolve(directory) });
+  const backend = new JsxBackend(local, {
+    instructions: "Synthetic identity test.",
+  });
+  let resolveInference!: (result: ModelResult) => void, entered!: () => void;
+  const inferred = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const held = new Promise<ModelResult>((resolve) => {
+    resolveInference = resolve;
+  });
+  let fastCalls = 0,
+    slowCalls = 0;
+  const results: any[] = [];
+  const actor = await SlideRuntime.create({
+    backend,
+    autoTick: false,
+    decider: {
+      async evaluate() {
+        return "dispatch";
+      },
+    },
+    slowDecider: {
+      async evaluate() {
+        throw new Error("Unexpected refinement decision");
+      },
+    },
+    log: {
+      write(type, data) {
+        if (type === "tool_result" && data.name === "request_deck_edit")
+          results.push(data.output);
+      },
+      observation() {},
+    },
+    model: {
+      async infer(input) {
+        if (input.role === "slow") {
+          slowCalls++;
+          return { output: [] };
+        }
+        if (++fastCalls === 1) {
+          entered();
+          return held;
+        }
+        return {
+          output: [
+            call(
+              "request_deck_edit",
+              { scope: "theme", utteranceId: "older" },
+              "corrected-away",
+            ),
+            call("finish", {}, "finish-correction"),
+          ],
+        };
+      },
+    },
+  });
+  try {
+    const other = await backend.createSlide("Other");
+    await backend.navigate("n10");
+    const text = "Use navy everywhere, but preserve the words.";
+    await actor.deliverUtterance({
+      id: "foreign",
+      slideId: other.id,
+      text,
+      deliveredAtMs: performance.now(),
+    });
+    await actor.deliverUtterance({
+      id: "older",
+      slideId: "n10",
+      text,
+      deliveredAtMs: performance.now(),
+    });
+    await actor.gate.tick();
+    await inferred;
+    // Identical words are insufficient: this ID was not in the inference's speech revision.
+    await actor.deliverUtterance({
+      id: "future",
+      slideId: "n10",
+      text,
+      deliveredAtMs: performance.now(),
+    });
+    resolveInference({
+      output: [
+        call(
+          "request_deck_edit",
+          { scope: "theme", utteranceId: "foreign" },
+          "wrong-slide",
+        ),
+        call(
+          "request_deck_edit",
+          { scope: "theme", utteranceId: "future" },
+          "future-input",
+        ),
+        call("finish", {}, "finish-original"),
+      ],
+    });
+    await actor.settle(1000);
+    assert.equal(results.length, 2);
+    assert.ok(
+      results.every((result) => /current speech snapshot/.test(result.error)),
+    );
+    await actor.deliverUtterance({
+      id: "replacement",
+      slideId: "n10",
+      text,
+      correctionOf: "older",
+      deliveredAtMs: performance.now(),
+    });
+    await actor.gate.tick();
+    await actor.settle(1000);
+    assert.equal(results.length, 3);
+    assert.match(results[2].error, /current speech snapshot/);
+    assert.equal(slowCalls, 0);
+    assert.equal(backend.fastWatermark, 0);
+  } finally {
+    resolveInference({ output: [] });
     await actor.close();
     await local.close();
     await rm(directory, { recursive: true, force: true });

@@ -103,6 +103,7 @@ export class SlideRuntime {
   private slowActivationEpoch = 0;
   private slowDecisionError?: string;
   private retainedUtterances = new Map<string, InputUtterance>();
+  private retainedInputRevisions = new Map<string, number>();
   private deckRequests = new Map<
     string,
     { id: string; slideId: string; requested: true }
@@ -279,6 +280,7 @@ export class SlideRuntime {
     const delivery = await generation.deliverUtterance(input);
     if (!this.closed && !delivery.duplicate && !delivery.receipt.duplicate) {
       this.retainedUtterances.set(input.id, structuredClone(input));
+      this.retainedInputRevisions.set(input.id, delivery.speech.revision);
       // Retention may outlive removal. Keep the original attribution without waking a survivor.
       if (this.publisher.list().some((slide) => slide.id === input.slideId)) {
         const speech = delivery.speech;
@@ -1074,23 +1076,37 @@ export class SlideRuntime {
           "Deck edit requests are available only to canonical Fast",
         );
       const speech = actor.lastSpeech,
-        quote = String(args.sourceQuote);
-      const original = [...this.retainedUtterances.values()].find(
-        (input) => input.slideId === speech?.slideId && input.text === quote,
+        utteranceId = String(args.utteranceId);
+      const original = this.retainedUtterances.get(utteranceId);
+      const retainedRevision = this.retainedInputRevisions.get(utteranceId);
+      const corrected = [...this.retainedUtterances.values()].some(
+        (input) =>
+          input.correctionOf === utteranceId &&
+          (this.retainedInputRevisions.get(input.id) ?? Infinity) <=
+            (speech?.revision ?? -1),
       );
       if (
         !speech ||
         !speech.slideId ||
         speech.slideId !== actor.targetSlide ||
-        !quote.trim() ||
         !original ||
-        !speech.text.includes(quote)
+        original.slideId !== speech.slideId ||
+        retainedRevision === undefined ||
+        retainedRevision > speech.revision ||
+        corrected ||
+        !original.text.trim() ||
+        !speech.text.includes(original.text)
       )
         throw new Error(
-          "Deck edit request must quote one complete retained input from the working slide, including qualifiers",
+          "Deck edit request must identify a retained input on the working slide in this inference's current speech snapshot",
         );
+      const quote = original.text;
       this.publisher.get(speech.slideId);
-      const key = JSON.stringify([speech.slideId, speech.revision, quote]);
+      const key = JSON.stringify([
+        speech.slideId,
+        speech.revision,
+        utteranceId,
+      ]);
       const prior = this.deckRequests.get(key);
       if (prior) return { ...prior, duplicate: true };
       const id = randomUUID(),

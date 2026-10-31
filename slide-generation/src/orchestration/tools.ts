@@ -133,10 +133,7 @@ export function parseTool(
 const deckRequestSchema = z
   .object({
     scope: z.enum(["cross_slide", "theme", "library"]),
-    sourceQuote: z
-      .string()
-      .max(16_000)
-      .refine((value) => value.trim().length > 0, "Quote must not be blank"),
+    utteranceId: z.string().min(1).max(4096),
   })
   .strict();
 
@@ -169,7 +166,7 @@ export function lifecycleDefinitions(role: Role): FunctionTool[] {
       name: "request_deck_edit",
       strict: true,
       description:
-        "Forward an explicit user request requiring cross-slide, theme, or library work to Slow immediately. Copy one COMPLETE original user input from your current retained speech into sourceQuote, including every qualifier or negation. A substring or paraphrase is rejected. Do not invent, rewrite, or broaden the request; do not use this for autonomous refinement. No Fast publication is required. Repeated identical requests from this speech revision queue only once. Fast's source-edit scope remains unchanged.",
+        "Forward an explicit user request requiring cross-slide, theme, or library work to Slow immediately. Copy its exact Prompt utteranceId from notes.transcript in your current context (or read_speaker_notes). The runtime forwards the complete stored input, including qualifiers; supply no quote, paraphrase, or task text. The ID must belong to your working slide and current speech snapshot. Do not broaden the request; do not use this for autonomous refinement. No Fast publication is required. Repeated identical requests from this speech revision queue only once. Fast's source-edit scope remains unchanged.",
       parameters: z.toJSONSchema(deckRequestSchema),
     });
   return tools;
