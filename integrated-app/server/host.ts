@@ -477,6 +477,13 @@ export class ProjectOwner {
               "Slides can be added in View or Talk",
             );
           await this.runtime.backend.createSlide();
+        } else if (command.type === "delete") {
+          if (!["view", "talk"].includes(this.data.mode))
+            throw new ProductError("mode", "Slides can be deleted in View or Talk");
+          if (!command.slideId) throw new ProductError("slide_required", "Choose a slide to delete");
+          if (this.runtime.backend.list().length <= 1)
+            throw new ProductError("last_slide", "Keep at least one slide in the deck");
+          result = await this.runtime.backend.deleteSlide(command.slideId);
         } else if (command.type === "pause") this.runtime.actors.pause();
         else if (command.type === "resume") {
           if (this.data.mode !== "talk" && this.data.mode !== "practice")

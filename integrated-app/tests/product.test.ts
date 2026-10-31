@@ -189,3 +189,41 @@ test('prepared navigation contains canonical public renderer output and build or
     assert.equal(next.body.slides[0].readiness.ready, true);
   } finally { await f.host.close(); await rm(f.directory, {recursive:true,force:true}); }
 });
+
+test('explicit slide deletion selects a neighbor, retains evidence, deduplicates and survives reload', async () => {
+  const f = await setup(); let host = f.host;
+  try {
+    const p = await project(host, 'Delete slides');
+    const original = (await state(host, p)).selectedId;
+    const added = await command(host, p, {type:'add'});
+    const middle = added.body.snapshot.selectedId;
+    const third = (await command(host, p, {type:'add'})).body.snapshot.selectedId;
+    const owner = await host.store.open(p.id);
+    await owner.runtime.backend.deliverUtterance({id:'deleted-evidence',slideId:middle,text:'Retain these private notes.',deliveredAtMs:1});
+    await owner.runtime.local.engine.settledInput();
+    await command(host, p, {type:'select',slideId:middle});
+    const commandId = crypto.randomUUID();
+    const removed = await command(host, p, {type:'delete',slideId:middle}, commandId);
+    assert.equal(removed.status, 200, JSON.stringify(removed.body));
+    assert.equal(removed.body.snapshot.selectedId, third);
+    assert.deepEqual(removed.body.snapshot.slides.map((s:any)=>s.id), [original, third]);
+    assert.equal(removed.body.viewer.slideId, third);
+    assert.match(owner.runtime.local.engine.readDocument().source, /ArchivedSlide/);
+    assert.match(owner.runtime.local.engine.readDocument().source, /Retain these private notes/);
+    assert.doesNotMatch(removed.body.viewer.html, /Retain these private notes/);
+    const duplicate = await command(host, p, {type:'delete',slideId:middle}, commandId);
+    assert.equal(duplicate.status, 200);
+    assert.equal(duplicate.body.snapshot.slides.length, 2);
+    await command(host, p, {type:'mode',mode:'present'});
+    assert.equal((await command(host, p, {type:'delete',slideId:third})).status, 409);
+    await command(host, p, {type:'mode',mode:'view'});
+    assert.equal((await command(host, p, {type:'delete',slideId:third})).body.snapshot.selectedId, original);
+    assert.equal((await command(host, p, {type:'delete',slideId:original})).status, 409);
+    assert.equal((await state(host, p)).slides.length, 1);
+    await host.close(); host = await f.make();
+    p.session = (await request(host, `${p.base}/sessions`, {role:'editor'})).body;
+    const reloaded = await state(host, p);
+    assert.deepEqual(reloaded.slides.map(s=>s.id), [original]);
+    assert.equal(reloaded.selectedId, original);
+  } finally { await host.close(); await rm(f.directory, {recursive:true,force:true}); }
+});

@@ -79,6 +79,7 @@ export interface Command {
     | "next"
     | "previous"
     | "add"
+    | "delete"
     | "pause"
     | "resume"
     | "blackout"

@@ -19,6 +19,7 @@ const commandSchema = z
       "next",
       "previous",
       "add",
+      "delete",
       "pause",
       "resume",
       "blackout",
