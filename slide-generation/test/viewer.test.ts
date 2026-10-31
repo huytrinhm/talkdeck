@@ -293,3 +293,19 @@ test('a corrupt font is not a successful viewer publication and external CSS req
     assert.deepEqual(h.errors, []);
   } finally { await h.close(); }
 });
+
+test('confirming an immediately displayed artifact preserves DOM and does not restart animation', async () => {
+  const h = await harness();
+  try {
+    const first = message(1, slide('<div data-node="words" data-content="text">Ready now</div>'));
+    await send(h.page, first); await ack(h.page, 'settled', 1);
+    await h.frame.evaluate(() => { (window as any).originalNode = document.querySelector('[data-node="words"]'); });
+    await send(h.page, { ...first, sequence: 2, publicationId: 'canonical-confirmation', motion: DEFAULT_MOTION });
+    const confirmation = await ack(h.page, 'settled', 2);
+    assert.equal(confirmation.publicationId, 'canonical-confirmation');
+    assert.equal(confirmation.domEquivalent, true);
+    assert.equal(await h.frame.evaluate(() => (window as any).originalNode === document.querySelector('[data-node="words"]')), true);
+    assert.equal(await h.frame.locator('#exits').innerHTML(), '');
+    assert.deepEqual(h.errors, []);
+  } finally { await h.close(); }
+});

@@ -250,3 +250,5 @@ repeated state. Native tool contracts and specialist result delivery are self-co
 Practice revision excludes persisted preview artifacts from model text and attaches candidate
 images separately. Headless/practice hosts load the same compact editor instruction base.
 See [MODEL-BOUNDARIES.md](docs/MODEL-BOUNDARIES.md) for exact scope, evidence and limitations.
+
+Immediate viewer publications bypass animation geometry and per-node style snapshots while retaining the last visible surface during resource preparation. Confirmation of identical settled HTML/CSS/build content updates publication identity without replacing the DOM or replaying motion. Normal same-slide content changes retain the animated path.

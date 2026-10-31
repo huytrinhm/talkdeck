@@ -189,9 +189,52 @@
     } finally { clearTimeout(timer); }
   }
   async function publish(message) {
+    // A server confirmation of a locally displayed immutable artifact only changes
+    // publication identity. Do not rebuild the DOM or restart motion for it.
+    if (!preparing && !animations.size && current && current.html === message.html && current.css === message.css
+      && current.slideId === message.slideId && current.mode === message.mode && current.build === message.build
+      && JSON.stringify(current.holdIds) === JSON.stringify(message.holdIds)) {
+      current = message; sequence = message.sequence;
+      if (lastVisible) lastVisible.message = message;
+      emit('applied', current); painted(current, generation);
+      emit('settled', current, { domEquivalent: domEquivalent(current), visibleNodeIds: visibleIds() });
+      return;
+    }
     const token = ++generation;
     if (preparing && current) emit('refused', current, { code: 'superseded_before_paint' });
     clearFrame();
+    // Immediate navigation does not need motion snapshots, computed-style cloning,
+    // exit layers or per-node animation preparation. Keep normal updates animated.
+    if (message.motion.durationMs === 0) {
+      if (!preparing && lastVisible) {
+        const old = style.textContent === message.css ? stage.cloneNode(true) : freezeElement(stage);
+        for (const node of [old, ...old.querySelectorAll('*')]) {
+          node.removeAttribute('id'); node.removeAttribute('data-node'); node.removeAttribute('data-content');
+        }
+        old.style.position = 'absolute'; old.style.inset = '0';
+        exits.replaceChildren(old);
+      }
+      preparing = true; current = message; sequence = message.sequence;
+      animations.clear(); exits.style.opacity = '';
+      stage.style.visibility = 'hidden';
+      stage.replaceChildren(safeFragment(message.html).content);
+      if (style.textContent !== message.css) style.textContent = message.css;
+      try { await assetsReady(); }
+      catch (error) {
+        if (token !== generation) return;
+        stage.innerHTML = lastVisible?.html ?? ''; style.textContent = lastVisible?.css ?? '';
+        stage.style.visibility = ''; preparing = false; current = lastVisible?.message ?? null; exits.replaceChildren();
+        if (current) applyBuild(current);
+        emit('refused', message, { code: error.message === 'asset_timeout' || error.message === 'font_failed' ? error.message : 'asset_failed' });
+        return;
+      }
+      if (token !== generation) return;
+      preparing = false; stage.style.visibility = ''; applyBuild(current); exits.replaceChildren();
+      lastVisible = { message: current, html: message.html, css: message.css }; lastVisual = new Map();
+      emit('applied', current); painted(current, token);
+      emit('settled', current, { domEquivalent: domEquivalent(current), visibleNodeIds: visibleIds() });
+      return;
+    }
     const previousMessage = lastVisible?.message ?? null;
     const previous = preparing ? lastVisual : snapshot();
     const template = safeFragment(message.html);
