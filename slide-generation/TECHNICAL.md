@@ -211,3 +211,14 @@ Still required: resolve demonstrated full-talk failures, run all five paced talk
 review actual visible/audience behavior and semantic/design outcomes, replay each fix, compare compatible frozen versions,
 then perform separately verified refactoring passes. Frontend integration remains separate. No full qualification,
 latency target, cost improvement or completed improvement-loop claim is made.
+
+## Practice review orchestration
+
+`src/practice/` adds backend rehearsal recording and end-of-practice review on the
+canonical actor host. It front-loads full source/anchors, rehearsal evidence, notes
+and images into one tool-free structured Responses request. Proposals are native
+transactions prepared in isolated engine forks, with real browser checks and
+private previews. Acceptance revalidates changes, checks the exact candidate at
+commit, and creates a canonical undo unit. Practice speech bypasses generation;
+explicit push-to-edit still works. See [the contract and API](docs/PRACTICE-REVIEW.md).
+No product frontend, prosody inference, or long-talk summary pipeline is added.

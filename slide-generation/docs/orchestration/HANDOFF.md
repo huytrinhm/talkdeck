@@ -11,6 +11,14 @@ Historical snapshot: commit `7ca6bde`, 2026-10-31, before consolidation. Its ori
 are retained below. Current integration uses the same actors with an injected canonical JSX backend and a headless
 packaged viewer; the integrated live pilot and repeated five-talk qualification remain unfinished.
 
+## Practice/feedback update
+
+The backend practice and proposal flow is now implemented under `src/practice/`.
+Read [PRACTICE-REVIEW.md](../PRACTICE-REVIEW.md) for the front-loaded context,
+structured proposals, private validation/previews, acceptance, persistence, and API.
+The historical status table below predates this addition; presentation mode and
+frontend integration remain separate work.
+
 ## Read in this order
 
 1. [Product idea](PRODUCT-IDEA.md): users, workflow, and unimplemented intentions.

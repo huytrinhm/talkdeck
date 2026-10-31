@@ -160,3 +160,18 @@ supersedes the earlier separate-directory ownership restriction for that consoli
 an injected canonical JSX backend and the packaged headless viewer. Keep a single canonical editable deck, preserve
 legacy artifacts as historical, and retain strict recording/budget/replay requirements. No product frontend is required
 for the headless loop; its future bridge is not represented as implemented. Accepted.
+
+
+## D58 — end-of-practice feedback and concrete proposals
+
+User direction: record the rehearsal and review it at the end; generate proposals
+at that time as well, with conservativeness controlled by the system prompt.
+Follow-up: **“less tool, more context”**. Implemented in `src/practice/`: a frozen,
+complete review context plus slide images goes into one tool-free structured
+request. The response contains feedback and native transactions together. Backend
+code validates each independent proposal privately and prepares exact previews.
+Acceptance does not call an LLM. Practice narration does not drive generation;
+explicit push-to-edit remains available. No frontend is included.
+
+See [PRACTICE-REVIEW.md](PRACTICE-REVIEW.md) for source/notes evidence, proposal
+versioning, stale acceptance, audio timing limitations and implementation evidence.

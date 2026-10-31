@@ -10,6 +10,7 @@ now lives under `src/orchestration/`, with tests in `test/orchestration/` and hi
 - [Decision ledger](docs/DECISIONS.md): settled choices; do not reopen them.
 - [Agent instructions](docs/AGENT_PROMPT.md) and [Lucide icons](docs/LUCIDE_ICONS.md): editing and dedicated-icon contracts.
 - [Improvement loop](docs/IMPROVEMENT_LOOP.md) and [five timed talks](fixtures/talks/README.md): measurement and comparison.
+- [Practice feedback and proposals](docs/PRACTICE-REVIEW.md): record first, one tool-free end review, private previews and explicit acceptance. Run `npm run practice:server`.
 - [Headless evidence](src/headless/README.md): actual viewer frames, recording, audits and reports.
 - [Orchestration history](docs/orchestration/HANDOFF.md): preserved scheduler/control contracts and historical measurements.
 

@@ -23,7 +23,8 @@
     "eval:freeze": "node --import tsx src/evaluation/cli.ts freeze",
     "test:orchestration": "node --import tsx --test test/orchestration/*.test.ts",
     "legacy:fixture": "node --import tsx src/orchestration/fixture-deck.ts",
-    "legacy:server": "node --import tsx src/orchestration/server.ts"
+    "legacy:server": "node --import tsx src/orchestration/server.ts",
+    "practice:server": "node --import tsx src/practice/server.ts"
   },
   "dependencies": {
     "@hono/node-server": "1.19.17",
