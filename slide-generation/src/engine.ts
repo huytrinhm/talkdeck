@@ -11,7 +11,7 @@ import { introducedErrors, ready, UnavailableValidation } from './validation.js'
 import type { DeckRepository } from './storage/repository.js';
 import type { EvidenceInbox } from './storage/inbox.js';
 import { DurabilityError } from './storage/files.js';
-import { restoreContentCandidate } from './source/history.js';
+import { restoreContentCandidate, type NoteRestoration } from './source/history.js';
 
 export interface CommitServices {
   repository: DeckRepository;
@@ -35,6 +35,20 @@ export class SlideEngine {
   constructor(document: DeckDocument, private validation: ValidationPipeline = new UnavailableValidation(), private trace = new Trace(), private services?: CommitServices) {
     this.document = { ...document, source: document.source.replace(/\r\n?/g, '\n') };
     parseSource(this.document.source);
+  }
+  /** Isolated proposal workspace: same normalization/validation, no inbox, disk or live publication. */
+  fork(document = this.readDocument()): SlideEngine {
+    if (!this.services) throw new SourceError('not_implemented', 'Proposal validation requires configured services');
+    let stored = { ...document };
+    const repository: DeckRepository = {
+      async load() { return {document: {...stored}, revision: lineHash(stored.source)}; },
+      async initialize(input) { stored = {...input}; return this.load(); },
+      async compareAndSwap(expected, input) {
+        if (lineHash(stored.source) !== expected) throw new SourceError('revision_conflict', 'Private proposal changed');
+        stored = {...input}; return this.load();
+      },
+    };
+    return new SlideEngine(stored, this.validation, new Trace(), {...this.services, repository, inbox: undefined});
   }
   readDocument(): DeckDocument { return { ...this.document }; }
   state() { return { revision: lineHash(this.document.source), commitConfigured: !!this.services,
@@ -119,7 +133,7 @@ export class SlideEngine {
     this.lastInputError = blocked[0]?.failure.code;
   }
   async settledInput() { await this.drainTail; return { pendingError: this.lastInputError }; }
-  edit(input: unknown, idempotencyKey?: string, commitGuard?: () => void) {
+  edit(input: unknown, idempotencyKey?: string, commitGuard?: (candidate?: string) => void) {
     if (idempotencyKey !== undefined) {
       if (!/^[\w.-]{1,128}$/.test(idempotencyKey)) throw new SourceError('idempotency_key', 'Invalid idempotency key');
       const digest = lineHash(JSON.stringify(transactionSchema.parse(input)));
@@ -135,7 +149,7 @@ export class SlideEngine {
     }
     return this.runEdit(input, commitGuard);
   }
-  private runEdit(input: unknown, commitGuard?: () => void) {
+  private runEdit(input: unknown, commitGuard?: (candidate?: string) => void) {
     const transactionId = randomUUID();
     const run = this.editTail.then(async () => {
       const cause = { deckId: parseSource(this.document.source).id!, revision: lineHash(this.document.source), transactionId };
@@ -181,7 +195,7 @@ export class SlideEngine {
       throw error;
     }
   }
-  private async transact(input: unknown, transactionId: string, commitGuard?: () => void) {
+  private async transact(input: unknown, transactionId: string, commitGuard?: (candidate?: string) => void) {
     const transaction = transactionSchema.parse(input);
     for (let attempt = 0; attempt < 3; attempt++) {
       const current = this.document.source, staged = this.snapshots.stage(current, transaction.edits);
@@ -226,7 +240,7 @@ export class SlideEngine {
         if (latest.document.source !== this.document.source) { this.document = latest.document; this.lastCheckComplete = false; }
         await this.flushInputLocked();
         if (current !== this.document.source) return undefined;
-        commitGuard?.();
+        commitGuard?.(candidate);
         if (candidate !== current) await this.persist(current, candidate);
         const noOp = candidate === current;
         const root = parseSource(this.document.source);
@@ -245,13 +259,13 @@ export class SlideEngine {
   }
 
   /** Trusted user history control. Restore visual source while retaining all current evidence. */
-  restoreContent(snapshot: string, commitGuard?: () => void) {
+  restoreContent(snapshot: string, commitGuard?: (candidate?: string) => void, notes: NoteRestoration[] = []) {
     const run = this.editTail.then(async () => {
       if (!this.services) throw new SourceError('not_implemented', 'Durable history is not configured');
       for (let attempt = 0; attempt < 3; attempt++) {
         commitGuard?.();
         const current = this.document.source;
-        let candidate = restoreContentCandidate(current, snapshot);
+        let candidate = restoreContentCandidate(current, snapshot, notes);
         candidate = await this.services.normalize(candidate);
         parseAndValidate(candidate, this.services.schema);
         const baseline = await this.check(current), report = await this.check(candidate);

@@ -85,6 +85,13 @@ export class SlideRuntime {
     return this.gateFor(this.publisher.selectedId);
   }
   paused = false;
+  practiceMode = false;
+  practiceInput?: (input: InputUtterance) => Promise<{
+    utteranceId: string;
+    retainedAtMs: number;
+    duplicate?: boolean;
+    pending?: boolean;
+  }>;
   private restoringHistory = false;
   private historyChain: Promise<unknown> = Promise.resolve();
   private historyPending = 0;
@@ -251,7 +258,8 @@ export class SlideRuntime {
         gate.restoreNarration(archived);
         this.archivedNarration.delete(slideId);
       }
-      if (this.paused || this.restoringHistory) gate.pause();
+      if (this.paused || this.restoringHistory || this.practiceMode)
+        gate.pause();
       if (this.options.autoTick !== false) gate.start();
     }
     return gate;
@@ -272,13 +280,25 @@ export class SlideRuntime {
   /** Durable evidence retention precedes eligibility; target is captured by the caller. */
   async deliverUtterance(input: InputUtterance) {
     if (this.closed) throw new Error("Runtime closed");
+    if (this.practiceMode) {
+      if (!this.practiceInput)
+        throw new Error(
+          "Practice is not recording; start a rehearsal or leave practice mode",
+        );
+      return this.practiceInput(structuredClone(input));
+    }
     const generation = this.publisher.generation;
     if (!generation)
       throw new Error(
         "Durable utterances require a canonical generation backend",
       );
     const delivery = await generation.deliverUtterance(input);
-    if (!this.closed && !delivery.duplicate && !delivery.receipt.duplicate) {
+    if (
+      !this.closed &&
+      !this.practiceMode &&
+      !delivery.duplicate &&
+      !delivery.receipt.duplicate
+    ) {
       this.retainedUtterances.set(input.id, structuredClone(input));
       this.retainedInputRevisions.set(input.id, delivery.speech.revision);
       // Retention may outlive removal. Keep the original attribution without waking a survivor.
@@ -426,7 +446,7 @@ export class SlideRuntime {
         }
         this.restoringHistory = false;
         if (!this.closed) {
-          if (!this.paused)
+          if (!this.paused && !this.practiceMode)
             for (const gate of this.gates.values()) gate.resume();
           for (const actor of actors)
             if (actor.requested || actor.pendingSpeech || actor.tasks.length)
@@ -436,6 +456,9 @@ export class SlideRuntime {
     };
     // The first control starts synchronously so a comment submitted immediately
     // after undo() belongs to the new work generation, not the cancelled one.
+    return this.queueControl(perform);
+  }
+  private queueControl<T>(perform: () => Promise<T>): Promise<T> {
     const operation =
       this.historyPending++ === 0 ? perform() : this.historyChain.then(perform);
     this.historyChain = operation
@@ -444,6 +467,64 @@ export class SlideRuntime {
         this.historyPending--;
       });
     return operation;
+  }
+  /** User mode boundary: cancel old generation; explicit tasks remain usable afterwards. */
+  setPracticeMode(value: boolean): Promise<void> {
+    return this.queueControl(async () => {
+      if (this.closed) throw new Error("Runtime closed");
+      if (this.practiceMode === value) return;
+      this.practiceMode = value;
+      if (!value) {
+        if (!this.paused) for (const gate of this.gates.values()) gate.resume();
+        this.emit("practice_mode", { enabled: false });
+        return;
+      }
+      this.restoringHistory = true;
+      this.publisher.setPaused(true); // Invalidates renders already in flight.
+      this.slowActivationEpoch++;
+      this.slowDecisionController?.abort();
+      this.slowDecisionError = undefined;
+      for (const gate of this.gates.values()) {
+        gate.pause();
+        gate.suppressCurrent();
+      }
+      const actors = [...this.actors.values()];
+      for (const actor of actors) {
+        actor.pendingBySlide.clear();
+        actor.pendingSpeech =
+          actor.passiveSpeech =
+          actor.lastSpeech =
+            undefined;
+        actor.tasks.length = 0;
+        actor.messages.length = 0;
+        actor.requested = false;
+        actor.requiredResults.clear();
+        actor.error = undefined;
+        if (actor.state === "failed") this.setState(actor, "idle");
+        actor.controller.abort(
+          new Error("Generation cancelled by practice mode"),
+        );
+      }
+      try {
+        await Promise.allSettled(actors.map((a) => a.promise));
+      } finally {
+        this.slowEvaluatedFast = this.publisher.fastWatermark;
+        for (const actor of actors) {
+          actor.controller = new AbortController();
+          actor.observedFast = this.publisher.fastWatermark;
+          actor.history.add({
+            role: "user",
+            content:
+              "Entered practice mode. Previous generation work was cancelled. Only new explicit edit tasks authorize deck changes; rehearsal speech is evidence, not pending instructions.",
+          });
+        }
+        this.restoringHistory = false;
+        this.publisher.setPaused(this.paused);
+        for (const actor of actors)
+          if (actor.tasks.length || actor.requested) this.wake(actor);
+      }
+      this.emit("practice_mode", { enabled: true });
+    });
   }
   pause() {
     if (this.closed) throw new Error("Runtime closed");
@@ -461,7 +542,7 @@ export class SlideRuntime {
     this.paused = false;
     this.publisher.setPaused(false);
     for (const gate of this.gates.values())
-      if (!this.restoringHistory) gate.resume();
+      if (!this.restoringHistory && !this.practiceMode) gate.resume();
     for (const resolve of this.resumeWaiters) resolve();
     this.resumeWaiters.clear();
     for (const actor of this.actors.values())
@@ -497,6 +578,7 @@ export class SlideRuntime {
     }));
   }
   private dispatch(speech: Speech) {
+    if (this.practiceMode) return;
     const fast = this.actors.get("fast")!,
       slow = this.actors.get("slow")!;
     const slideId = speech.slideId ?? this.publisher.selectedId;
@@ -603,6 +685,7 @@ export class SlideRuntime {
       this.closed ||
       this.paused ||
       this.restoringHistory ||
+      this.practiceMode ||
       slow.state !== "idle" ||
       this.slowDecision
     )

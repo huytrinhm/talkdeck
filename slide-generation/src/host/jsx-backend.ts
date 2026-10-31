@@ -12,6 +12,8 @@ import { indexSource } from '../source/candidate.js';
 import type { InputUtterance } from '../source/ingestion.js';
 import type { ToolObservation } from '../tools.js';
 
+import type { NoteRestoration } from '../source/history.js';
+interface HistoryEntry {source: string; selectedId: string; notes?: NoteRestoration[]}
 type Runtime = Awaited<ReturnType<typeof createLocalRuntime>>;
 export interface JsxBackendOptions {
   instructions: string;
@@ -29,8 +31,8 @@ export class JsxBackend implements GenerationBackend {
   private pauseEpoch = 0;
   private historyEpoch = 0;
   private mutationTail: Promise<unknown> = Promise.resolve();
-  private undoSources: { source: string; selectedId: string }[] = [];
-  private redoSources: { source: string; selectedId: string }[] = [];
+  private undoSources: HistoryEntry[] = [];
+  private redoSources: HistoryEntry[] = [];
   readonly undo: Observation[] = [];
   readonly deckUndo: DeckSnapshot[] = [];
   readonly requestedTitles = new Map<string, string>();
@@ -106,7 +108,8 @@ export class JsxBackend implements GenerationBackend {
     finally { event.finishedAtMs = performance.now(); try { await this.options.onTool?.(event); } catch (error) { this.recordingFailures.push(String(error)); } }
   }
   private snapshot() { return { source: this.runtime.engine.readDocument().source, selectedId: this.selectedId }; }
-  private committed(before: { source: string; selectedId: string }, role: Role, target?: string) {
+  private committed(before: HistoryEntry, role: Role, target?: string, trackNotes = false) {
+    if (trackNotes) before.notes = this.noteRestorations(this.runtime.engine.readDocument().source, before.source);
     this.undoSources.push(before); this.redoSources.length = 0;
     this.deckUndo.push({ selectedId: before.selectedId, slides: [] });
     this.revision++; if (role === 'fast') { this.fastWatermark++; this.latestFastSlideId = target ?? this.selectedId; }
@@ -116,6 +119,15 @@ export class JsxBackend implements GenerationBackend {
     if (JSON.stringify(previousIds) !== JSON.stringify(nextIds)) this.onStructure?.({ outcome: 'published', slideIds: nextIds, diagnostics: [] });
     const observation = slides.find(s => s.id === target)?.observation ?? slides.find(s => s.id === this.selectedId)?.observation;
     if (observation) this.onPublish?.(observation, role);
+  }
+  private noteRestorations(base: string, target: string): NoteRestoration[] {
+    const indexed = (source: string) => new Map(childNodes(parseSource(source)).filter(n => n.tag === 'Slide').map(slide => {
+      const note = childNodes(slide).find(n => n.tag === 'SpeakerNotes')!;
+      return [slide.id!, source.slice(note.start, note.end)];
+    }));
+    const before = indexed(base), after = indexed(target);
+    return [...before].flatMap(([slideId, body]) => after.has(slideId) && after.get(slideId) !== body
+      ? [{slideId, base: body, target: after.get(slideId)!}] : []);
   }
   async deliverUtterance(input: InputUtterance) {
     const receipt = await this.runtime.engine.ingest(input);
@@ -154,13 +166,33 @@ export class JsxBackend implements GenerationBackend {
       const saved = from.at(-1);
       if (!saved) return { outcome: 'unchanged', direction, selectedId: this.selectedId, history: this.historyStatus() };
       const before = this.snapshot();
-      await this.runtime.engine.restoreContent(saved.source, () => { if (this.closed) throw new Error('Backend closed'); });
-      from.pop(); to.push(before); this.deckUndo.length = this.undoSources.length;
+      await this.runtime.engine.restoreContent(saved.source, () => { if (this.closed) throw new Error('Backend closed'); }, saved.notes);
+      const restored = this.runtime.engine.readDocument().source;
+      const reverseNotes = saved.notes?.length ? this.noteRestorations(restored, before.source) : undefined;
+      from.pop(); to.push({...before, notes: reverseNotes}); this.deckUndo.length = this.undoSources.length;
       const slides = this.list();
       if (!slides.some(s => s.id === this.selectedId)) this.selectedId = slides.some(s => s.id === saved.selectedId) ? saved.selectedId : slides[0].id;
       this.revision++; this.onStructure?.({ outcome: 'published', slideIds: slides.map(s => s.id), diagnostics: [] });
       await this.options.onSelection?.(this.selectedId);
       return { outcome: 'restored', direction, selectedId: this.selectedId, history: this.historyStatus() };
+    });
+  }
+  /** Explicit proposal acceptance, including when paused. One canonical commit/undo unit. */
+  async acceptProposal(transaction: unknown, expectedRevision: string, expectedCandidate: string, signal: AbortSignal) {
+    const epoch = this.historyEpoch, pauseEpoch = this.pauseEpoch;
+    return this.serialize(async () => {
+      const before = this.snapshot();
+      const guard = (candidate?: string) => {
+        signal.throwIfAborted();
+        if (this.closed || epoch !== this.historyEpoch || pauseEpoch !== this.pauseEpoch)
+          throw new SourceError('control_boundary', 'Proposal crossed a user control boundary');
+        if (this.runtime.engine.state().revision !== expectedRevision || (candidate && lineHash(candidate) !== expectedCandidate))
+          throw new SourceError('proposal_stale', 'Deck or prepared candidate changed; refresh the preview');
+      };
+      guard();
+      const result = await this.runtime.engine.edit(transaction, undefined, guard);
+      if (result.accepted && !result.noOp) this.committed(before, 'slow', undefined, true);
+      return result;
     });
   }
   async close() { this.closed = true; await this.mutationTail; }

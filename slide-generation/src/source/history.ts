@@ -1,11 +1,28 @@
+import { merge } from '../orchestration/merge.js';
 import { SourceError } from '../contracts.js';
-import { parseSource } from '../parser.js';
+import { parseSource, textContent } from '../parser.js';
 import { childNodes } from '../schema.js';
 import { allocateIds, advanceVersions, highWater, indexSource } from './candidate.js';
-import { applyPatches, setChildren, setProp } from './surgery.js';
+import { applyPatches, setChildren, setProp, escapeText } from './surgery.js';
 
-/** User undo/redo restores visual identity, never rewinds original words or cleaned notes. */
-export function restoreContentCandidate(current: string, snapshot: string): string {
+/** Raw evidence is never rewound. Explicitly accepted note edits can be reversed independently. */
+function restoreNote(base: string, target: string, live: string): string {
+  const wrap = (value: string) => `<Deck>${value}</Deck>`;
+  const text = (value: string) => textContent(childNodes(parseSource(wrap(value)))[0]);
+  const original = text(base), desired = text(target), current = text(live);
+  let result: string;
+  if (current === original) result = desired;
+  // Trusted canonical ingestion appends exact new utterances to notes. Preserve
+  // that suffix even when reversing an insertion into previously empty notes.
+  else if (!original || current.startsWith(original + '\n')) {
+    const suffix = original ? current.slice(original.length + 1) : current;
+    result = desired + (desired && suffix ? '\n' : '') + suffix;
+  } else result = merge(original, desired, current);
+  const wrapped = wrap(live), node = childNodes(parseSource(wrapped))[0];
+  return applyPatches(wrapped, [setChildren(wrapped, node, escapeText(result))]).slice(6, -7);
+}
+export interface NoteRestoration { slideId: string; base: string; target: string }
+export function restoreContentCandidate(current: string, snapshot: string, notes: NoteRestoration[] = []): string {
   const now = indexSource(current), previous = indexSource(snapshot);
   if (now.root.id !== previous.root.id) throw new SourceError('history_deck', 'History belongs to another deck');
   const currentSlides = childNodes(now.root).filter(n => n.tag === 'Slide');
@@ -21,7 +38,9 @@ export function restoreContentCandidate(current: string, snapshot: string): stri
     for (const tag of ['SpeakerNotes', 'Transcript']) {
       const target = childNodes(slide).find(n => n.tag === tag)!;
       const origin = childNodes(fresh).find(n => n.tag === tag)!;
-      patches.push({ start: target.start, end: target.end, text: current.slice(origin.start, origin.end) });
+      const live = current.slice(origin.start, origin.end);
+      const restoration = tag === 'SpeakerNotes' ? notes.find(n => n.slideId === slide.id) : undefined;
+      patches.push({ start: target.start, end: target.end, text: restoration ? restoreNote(restoration.base, restoration.target, live) : live });
     }
   }
   const archive = childNodes(previous.root).find(n => n.tag === 'Archive')!;
