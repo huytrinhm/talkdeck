@@ -17,6 +17,7 @@ import type { models as Models } from '../src/orchestration/config.js';
 import { verifyFrozenBaseline, type FrozenBaseline } from '../src/evaluation/freeze.js';
 import { atomicWrite } from '../src/storage/files.js';
 import { HeadlessViewer } from '../src/headless/viewer.js';
+import { writeDeckContactSheet, ContactSheetError } from '../src/headless/contact-sheet.js';
 import { createHash } from 'node:crypto';
 
 const { values } = parseArgs({ options: { fixture: { type: 'string' }, out: { type: 'string' }, repetition: { type: 'string' },
@@ -128,7 +129,8 @@ try {
   const facts = { recordingComplete: !finishFailure && !host.errors.length && !recorder.failures.length && !host.backend.recordingFailures.length,
     finalReady: evidence.readiness?.complete ? evidence.readiness.ready : null,
     modelCalls: budget.calls, inputTokens: budget.observedInputTokens, outputTokens: budget.observedOutputTokens, costUsd: null };
-  const { audit, metrics } = await produceReports({ directory: recorder.directory, fixture, run,
+  const contactSheet = await finalContactSheet(recorder.directory, evidence.source, host.finalSlides, run.finishedAtMs);
+  const { audit, metrics } = await produceReports({ directory: recorder.directory, fixture, run, ...contactSheet,
     evidence, routes: host.routes, facts, finalSlides: host.finalSlides,
     servedTiers: [...new Set(host.providers.records().map(r => r.returnedTier ?? 'unknown'))],
     failures: finishFailure ? [finishFailure] : [], writeJson: (name, data) => recorder.summary(name, data) });
@@ -163,10 +165,11 @@ type Facts = Pick<ReturnType<typeof runMetricsSchema.parse>, 'recordingComplete'
 async function produceReports(input: {
   directory: string; fixture: AuditHeadlessInput['fixture']; run: AuditHeadlessInput['run'];
   evidence: { source: string; frames: AuditHeadlessInput['frames']; readiness?: AuditHeadlessInput['readiness']; readinessAtMs?: number; readinessEvidence?: string };
+  contactSheetPath?: string; contactSheetUnavailable?: string;
   routes: AuditHeadlessInput['routes']; facts: Facts; finalSlides: { slideId: string; path: string }[]; servedTiers: string[]; failures: unknown[];
   writeJson: (name: 'metrics.json' | 'audit.json', data: unknown) => Promise<void>;
 }) {
-  const limitations: string[] = [];
+  const limitations: string[] = input.contactSheetUnavailable ? [input.contactSheetUnavailable] : [];
   let creationEvidence: ReturnType<typeof buildCreationEvidence> = [];
   try {
     creationEvidence = buildCreationEvidence(JSON.parse(await readFile(join(input.directory, 'initial.json'), 'utf8')),
@@ -187,7 +190,8 @@ async function produceReports(input: {
     recordingComplete: facts.recordingComplete && run.recordingComplete && limitations.length === 0 });
   const review = renderMarkdownReport({ fixture, run: { ...run, recordingComplete: metrics.recordingComplete }, observations: audit.observations,
     audit: audit.audit, model: { calls: facts.modelCalls, inputTokens: facts.inputTokens, outputTokens: facts.outputTokens, costUsd: facts.costUsd,
-      servedTiers: input.servedTiers }, finalSlides: input.finalSlides, viewerGalleryPath: 'viewer-gallery.html' })
+      servedTiers: input.servedTiers }, finalSlides: input.finalSlides, viewerGalleryPath: 'viewer-gallery.html',
+    contactSheetPath: input.contactSheetPath, contactSheetUnavailable: input.contactSheetUnavailable })
     + `\nFinal readiness: ${facts.finalReady === null ? 'unknown' : facts.finalReady}.\n`
     + (input.failures.length ? `\nFinalization/recovery errors (original evidence retained):\n\n\`\`\`json\n${JSON.stringify(input.failures, null, 2)}\n\`\`\`\n` : '')
     + limitations.map(text => `\n- ${text}\n`).join('');
@@ -229,10 +233,36 @@ async function recoverReports(directory: string, fixtureFile: string) {
   const recovery = { recoveredAt: new Date().toISOString(), harness, originalManifestSha256: lineHash(await readFile(join(directory, 'manifest.json'), 'utf8')),
     mode: 'offline-evidence-only', paidCalls: 0, originalFailure };
   await writeFile(join(directory, 'recovery.json'), JSON.stringify(recovery, null, 2), { flag: 'wx' });
-  await produceReports({ directory, fixture, run, evidence: { source, frames, readiness, readinessAtMs: readiness?.atMs,
+  await produceReports({ directory, fixture, run,
+    contactSheetUnavailable: 'Recovery did not regenerate or certify a whole-deck contact sheet; original artifacts remain unchanged.', evidence: { source, frames, readiness, readinessAtMs: readiness?.atMs,
     readinessEvidence: readiness ? 'final/readiness.json' : undefined }, routes: await readJson('routes.json'), facts, finalSlides,
     servedTiers: [...new Set(modelRecords.map(record => String(record.returnedTier ?? 'unknown')))], failures: [originalFailure],
     writeJson: (name, data) => writeFile(join(directory, name), JSON.stringify(data, null, 2), { flag: 'wx' }) });
   console.log(JSON.stringify({ event: 'recovered-failed-run', directory, ...facts, paidCalls: 0 }));
   process.exitCode = 1; // Producing a report never turns this failed trial into a successful run.
+}
+
+
+async function finalContactSheet(directory: string, source: string, slides: { slideId: string; path: string }[], runFinishedAtMs: number) {
+  const contactSheetPath = 'final/deck-contact-sheet.png';
+  let status: Record<string, unknown>, contactSheetUnavailable: string | undefined;
+  try {
+    // The compositor validates canonical live-slide order, complete exact captures,
+    // image decoding and dimensions. It never renders or invents a missing slide.
+    const sheet = await writeDeckContactSheet({ source, slides: slides.map(slide => ({ ...slide, path: join(directory, slide.path) })),
+      outputPath: join(directory, contactSheetPath) });
+    status = { ...sheet, path: contactSheetPath, items: sheet.items.map(item => ({ ...item, path: relative(directory, item.path) })) };
+  } catch (error) {
+    contactSheetUnavailable = `Whole-deck contact sheet unavailable: ${safeHeadlessError(error)}`;
+    status = { complete: false, sourceSha256: lineHash(source), capturedSlideIds: slides.map(slide => slide.slideId),
+      ...(error instanceof ContactSheetError ? { expectedSlideIds: error.expectedSlideIds, issues: error.issues } : {}), error: errorEvidence(error) };
+  }
+  try {
+    await writeFile(join(directory, 'final/contact-sheet-status.json'), JSON.stringify({ ...status,
+      generatedAfterRunFinishedAtMs: runFinishedAtMs, generatedAtMs: performance.now(),
+      purpose: 'Post-run whole-deck design review; not audience-visible latency evidence' }, null, 2), { flag: 'wx' });
+  } catch (error) {
+    contactSheetUnavailable = `${contactSheetUnavailable ? `${contactSheetUnavailable}; ` : ''}Contact-sheet status export failed: ${safeHeadlessError(error)}`;
+  }
+  return { ...(status.complete === true ? { contactSheetPath } : {}), ...(contactSheetUnavailable ? { contactSheetUnavailable } : {}) };
 }
