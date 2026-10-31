@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { createLocalRuntime } from '../src/runtime.js';
 import { GenerationSession, type HostEvent } from '../src/host/session.js';
 import type { PublicationMessage } from '../src/viewer/protocol.js';
+import { JsxBackend } from '../src/host/jsx-backend.js';
 
 test('host adapter publishes private-evidence-free artifacts and correlates explicit viewer acknowledgments', async () => {
   await mkdir('.artifacts/tests', { recursive: true });
@@ -35,4 +36,34 @@ test('host adapter publishes private-evidence-free artifacts and correlates expl
     assert.equal(sent.length, count);
     assert.equal(events.at(-1)?.type, 'publication-refused');
   } finally { await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('deleting the selected slide publishes the surviving neighbor at the committed revision', async () => {
+  await mkdir('.artifacts/tests', { recursive: true });
+  const directory = await mkdtemp('.artifacts/tests/host-deletion-');
+  const runtime = await createLocalRuntime({ directory: resolve(directory) });
+  const sent: PublicationMessage[] = [], events: HostEvent[] = [];
+  const session = new GenerationSession(runtime.engine, runtime.tools, runtime.renderer, runtime.browser,
+    { channel: 'test_deletion_channel_12345', slideId: 'n10', send: m => { sent.push(m); }, record: e => { events.push(e); } });
+  const backend = new JsxBackend(runtime, { instructions: '', onSelection: id => session.selectSlide(id) });
+  try {
+    await backend.initialize(runtime.engine.readDocument().source);
+    const second = await backend.createSlide('Temporary');
+    await backend.deliverUtterance({ id: 'retained-on-delete', slideId: second.id, text: 'Keep this original source.', deliveredAtMs: 1 });
+    const removedSource = runtime.engine.readSource(second.id).lines.map(l => l.text).join('\n');
+    const read = runtime.engine.readSource('deck');
+    const context = backend.generation.context({ agent: 'slow', role: 'slow', inferenceId: 'delete', signal: new AbortController().signal });
+    const result = await backend.generation.invoke({ agent: 'slow', role: 'slow', inferenceId: 'delete', context, signal: new AbortController().signal }, 'edit_source', {
+      edits: [{ snapshotId: read.snapshotId, nodeId: read.nodeId, op: 'replace', startLine: 1, hashes: read.lines.map(l => l.hash), text: read.lines.map(l => l.text).join('\n').replace(removedSource, '') }],
+    });
+    assert.equal((result.output as any).accepted, true);
+    await session.settle();
+    assert.equal(backend.selectedId, 'n10');
+    assert.equal(sent.at(-1)?.slideId, backend.selectedId);
+    assert.equal(sent.at(-1)?.revision, runtime.engine.state().revision);
+    assert.equal(events.filter(event => event.type === 'publication-refused').length, 0);
+    assert.match(runtime.engine.readDocument().source, /ArchivedSlide/);
+    assert.match(runtime.engine.readDocument().source, /Keep this original source/);
+    assert.doesNotMatch(sent.at(-1)!.html, /Keep this original source/);
+  } finally { await backend.close(); await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
 });

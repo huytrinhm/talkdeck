@@ -8,6 +8,8 @@ import { acknowledgmentSchema, DEFAULT_MOTION, type ViewerAcknowledgment, type P
 import { lineHash } from '../hashline.js';
 import type { InputUtterance } from '../source/ingestion.js';
 import type { ToolRegistry } from '../tools.js';
+import { parseSource } from '../parser.js';
+import { childNodes } from '../schema.js';
 
 export type HostEvent =
   | { type: 'publication'; atMs: number; message: PublicationMessage }
@@ -26,6 +28,7 @@ export interface SessionOptions {
 export class GenerationSession {
   private sequence = 0;
   private selected: string;
+  private slideOrder: string[];
   private mode: 'editor' | 'presentation';
   private tail: Promise<unknown> = Promise.resolve();
   private readonly sent = new Map<string, PublicationMessage>();
@@ -35,6 +38,7 @@ export class GenerationSession {
     private browser: BrowserValidationPipeline, private options: SessionOptions) {
     if (!/^[a-zA-Z0-9_-]{16,128}$/.test(options.channel)) throw new Error('Invalid viewer channel');
     this.selected = options.slideId; this.mode = options.mode ?? 'editor';
+    this.slideOrder = childNodes(parseSource(engine.readDocument().source)).filter(node => node.tag === 'Slide').map(node => node.id!);
     this.unsubscribe = engine.subscribe(event => this.enqueue(event, true));
   }
   private async record(event: HostEvent) { await this.options.record(event); }
@@ -48,6 +52,15 @@ export class GenerationSession {
     await this.settle();
   }
   private enqueue(event: CommittedRevision, committed = false) {
+    if (committed) {
+      const nextOrder = childNodes(parseSource(event.document.source)).filter(node => node.tag === 'Slide').map(node => node.id!);
+      // A deletion is already canonical when observers run. Resolve selection against
+      // this exact revision before capturing the publication, matching the host's
+      // existing nearest-surviving-slide policy even when its observer runs later.
+      if (nextOrder.length && !nextOrder.includes(this.selected))
+        this.selected = nextOrder[Math.min(Math.max(0, this.slideOrder.indexOf(this.selected)), nextOrder.length - 1)];
+      this.slideOrder = nextOrder;
+    }
     const slideId = this.selected, mode = this.mode;
     this.tail = this.tail.catch(() => {}).then(async () => {
       if (this.closed) return;
