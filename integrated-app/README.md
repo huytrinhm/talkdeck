@@ -38,6 +38,11 @@ generation actors. Context shows image previews and availability for slides.
 Existing image uploads are registered when a project opens; unsafe SVGs or invalid
 image signatures stay unavailable for slides. Other files retain their existing
 text-context or reference-only behavior. Assets remain project-scoped across restarts.
+Fast, Slow and specialist agents can call `search_assets` to search image filenames,
+media types and IDs, or browse with an empty query. Results are paginated and include
+exact canonical image references. Search calls are recorded as `asset_search` events
+in the project's provider log. Decision gates receive catalog availability so image
+requests can be dispatched to an agent with access to this tool.
 
 ## Hosting
 

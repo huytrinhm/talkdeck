@@ -25,6 +25,7 @@ import { models } from "../../slide-generation/src/orchestration/config.js";
 import { ProductProviders, safeError } from "./providers.js";
 import { serverNavigationTrace } from './tracing.js';
 import { ProjectImages } from './images.js';
+import { installAssetCatalog } from './asset-tools.js';
 import { resolveImage } from '../../slide-generation/src/render/assets.js';
 import type {
   Command,
@@ -157,6 +158,7 @@ export class ProjectOwner {
           parseSource(this.runtime.local.engine.readDocument().source),
         ).find((n) => n.tag === "Brief")!,
       );
+    installAssetCatalog(this.runtime.backend.generation, this.images, event => this.providers.record(event));
     if (
       this.data.selectedId &&
       this.runtime.backend.list().some((s) => s.id === this.data.selectedId)

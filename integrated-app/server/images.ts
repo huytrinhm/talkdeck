@@ -8,6 +8,22 @@ import type { Material } from '../shared/protocol.js';
 export class ProjectImages implements AssetResolver {
   constructor(private directory: string, private projectId: string, private materials: () => Material[]) {}
 
+  search(query = '', offset = 0, limit = 20) {
+    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const matches = this.materials().filter(material => {
+      if (!material.asset || material.status !== 'image-ready') return false;
+      const searchable = `${material.name} ${material.mime} ${material.asset.id}`.toLowerCase();
+      return terms.every(term => searchable.includes(term));
+    });
+    const assets = matches.slice(offset, offset + limit).map(material => ({
+      name: material.name, mediaType: material.mime, bytes: material.bytes,
+      asset: { ...material.asset! },
+    }));
+    return { assets, total: matches.length, offset,
+      ...(offset + assets.length < matches.length ? { nextOffset: offset + assets.length } : {}),
+    };
+  }
+
   private mediaType(material: Pick<Material, 'name' | 'mime'>, bytes: Buffer) {
     if (bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png';
     if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';

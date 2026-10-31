@@ -70,6 +70,7 @@ function message(fields: unknown, image: ReturnType<typeof evidence>["image"]) {
 export const SPEECH_GATE_INSTRUCTIONS = `Decide whether newly available speech gives the slide-writing agent useful work now. The presenter is speaking while the agent builds the current slide.
 Compare current_transcript with previously_sent_transcript, the last snapshot sent to the agent. Null means this slide has received no dispatch. The transcript is cumulative and may revise earlier wording. correction_context supplies additional recognition corrections when relevant.
 Choose dispatch for a useful complete idea, intelligible topic introduction, meaningful correction, or authorized editing request. Choose hold for repetition or unresolved fragments. 'Today we compare' alone is unresolved. A trailing incomplete phrase must allow earlier complete ideas to proceed.
+When asset_catalog reports available uploaded images, a request to show, find, or use an image is actionable: dispatch so the slide-writing agent can search the catalog. A missing filename alone is not a reason to hold that request.
 Dispatch sends the cumulative transcript for reasoning and advances the baseline. Hold retains speech for another evaluation. The agent may still be processing previously sent speech. Base dispatch on new meaning or corrections, including while the agent is busy. Each dispatch replaces its pending snapshot.
 Use the attached slide image, or visible_source when supplied, as presentation context. Follow any concrete evidence limitations in the request.`;
 
@@ -89,6 +90,7 @@ export function speechDecisionContext(input: DecisionInput) {
   // Never accidentally attach a different slide while concealing its attribution.
   const current = input.current?.slideId === input.speech.slideId ? input.current : undefined;
   const view = evidence(current);
+  const assetCatalog = record(record(input.deck)?.assetCatalog);
   const corrections = input.speech.corrections
     .filter(c => c.revision > (baseline?.revision ?? 0))
     .filter(c => c.before !== c.after && !(c.before === baseline?.text && c.after === input.speech.text))
@@ -96,6 +98,7 @@ export function speechDecisionContext(input: DecisionInput) {
   return message({
     previously_sent_transcript: baseline?.text ?? null,
     current_transcript: input.speech.text,
+    ...(assetCatalog ? { asset_catalog: assetCatalog } : {}),
     ...(corrections.length ? { correction_context: corrections } : {}),
     ...view.fields,
     ...(input.context ? { brief: input.context } : {}),
@@ -105,8 +108,10 @@ export function speechDecisionContext(input: DecisionInput) {
 export function slowDecisionContext(input: SlowDecisionInput) {
   const view = evidence(input.current);
   const deck = record(input.deck), slides = deck?.slides, design = record(deck?.designState);
+  const assetCatalog = record(deck?.assetCatalog);
   return message({
     target_slide_id: input.current.slideId ?? null,
+    ...(assetCatalog ? { asset_catalog: assetCatalog } : {}),
     ...view.fields,
     ...(design ? { design_state: { theme: design.theme, sharedDefinitions: design.sharedDefinitions } } : {}),
     ...(input.speech ? input.speech.slideId === input.current.slideId
