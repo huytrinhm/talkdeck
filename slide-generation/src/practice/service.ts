@@ -407,12 +407,13 @@ export class PracticeService {
               proposal: r.revisionRequest.proposal,
               prompt: r.revisionRequest.prompt,
             },
+            change: r.changeRequest,
             signal: controller.signal,
           }),
           controller.signal,
         );
         const review = this.validateReview(raw, r.context);
-        if (r.revisionRequest && review.proposals.length !== 1)
+        if ((r.revisionRequest || r.changeRequest) && review.proposals.length !== 1)
           throw new SourceError(
             "review_revision",
             "A counter-prompt must produce exactly one replacement proposal",
@@ -768,7 +769,9 @@ export class PracticeService {
       const signal = this.lifetime.signal;
       const current = this.options.local.engine.readDocument().source;
       let prepared = p;
-      if (lineHash(current) !== p.previewBase) {
+      // Source equality cannot prove identical font, asset, renderer or measured preview bytes.
+      // Always privately restage and compare the complete prepared bundle before acceptance.
+      {
         prepared = await prepareProposal(
           this.options.local,
           r.context!,
@@ -874,11 +877,33 @@ export class PracticeService {
         status: "processing",
         proposals: [],
         attempts: 0,
+        changeRequest: undefined,
         revisionRequest: {
           practiceId: r.id,
           proposal: structuredClone(p),
           prompt,
         },
+      };
+      this.records.set(next.id, next);
+      await this.launch(next);
+      return this.get(next.id);
+    });
+  }
+  /** An explicit review request with no prior proposal still uses private staging and exact-version acceptance. */
+  requestChange(id: string, slideId: string, prompt: string) {
+    return this.serial(async () => {
+      const prior = this.record(id);
+      if (prior.status === "recording" || prior.status === "processing")
+        throw new SourceError("practice_state", "Finish the current recording/review first");
+      if (!prompt.trim() || prompt.length > 100_000)
+        throw new SourceError("request", "A bounded change prompt is required");
+      const source = this.options.local.engine.readDocument().source;
+      if (!childNodes(parseSource(source)).some(n => n.tag === "Slide" && n.id === slideId))
+        throw new SourceError("missing_slide", "The requested slide no longer exists");
+      const next: PracticeRecord = {
+        ...structuredClone(prior), id: randomUUID(), baseline: {source, revision:lineHash(source)},
+        context: undefined, review: undefined, status: "processing", proposals: [], attempts: 0,
+        revisionRequest: undefined, changeRequest: {slideId, prompt:prompt.trim()}, error: undefined,
       };
       this.records.set(next.id, next);
       await this.launch(next);

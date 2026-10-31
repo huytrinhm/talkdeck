@@ -7,6 +7,7 @@ import { preparePage, measurePage } from './measure.js';
 import { evaluateMeasurement, CHECK_POLICY_VERSION } from './policy.js';
 import { BrowserPool, type BrowserPoolOptions } from './pool.js';
 import type { BrowserCheckResult, CheckEvidence } from './types.js';
+import { measureReview, type ReviewCapture } from './review-capture.js';
 import { APCA_VERSION } from '../render/contrast.js';
 
 export interface ArtifactRenderer { render(source: string, slideId: string): Promise<RenderArtifact> }
@@ -85,6 +86,19 @@ export class BrowserValidationPipeline implements ValidationPipeline {
       captures.push({ slideId, jpeg: capture, sourceDigest: digest(artifact.source), artifactDigest: artifactDigest(artifact) });
     }
     return captures;
+  }
+  /** Images and overlay geometry are produced from one immutable artifact in one prepared page. */
+  async captureReview(artifact: RenderArtifact): Promise<ReviewCapture> {
+    return this.pool.withPage(async (page, _version, externalRequests) => {
+      await preparePage(page, artifact);
+      const geometry = await measureReview(page);
+      for (const node of geometry.nodes) if (node.visual.image) node.visual.image = digest(node.visual.image);
+      const jpeg = await page.screenshot({ type: 'jpeg', quality: 90, animations: 'disabled', fullPage: false });
+      if (externalRequests.length) throw new SourceError('validation_unavailable', 'Review renderer attempted an external network request');
+      return { jpeg: jpeg.toString('base64'), imageDigest: createHash('sha256').update(jpeg).digest('hex'),
+        renderDigest: digest(JSON.stringify({html:artifact.html, css:artifact.css, dependencies:artifact.dependencies, fonts:artifact.fonts})),
+        sourceDigest: digest(artifact.source), dependencies: structuredClone(artifact.dependencies), geometry };
+    });
   }
   close() { return this.pool.close(); }
 }
