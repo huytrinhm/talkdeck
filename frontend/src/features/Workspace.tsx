@@ -5,10 +5,7 @@ import {
   Timer,
   Presentation,
   Monitor,
-  SlidersHorizontal,
   Download,
-  PanelRight,
-  PanelRightClose,
   Check,
   Pause,
   Play,
@@ -19,13 +16,11 @@ import {
   MonitorOff,
   MonitorCheck,
   Undo2,
-  Settings,
 } from "lucide-react";
 import {
   Button,
   Input,
   Textarea,
-  Modal,
   Menu,
   MenuItem,
   Tabs,
@@ -108,7 +103,6 @@ export function Workspace({
   onChange,
   onMode,
   onBack,
-  onAppSettings,
   speechSuspended = false,
   claimInputStart,
   initialSelectedId,
@@ -133,9 +127,7 @@ export function Workspace({
   useEffect(() => {
     onSelectionChange?.(selectedId);
   }, [selectedId]);
-  const [sidebar, setSidebar] = useState(true),
-    [tab, setTab] = useState("transcript");
-  const [settings, setSettings] = useState(false);
+  const [tab, setTab] = useState("transcript");
   const { source: voiceSource } = usePhoneVoice();
   const [audience, setAudience] = useState(false),
     [fullscreen, setFullscreen] = useState(false),
@@ -537,12 +529,6 @@ export function Workspace({
       onMode("review");
     } else onMode("edit");
   }
-  function openAppSettings(tab: SettingsTab = "preferences") {
-    preserveUnfinished();
-    speech.current?.pause();
-    setHeld(false);
-    onAppSettings?.(tab);
-  }
   function togglePause() {
     if (
       speechState.status === "listening" ||
@@ -699,8 +685,10 @@ export function Workspace({
             />
           </label>
           <label className="field">
-            Slide instructions
+            System prompt
             <Textarea
+              aria-label="System prompt"
+              maxLength={6000}
               value={project.systemPrompt}
               onChange={(e) =>
                 mutate({ ...project, systemPrompt: e.target.value })
@@ -738,12 +726,6 @@ export function Workspace({
           </h1>
           {mode === "present" || mode === "practice" ? (
             <div className="header-end">
-              <IconButton
-                label="App settings"
-                onClick={() => openAppSettings()}
-              >
-                <Settings />
-              </IconButton>
               <span className="timer">{formatTime(elapsed)}</span>
               <IconButton
                 label="Audience (A)"
@@ -803,18 +785,6 @@ export function Workspace({
               >
                 <Monitor />
               </IconButton>
-              <IconButton
-                label="Project settings"
-                onClick={() => setSettings(true)}
-              >
-                <SlidersHorizontal />
-              </IconButton>
-              <IconButton
-                label="App settings"
-                onClick={() => openAppSettings()}
-              >
-                <Settings />
-              </IconButton>
               <Menu
                 trigger={
                   <Button
@@ -842,13 +812,6 @@ export function Workspace({
                   </MenuItem>
                 ))}
               </Menu>
-              <IconButton
-                label="Toggle sidebar"
-                pressed={sidebar}
-                onClick={() => setSidebar((v) => !v)}
-              >
-                {sidebar ? <PanelRightClose /> : <PanelRight />}
-              </IconButton>
             </nav>
           )}
         </header>
@@ -894,7 +857,9 @@ export function Workspace({
                       segments={
                         mode === "practice"
                           ? practice.current.transcript
-                          : project.transcript
+                          : project.transcript.filter((segment) =>
+                              sessionTranscriptIds.current.has(segment.id),
+                            )
                       }
                       interim={interim}
                     />
@@ -964,53 +929,49 @@ export function Workspace({
                   </div>
                 )}
               </div>
-              {sidebar && (
-                <aside
-                  className="workspace-sidebar"
-                  aria-label="Project sidebar"
-                >
-                  <Tabs value={tab} onValueChange={setTab}>
-                    <TabsList className="tab-list">
-                      <TabsTrigger className="tab-trigger" value="transcript">
-                        Transcript
-                      </TabsTrigger>
-                      <TabsTrigger className="tab-trigger" value="context">
-                        Context
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="transcript">
-                      <Transcript
-                        segments={project.transcript}
-                        sessionIds={sessionTranscriptIds.current}
-                        interim={interim}
-                      />
-                    </TabsContent>
-                    <TabsContent value="context">
-                      <div className="context-content">
-                        <label className="field">
-                          Slide instructions
-                          <Textarea
-                            maxLength={6000}
-                            value={project.systemPrompt}
-                            onChange={(e) =>
-                              mutate({
-                                ...project,
-                                systemPrompt: e.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <Materials
-                          materials={project.materials}
-                          onChange={(materials) =>
-                            mutate({ ...projectRef.current, materials })
+              <aside className="workspace-sidebar" aria-label="Project sidebar">
+                <Tabs value={tab} onValueChange={setTab}>
+                  <TabsList className="tab-list">
+                    <TabsTrigger className="tab-trigger" value="transcript">
+                      Transcript
+                    </TabsTrigger>
+                    <TabsTrigger className="tab-trigger" value="context">
+                      Context
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="transcript">
+                    <Transcript
+                      segments={project.transcript}
+                      sessionIds={sessionTranscriptIds.current}
+                      interim={interim}
+                    />
+                  </TabsContent>
+                  <TabsContent value="context">
+                    <div className="context-content">
+                      <label className="field">
+                        System prompt
+                        <Textarea
+                          aria-label="System prompt"
+                          maxLength={6000}
+                          value={project.systemPrompt}
+                          onChange={(e) =>
+                            mutate({
+                              ...project,
+                              systemPrompt: e.target.value,
+                            })
                           }
                         />
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </aside>
-              )}
+                      </label>
+                      <Materials
+                        materials={project.materials}
+                        onChange={(materials) =>
+                          mutate({ ...projectRef.current, materials })
+                        }
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </aside>
             </>
           )}
         </div>
@@ -1134,43 +1095,6 @@ export function Workspace({
           </div>
         </div>
       )}
-      <Modal
-        open={settings}
-        onOpenChange={setSettings}
-        title="Project settings"
-      >
-        <label className="field">
-          Title
-          <Input
-            maxLength={120}
-            value={project.title}
-            onChange={(e) => mutate({ ...project, title: e.target.value })}
-          />
-        </label>
-        <label className="field">
-          Description
-          <Textarea
-            maxLength={1600}
-            value={project.description}
-            onChange={(e) =>
-              mutate({ ...project, description: e.target.value })
-            }
-          />
-        </label>
-        <label className="field">
-          Slide instructions
-          <Textarea
-            maxLength={6000}
-            value={project.systemPrompt}
-            onChange={(e) =>
-              mutate({ ...project, systemPrompt: e.target.value })
-            }
-          />
-        </label>
-        <div className="form-actions">
-          <Button onClick={() => setSettings(false)}>Done</Button>
-        </div>
-      </Modal>
       {notice && (
         <div role="status" className="notice">
           {notice}

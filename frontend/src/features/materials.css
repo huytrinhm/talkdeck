@@ -14,7 +14,6 @@
   margin: 0;
 }
 .add-sources {
-  border-radius: 999px !important;
   white-space: nowrap;
 }
 .materials-empty {
@@ -34,12 +33,12 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  border: 1px solid #353c47;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 5px;
 }
 .source-row:hover {
-  background: #29323e;
+  background: var(--accent);
 }
 .source-open {
   background: none;
@@ -57,7 +56,7 @@
 .source-open > svg {
   width: 21px;
   height: 21px;
-  color: #a6c9f5;
+  color: var(--foreground);
   flex: none;
 }
 .source-open > span {
@@ -74,35 +73,18 @@
 .source-open small {
   display: block;
   font-size: 11px;
-  color: #aab5c5;
+  color: var(--muted-foreground);
   margin-top: 5px;
 }
 .source-dialog {
   width: min(600px, calc(100vw - 32px)) !important;
 }
 .source-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: #191d23;
-  border-radius: 6px;
   margin: 20px 0;
-}
-.source-tabs button {
-  flex: 1;
-  border: 0;
-  background: none;
-  color: #aab5c5;
-  padding: 9px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.source-tabs button[data-state="active"] {
-  background: #303a49;
-  color: #edf1f7;
+  width: 100%;
 }
 .source-drop {
-  border: 1px dashed #59677c;
+  border: 1px dashed var(--border);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -113,7 +95,7 @@
   text-align: center;
 }
 .source-drop > svg {
-  color: #a6c9f5;
+  color: var(--foreground);
   width: 28px;
   height: 28px;
 }
@@ -132,26 +114,12 @@
   font-size: 12px;
   font-weight: 500;
 }
-.source-title {
-  height: 48px !important;
-  padding: 10px !important;
-  box-sizing: border-box;
-  line-height: 26px !important;
-}
-.source-title:focus {
-  outline-offset: -3px !important;
-}
 .source-code {
-  border: 1px solid #46546a !important;
-  background: #171e28 !important;
-  color: #e6edf6 !important;
-  border-radius: 5px;
-  padding: 14px !important;
   font:
     13px/1.75 ui-monospace,
     SFMono-Regular,
     Consolas,
-    monospace !important;
+    monospace;
   min-height: 230px;
   resize: vertical;
   white-space: pre-wrap;
@@ -189,7 +157,7 @@
 .source-table-scroll {
   overflow: auto;
   max-height: 45dvh;
-  border: 1px solid #46546a;
+  border: 1px solid var(--border);
   border-radius: 5px;
 }
 .source-table-scroll table {
@@ -203,7 +171,7 @@
 .source-table-scroll th,
 .source-table-scroll td {
   padding: 9px 12px;
-  border-bottom: 1px solid #353c47;
+  border-bottom: 1px solid var(--border);
   text-align: left;
   white-space: pre-wrap;
   min-width: 100px;
@@ -213,8 +181,8 @@
 .source-table-scroll th {
   position: sticky;
   top: 0;
-  background: #29323e;
-  color: #a6c9f5;
+  background: var(--accent);
+  color: var(--foreground);
 }
 .source-table-preview > .muted {
   font-size: 11px;
@@ -228,7 +196,7 @@
 }
 .material-reference-message {
   font-size: 13px;
-  color: #aab5c5;
+  color: var(--muted-foreground);
   line-height: 1.7;
   padding: 30px 0;
 }

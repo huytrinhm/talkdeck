@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, it, expect } from "vitest";
+import { afterEach, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { Review } from "./Review";
 import { newProject, blankSlide } from "../domain/types";
@@ -87,4 +87,38 @@ it("has no premature Done on Overview and retains completion through Slide chang
     ctrlKey: false,
   });
   expect(screen.getByRole("button", { name: "Done" })).toBeTruthy();
+});
+
+it("labels the completion action Back to slide with an arrow and saves completion before returning", () => {
+  const p = newProject([]);
+  p.slides = [blankSlide()];
+  p.rehearsals = [buildRehearsal(p.slides, [], 0)];
+  const done = vi.fn(),
+    change = vi.fn();
+  render(
+    <Review
+      project={p}
+      onChange={change}
+      onAgain={() => {}}
+      onPresent={() => {}}
+      onDone={done}
+    />,
+  );
+  fireEvent.mouseDown(screen.getByRole("tab", { name: /Slide changes/ }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  const back = screen.getByRole("button", {
+    name: "Back to slide",
+  });
+  expect(back.querySelector("svg.lucide-arrow-left")).toBeTruthy();
+  expect(
+    screen.queryByRole("button", { name: "Done" }),
+  ).toBeNull();
+  fireEvent.click(back);
+  expect(change.mock.calls.at(-1)?.[0].rehearsals[0].completedAt).toEqual(
+    expect.any(Number),
+  );
+  expect(done).toHaveBeenCalledOnce();
 });

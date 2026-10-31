@@ -68,7 +68,6 @@ export interface Project {
   title: string;
   description: string;
   systemPrompt: string;
-  folderId: string | null;
   materials: Material[];
   slides: Slide[];
   transcript: TranscriptSegment[];
@@ -78,14 +77,8 @@ export interface Project {
   theme: Theme;
   rehearsals: Rehearsal[];
 }
-export interface Folder {
-  id: string;
-  name: string;
-  parentId: string | null;
-}
 export interface Workspace {
-  version: 2;
-  folders: Folder[];
+  version: 3;
   projects: Project[];
 }
 export const DEFAULT_PROMPT =
@@ -100,14 +93,10 @@ export const blankSlide = (theme: Theme = "paper"): Slide => ({
   theme,
 });
 export const emptyWorkspace = (): Workspace => ({
-  version: 2,
-  folders: [],
+  version: 3,
   projects: [],
 });
-export const newProject = (
-  projects: Project[],
-  folderId: string | null = null,
-): Project => {
+export const newProject = (projects: Project[]): Project => {
   let n = 1;
   while (projects.some((p) => p.title.toLowerCase() === `untitled ${n}`)) n++;
   return {
@@ -115,7 +104,6 @@ export const newProject = (
     title: `Untitled ${n}`,
     description: "",
     systemPrompt: DEFAULT_PROMPT,
-    folderId,
     materials: [],
     slides: [],
     transcript: [],

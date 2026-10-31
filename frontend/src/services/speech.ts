@@ -224,7 +224,12 @@ export class BrowserSpeechAdapter {
     } catch {
       return;
     }
-    if (this.disposed || epoch !== this.epoch) {
+    if (
+      this.disposed ||
+      epoch !== this.epoch ||
+      this.status !== "listening" ||
+      this.muted
+    ) {
       stream.getTracks().forEach((t) => t.stop());
       return;
     }
@@ -234,20 +239,47 @@ export class BrowserSpeechAdapter {
       this.audio = context;
       const source = context.createMediaStreamSource(stream),
         analyser = context.createAnalyser();
-      analyser.fftSize = 256;
+      analyser.fftSize = 1024;
       source.connect(analyser);
+      // Recognition may start asynchronously after the initiating gesture.
+      // Resume the separate meter context rather than sampling a suspended graph.
+      if (context.state === "suspended") await context.resume();
+      if (this.disposed || epoch !== this.epoch || this.audio !== context)
+        return;
       const data = new Float32Array(analyser.fftSize);
+      let envelope = 0;
+      let previous = performance.now();
       const tick = () => {
-        if (this.disposed || epoch !== this.epoch) return;
+        if (
+          this.disposed ||
+          epoch !== this.epoch ||
+          this.status !== "listening" ||
+          this.muted
+        )
+          return;
         analyser.getFloatTimeDomainData(data);
         let sum = 0;
         for (const x of data) sum += x * x;
-        this.options.onLevel?.(Math.min(1, Math.sqrt(sum / data.length)));
+        const rms = Math.sqrt(sum / data.length);
+        // Speech is usually far below full scale. Map -55..-12 dBFS into the
+        // visual range, retaining silence and avoiding clipping every bar.
+        const measured = Math.max(
+          0,
+          Math.min(1, (20 * Math.log10(Math.max(rms, 1e-8)) + 55) / 43),
+        );
+        const now = performance.now();
+        const dt = Math.max(1, now - previous);
+        previous = now;
+        const responseMs = measured > envelope ? 40 : 140;
+        envelope += (measured - envelope) * (1 - Math.exp(-dt / responseMs));
+        if (envelope < 0.005) envelope = 0;
+        this.options.onLevel?.(envelope);
         this.frame = requestAnimationFrame(tick);
       };
       tick();
     } catch {
-      this.stopMeter();
+      // A cancelled older request must never tear down a newer meter.
+      if (epoch === this.epoch) this.stopMeter();
     }
   }
 }

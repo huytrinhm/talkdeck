@@ -41,7 +41,6 @@ it("rejects malformed project data instead of rendering or overwriting it", asyn
       .fn()
       .mockResolvedValue({
         version: 2,
-        folders: [],
         projects: [{ id: "broken" }],
       }),
   });

@@ -163,13 +163,13 @@ it.each(["error", "idle"] as const)(
   },
 );
 
-it("an explicit settings pause revokes the earlier device mute resume intent", () => {
+it("an explicit window blur pause revokes the earlier device mute resume intent", () => {
   setup();
   fireEvent.click(screen.getByRole("button", { name: "Resume (P)" }));
   act(() => callbacks.onState?.({ status: "listening", muted: false }));
   fireEvent.click(screen.getByRole("button", { name: "Mute (M)" }));
   expect(starts).toBe(1);
-  fireEvent.click(screen.getByRole("button", { name: "App settings" }));
+  fireEvent(window, new Event("blur"));
   fireEvent.click(screen.getByRole("button", { name: "Unmute (M)" }));
   expect(starts).toBe(1);
   expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
@@ -184,3 +184,37 @@ it("pauses Practice on hidden-page visibility change even without blur and rejec
   act(() => callbacks.onFinal?.("late hidden-page speech"));
   expect(change).not.toHaveBeenCalled();
 });
+
+it.each(["practice", "present"] as const)(
+  "starts %s with a fresh visible transcript and preserves saved history",
+  (mode) => {
+    const project = newProject([]);
+    project.slides = [blankSlide()];
+    project.transcript = [
+      {
+        id: "old",
+        slideId: project.slides[0].id,
+        text: "Words from an earlier session",
+        start: 0,
+        end: 1,
+      },
+    ];
+    render(
+      <Workspace
+        project={project}
+        mode={mode}
+        onChange={() => {}}
+        onMode={() => {}}
+        onBack={() => {}}
+      />,
+    );
+    const current = document.querySelector(
+      ".presenter-transcript > .transcript",
+    )!;
+    expect(current.textContent).toContain("Ready when you are");
+    expect(current.textContent).not.toContain("Words from an earlier session");
+    expect(document.querySelector(".saved-session-transcript")).toBeNull();
+    expect(screen.queryByText("Saved transcript")).toBeNull();
+    expect(project.transcript).toHaveLength(1);
+  },
+);

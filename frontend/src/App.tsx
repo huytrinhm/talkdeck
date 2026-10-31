@@ -14,17 +14,17 @@ export default function App() {
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
     [loadError, setLoadError] = useState(""),
     [saveError, setSaveError] = useState(""),
-    [hash, setHash] = useState(location.hash || "#folder/all");
-  const inputIntent = useRef<string | null>(null);
+    [hash, setHash] = useState(location.hash || "#projects");
   const selectedByProject = useRef(new Map<string, string | null>());
   useEffect(() => {
-    if (hash.split("?")[0] === "#phone") {
+    const route = hash.slice(1).split("/")[0].split("?")[0];
+    if (!["projects", "new", "project"].includes(route)) {
       history.replaceState(
         null,
         "",
-        location.pathname + location.search + "#folder/all",
+        location.pathname + location.search + "#projects",
       );
-      setHash("#folder/all");
+      setHash("#projects");
     }
   }, [hash]);
   const latest = useRef<Workspace | null>(null),
@@ -62,14 +62,12 @@ export default function App() {
   useEffect(() => {
     load();
     const navigate = () => {
-      if (inputIntent.current && inputIntent.current !== location.hash)
-        inputIntent.current = null;
       if (timer.current) {
         clearTimeout(timer.current);
         timer.current = null;
         if (latest.current) void persist(latest.current).catch(() => {});
       }
-      setHash(location.hash || "#folder/all");
+      setHash(location.hash || "#projects");
     };
     const unload = (e: BeforeUnloadEvent) => {
       if (latest.current !== lastSaved.current) {
@@ -97,10 +95,8 @@ export default function App() {
   const criticalKey = (w: Workspace | null) =>
     JSON.stringify(
       w && {
-        folders: w.folders,
         projects: w.projects.map((p) => ({
           id: p.id,
-          folderId: p.folderId,
           theme: p.theme,
           slides: p.slides.map((s) => s.id),
           materials: p.materials.map((m) => m.id),
@@ -182,23 +178,18 @@ export default function App() {
           onChange={updateProject}
           onMode={(m) => {
             const route = `#project/${project.id}/${m}`;
-            inputIntent.current = ["create", "practice", "present"].includes(m)
-              ? route
-              : null;
             go(route);
           }}
-          claimInputStart={() => {
-            const allowed = inputIntent.current === hash;
-            inputIntent.current = null;
-            return allowed;
-          }}
-          onBack={() => go("#folder/all")}
+          claimInputStart={() =>
+            ["create", "practice", "present"].includes(mode)
+          }
+          onBack={() => go("#projects")}
           speechSuspended={Boolean(appSettings)}
           onAppSettings={(tab) => setAppSettings(tab ?? "preferences")}
         />
       );
     else {
-      queueMicrotask(() => go("#folder/all"));
+      queueMicrotask(() => go("#projects"));
       content = <div role="status">Returning to projects…</div>;
     }
   } else if (kind === "new")
@@ -206,8 +197,7 @@ export default function App() {
       <ProjectSetup
         key={hash}
         workspace={workspace}
-        folderId={id === "all" ? null : (id ?? null)}
-        onCancel={() => go("#folder/all")}
+        onCancel={() => go("#projects")}
         onCreate={async (project) => {
           const w = {
             ...latest.current!,
@@ -224,12 +214,9 @@ export default function App() {
     content = (
       <Dashboard
         workspace={workspace}
-        folderId={id === "all" || kind !== "folder" ? null : (id ?? null)}
-        onFolder={(folderId) => go(`#folder/${folderId ?? "all"}`)}
         onChange={change}
         onOpen={(projectId) => go(`#project/${projectId}/edit`)}
-        onNew={(folderId) => go(`#new/${folderId ?? "all"}`)}
-        onAppSettings={() => setAppSettings("preferences")}
+        onNew={() => go("#new")}
       />
     );
   return (

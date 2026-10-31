@@ -291,7 +291,7 @@ export function PhoneSender({
   }
   return (
     <main className="phone-sender">
-      <a className="phone-brand" href="#folder/all">
+      <a className="phone-brand" href="#projects">
         Talkdeck
       </a>
       <div className="phone-sender-card">

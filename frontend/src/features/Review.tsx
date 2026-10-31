@@ -202,7 +202,8 @@ export function Review({
             Practice again
           </Button>
           <Button variant="primary" onClick={finish}>
-            Done
+            <ArrowLeft aria-hidden="true" />
+            Back to slide
           </Button>
         </div>
       </main>
