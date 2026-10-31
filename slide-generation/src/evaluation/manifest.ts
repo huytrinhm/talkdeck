@@ -9,6 +9,7 @@ export const manifestSchema = z.object({
   nodeVersion: z.string(), platform: z.string(), startedAt: z.string().datetime(),
   lockSha256: digest, promptSha256: digest, fixtureSha256: digest,
   dependencies: z.array(dependency),
+  harness: z.object({ sourceSha: z.string().regex(/^[a-f0-9]{40}$/), dirty: z.boolean(), runnerSha256: digest, evaluatorSha256: digest, observerSha256: digest.optional() }).strict().optional(),
   model: z.object({ provider: z.string(), name: z.string(), resolvedVersion: z.string().optional(),
     serviceTier: z.enum(['fast', 'priority', 'default', 'auto', 'flex', 'scale', 'ultrafast']).optional(),
     roles: z.record(z.string(), z.string()).optional(),
