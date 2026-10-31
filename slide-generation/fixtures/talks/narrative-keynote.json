@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "id": "narrative-keynote",
+  "title": "Narrative keynote",
+  "purpose": "Exact quotes, sparse layouts, no unsupported metrics, long pauses and unrequested churn.",
+  "initialContext": "This is a fictional rehearsal. Create and edit a multi-slide deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. New-slide and editing commands are part of the spoken input.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 2.3,
+    "postTalkObservationMs": 15000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "narrative-keynote-001",
+      "startMs": 1000,
+      "endMs": 7957,
+      "kind": "utterance",
+      "text": "Create the opening slide titled The quiet handoff. Use the subtitle A fictional story about listening.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 8000
+    },
+    {
+      "id": "narrative-keynote-002",
+      "startMs": 15957,
+      "endMs": 22479,
+      "kind": "utterance",
+      "text": "New slide titled The room. Put this sentence on it: Nobody asked for another dashboard.",
+      "targetAlias": "room",
+      "silenceAfterMs": 12000
+    },
+    {
+      "id": "narrative-keynote-003",
+      "startMs": 34479,
+      "endMs": 48827,
+      "kind": "utterance",
+      "text": "New slide titled What Mara said. This is a fictional quotation. The quote is: We do not need more alerts. We need to know who is holding the problem. Attribute it to Mara.",
+      "targetAlias": "quote-one",
+      "silenceAfterMs": 15000
+    },
+    {
+      "id": "narrative-keynote-004",
+      "startMs": 63827,
+      "endMs": 69045,
+      "kind": "utterance",
+      "text": "Keep that quotation in a quote block, not as the slide title.",
+      "targetAlias": "quote-one",
+      "silenceAfterMs": 8000
+    },
+    {
+      "id": "narrative-keynote-005",
+      "startMs": 77045,
+      "endMs": 84437,
+      "kind": "utterance",
+      "text": "New slide titled The pause. Use only this line as the main content: Listening changed the question.",
+      "targetAlias": "pause",
+      "silenceAfterMs": 18000
+    },
+    {
+      "id": "narrative-keynote-006",
+      "startMs": 102437,
+      "endMs": 110698,
+      "kind": "utterance",
+      "text": "New slide titled The handoff. Add these three phrases: Name the owner. State the next action. Confirm the handoff.",
+      "targetAlias": "handoff",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "narrative-keynote-007",
+      "startMs": 110698,
+      "endMs": 116351,
+      "kind": "utterance",
+      "text": "Reveal those phrases one at a time in the order I said them.",
+      "targetAlias": "handoff",
+      "silenceAfterMs": 10000
+    },
+    {
+      "id": "narrative-keynote-008",
+      "startMs": 126351,
+      "endMs": 135917,
+      "kind": "utterance",
+      "text": "New slide titled A second voice. Quote exactly: I can wait when I know someone has heard me. Attribute it to Noor.",
+      "targetAlias": "quote-two",
+      "silenceAfterMs": 15000
+    },
+    {
+      "id": "narrative-keynote-009",
+      "startMs": 150917,
+      "endMs": 157004,
+      "kind": "utterance",
+      "text": "Do not invent a survey, a percentage, or a customer count for this story.",
+      "targetAlias": "quote-two",
+      "silenceAfterMs": 6000
+    },
+    {
+      "id": "narrative-keynote-010",
+      "startMs": 163004,
+      "endMs": 171265,
+      "kind": "utterance",
+      "text": "New closing slide titled Leave a clear next step. The main sentence is: A good handoff leaves nobody guessing.",
+      "targetAlias": "closing",
+      "silenceAfterMs": 18000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "narrative-keynote-a001",
+      "triggerEventId": "narrative-keynote-001",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "The quiet handoff",
+        "A fictional story about listening"
+      ]
+    },
+    {
+      "id": "narrative-keynote-a002",
+      "triggerEventId": "narrative-keynote-002",
+      "targetAlias": "room",
+      "kind": "visible_exact",
+      "texts": [
+        "Nobody asked for another dashboard."
+      ]
+    },
+    {
+      "id": "narrative-keynote-a003",
+      "triggerEventId": "narrative-keynote-003",
+      "targetAlias": "quote-one",
+      "kind": "quote_exact",
+      "text": "We do not need more alerts. We need to know who is holding the problem.",
+      "by": "Mara"
+    },
+    {
+      "id": "narrative-keynote-a004",
+      "triggerEventId": "narrative-keynote-004",
+      "targetAlias": "quote-one",
+      "kind": "quote_role",
+      "text": "We do not need more alerts. We need to know who is holding the problem.",
+      "notRole": "title"
+    },
+    {
+      "id": "narrative-keynote-a005",
+      "triggerEventId": "narrative-keynote-005",
+      "targetAlias": "pause",
+      "kind": "visible_exact",
+      "texts": [
+        "Listening changed the question."
+      ]
+    },
+    {
+      "id": "narrative-keynote-a006",
+      "triggerEventId": "narrative-keynote-005",
+      "targetAlias": "pause",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "narrative-keynote-a007",
+      "triggerEventId": "narrative-keynote-006",
+      "targetAlias": "handoff",
+      "kind": "visible_exact",
+      "texts": [
+        "Name the owner.",
+        "State the next action.",
+        "Confirm the handoff."
+      ]
+    },
+    {
+      "id": "narrative-keynote-a008",
+      "triggerEventId": "narrative-keynote-007",
+      "targetAlias": "handoff",
+      "kind": "build_order",
+      "texts": [
+        "Name the owner.",
+        "State the next action.",
+        "Confirm the handoff."
+      ]
+    },
+    {
+      "id": "narrative-keynote-a009",
+      "triggerEventId": "narrative-keynote-008",
+      "targetAlias": "quote-two",
+      "kind": "quote_exact",
+      "text": "I can wait when I know someone has heard me.",
+      "by": "Noor"
+    },
+    {
+      "id": "narrative-keynote-a010",
+      "triggerEventId": "narrative-keynote-009",
+      "targetAlias": "quote-two",
+      "kind": "no_derived_numbers",
+      "scope": "deck"
+    },
+    {
+      "id": "narrative-keynote-a011",
+      "triggerEventId": "narrative-keynote-010",
+      "targetAlias": "closing",
+      "kind": "visible_exact",
+      "texts": [
+        "A good handoff leaves nobody guessing."
+      ]
+    },
+    {
+      "id": "narrative-keynote-a012",
+      "triggerEventId": "narrative-keynote-010",
+      "targetAlias": "closing",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 7,
+    "allUserSourceRetained": true,
+    "quotesVerbatim": true,
+    "noInventedMetrics": true,
+    "noUnrequestedChangesDuringPauses": true,
+    "presentationReady": true
+  }
+}

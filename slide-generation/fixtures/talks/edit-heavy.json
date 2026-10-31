@@ -1,0 +1,525 @@
+{
+  "schemaVersion": 1,
+  "id": "edit-heavy",
+  "title": "Edit-heavy session",
+  "purpose": "Rapid alternating additions/corrections, ordered operations, granular scope, deletions and archived evidence.",
+  "initialContext": "This is a fictional rehearsal. Create and edit a multi-slide deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. New-slide and editing commands are part of the spoken input.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 3.5,
+    "postTalkObservationMs": 15000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "edit-heavy-001",
+      "startMs": 1000,
+      "endMs": 5858,
+      "kind": "utterance",
+      "text": "Create a slide titled Launch checklist. Add the three items Draft, Review, and Publish in that order.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-002",
+      "startMs": 5858,
+      "endMs": 7858,
+      "kind": "utterance",
+      "text": "Add an item called Monitor after Publish.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-003",
+      "startMs": 7858,
+      "endMs": 9858,
+      "kind": "utterance",
+      "text": "Change Review to Verify. Change nothing else.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-004",
+      "startMs": 9858,
+      "endMs": 11573,
+      "kind": "utterance",
+      "text": "Move Monitor to the first position.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-005",
+      "startMs": 11573,
+      "endMs": 13288,
+      "kind": "utterance",
+      "text": "Highlight Verify using the accent color.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-006",
+      "startMs": 13288,
+      "endMs": 15574,
+      "kind": "utterance",
+      "text": "Make the title larger without changing its wording.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-007",
+      "startMs": 15574,
+      "endMs": 19574,
+      "kind": "utterance",
+      "text": "Remove Draft from the visible list. Keep the original words in the speaker notes.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-008",
+      "startMs": 19574,
+      "endMs": 21289,
+      "kind": "utterance",
+      "text": "Put Draft back immediately after Monitor.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-009",
+      "startMs": 21289,
+      "endMs": 24718,
+      "kind": "utterance",
+      "text": "New slide titled Owners. Add Ada for Verify and Lin for Publish.",
+      "targetAlias": "owners",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-010",
+      "startMs": 24718,
+      "endMs": 27290,
+      "kind": "utterance",
+      "text": "Change Lin to Jo. Only the Publish owner changes.",
+      "targetAlias": "owners",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-011",
+      "startMs": 27290,
+      "endMs": 30433,
+      "kind": "utterance",
+      "text": "Go back to Launch checklist. Change its title to Release checklist.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-012",
+      "startMs": 30433,
+      "endMs": 31576,
+      "kind": "utterance",
+      "text": "Move Publish before Verify.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-013",
+      "startMs": 31576,
+      "endMs": 33576,
+      "kind": "utterance",
+      "text": "Add this caption: Owner approval is required.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-014",
+      "startMs": 33576,
+      "endMs": 36434,
+      "kind": "utterance",
+      "text": "Move the caption below the list, keeping all its words.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-015",
+      "startMs": 36434,
+      "endMs": 39292,
+      "kind": "utterance",
+      "text": "Remove the highlight from Verify. Keep its position and wording.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-016",
+      "startMs": 39292,
+      "endMs": 41292,
+      "kind": "utterance",
+      "text": "Move the Owners slide before Release checklist.",
+      "targetAlias": "owners",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-017",
+      "startMs": 41292,
+      "endMs": 46150,
+      "kind": "utterance",
+      "text": "Create a temporary slide titled Parking lot. Put this sentence on it: Retry policy needs an owner.",
+      "targetAlias": "parking",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-018",
+      "startMs": 46150,
+      "endMs": 50150,
+      "kind": "utterance",
+      "text": "Delete the Parking lot slide. Keep its original transcript and notes in the archive.",
+      "targetAlias": "parking",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-019",
+      "startMs": 50150,
+      "endMs": 52722,
+      "kind": "utterance",
+      "text": "Return to Owners. Add Sam as the Monitor owner.",
+      "targetAlias": "owners",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-020",
+      "startMs": 52722,
+      "endMs": 55294,
+      "kind": "utterance",
+      "text": "Change Sam to Samira, keeping Ada and Jo unchanged.",
+      "targetAlias": "owners",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-021",
+      "startMs": 55294,
+      "endMs": 59009,
+      "kind": "utterance",
+      "text": "On Release checklist, reveal Monitor and Draft together, then Publish and Verify together.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "edit-heavy-022",
+      "startMs": 59009,
+      "endMs": 62438,
+      "kind": "utterance",
+      "text": "Stop changing the layout now. Keep both remaining slides as they are.",
+      "targetAlias": "checklist",
+      "silenceAfterMs": 15000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "edit-heavy-a001",
+      "triggerEventId": "edit-heavy-001",
+      "targetAlias": "checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Launch checklist"
+      ]
+    },
+    {
+      "id": "edit-heavy-a002",
+      "triggerEventId": "edit-heavy-001",
+      "targetAlias": "checklist",
+      "kind": "ordered_text",
+      "texts": [
+        "Draft",
+        "Review",
+        "Publish"
+      ]
+    },
+    {
+      "id": "edit-heavy-a003",
+      "triggerEventId": "edit-heavy-002",
+      "targetAlias": "checklist",
+      "kind": "ordered_text",
+      "texts": [
+        "Draft",
+        "Review",
+        "Publish",
+        "Monitor"
+      ]
+    },
+    {
+      "id": "edit-heavy-a004",
+      "triggerEventId": "edit-heavy-003",
+      "targetAlias": "checklist",
+      "kind": "correction",
+      "old": "Review",
+      "new": "Verify",
+      "label": "list item"
+    },
+    {
+      "id": "edit-heavy-a005",
+      "triggerEventId": "edit-heavy-003",
+      "targetAlias": "checklist",
+      "kind": "unchanged_except",
+      "allowed": [
+        "Review -> Verify"
+      ]
+    },
+    {
+      "id": "edit-heavy-a006",
+      "triggerEventId": "edit-heavy-004",
+      "targetAlias": "checklist",
+      "kind": "ordered_text",
+      "texts": [
+        "Monitor",
+        "Draft",
+        "Verify",
+        "Publish"
+      ]
+    },
+    {
+      "id": "edit-heavy-a007",
+      "triggerEventId": "edit-heavy-005",
+      "targetAlias": "checklist",
+      "kind": "style_target",
+      "text": "Verify",
+      "change": "accent color"
+    },
+    {
+      "id": "edit-heavy-a008",
+      "triggerEventId": "edit-heavy-006",
+      "targetAlias": "checklist",
+      "kind": "style_target",
+      "text": "Launch checklist",
+      "change": "larger type"
+    },
+    {
+      "id": "edit-heavy-a009",
+      "triggerEventId": "edit-heavy-006",
+      "targetAlias": "checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Launch checklist"
+      ]
+    },
+    {
+      "id": "edit-heavy-a010",
+      "triggerEventId": "edit-heavy-007",
+      "targetAlias": "checklist",
+      "kind": "visible_absent",
+      "texts": [
+        "Draft"
+      ],
+      "match": "exact"
+    },
+    {
+      "id": "edit-heavy-a011",
+      "triggerEventId": "edit-heavy-007",
+      "targetAlias": "checklist",
+      "kind": "source_retained",
+      "texts": [
+        "Draft"
+      ]
+    },
+    {
+      "id": "edit-heavy-a012",
+      "triggerEventId": "edit-heavy-008",
+      "targetAlias": "checklist",
+      "kind": "ordered_text",
+      "texts": [
+        "Monitor",
+        "Draft",
+        "Verify",
+        "Publish"
+      ]
+    },
+    {
+      "id": "edit-heavy-a013",
+      "triggerEventId": "edit-heavy-009",
+      "targetAlias": "owners",
+      "kind": "visible_exact",
+      "texts": [
+        "Owners",
+        "Ada",
+        "Verify",
+        "Lin",
+        "Publish"
+      ]
+    },
+    {
+      "id": "edit-heavy-a014",
+      "triggerEventId": "edit-heavy-010",
+      "targetAlias": "owners",
+      "kind": "correction",
+      "old": "Lin",
+      "new": "Jo",
+      "label": "Publish owner"
+    },
+    {
+      "id": "edit-heavy-a015",
+      "triggerEventId": "edit-heavy-010",
+      "targetAlias": "owners",
+      "kind": "unchanged_except",
+      "allowed": [
+        "Publish owner Lin -> Jo"
+      ]
+    },
+    {
+      "id": "edit-heavy-a016",
+      "triggerEventId": "edit-heavy-011",
+      "targetAlias": "checklist",
+      "kind": "correction",
+      "old": "Launch checklist",
+      "new": "Release checklist",
+      "label": "slide title"
+    },
+    {
+      "id": "edit-heavy-a017",
+      "triggerEventId": "edit-heavy-012",
+      "targetAlias": "checklist",
+      "kind": "ordered_text",
+      "texts": [
+        "Monitor",
+        "Draft",
+        "Publish",
+        "Verify"
+      ]
+    },
+    {
+      "id": "edit-heavy-a018",
+      "triggerEventId": "edit-heavy-013",
+      "targetAlias": "checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Owner approval is required."
+      ]
+    },
+    {
+      "id": "edit-heavy-a019",
+      "triggerEventId": "edit-heavy-014",
+      "targetAlias": "checklist",
+      "kind": "relative_position",
+      "text": "Owner approval is required.",
+      "relation": "below",
+      "other": "list"
+    },
+    {
+      "id": "edit-heavy-a020",
+      "triggerEventId": "edit-heavy-014",
+      "targetAlias": "checklist",
+      "kind": "visible_exact",
+      "texts": [
+        "Owner approval is required."
+      ]
+    },
+    {
+      "id": "edit-heavy-a021",
+      "triggerEventId": "edit-heavy-015",
+      "targetAlias": "checklist",
+      "kind": "style_target",
+      "text": "Verify",
+      "change": "clear explicit color override"
+    },
+    {
+      "id": "edit-heavy-a022",
+      "triggerEventId": "edit-heavy-015",
+      "targetAlias": "checklist",
+      "kind": "ordered_text",
+      "texts": [
+        "Monitor",
+        "Draft",
+        "Publish",
+        "Verify"
+      ]
+    },
+    {
+      "id": "edit-heavy-a023",
+      "triggerEventId": "edit-heavy-016",
+      "targetAlias": "owners",
+      "kind": "slide_order",
+      "aliases": [
+        "owners",
+        "checklist"
+      ]
+    },
+    {
+      "id": "edit-heavy-a024",
+      "triggerEventId": "edit-heavy-017",
+      "targetAlias": "parking",
+      "kind": "visible_exact",
+      "texts": [
+        "Parking lot",
+        "Retry policy needs an owner."
+      ]
+    },
+    {
+      "id": "edit-heavy-a025",
+      "triggerEventId": "edit-heavy-018",
+      "targetAlias": "parking",
+      "kind": "slide_deleted_archived",
+      "text": "Retry policy needs an owner."
+    },
+    {
+      "id": "edit-heavy-a026",
+      "triggerEventId": "edit-heavy-019",
+      "targetAlias": "owners",
+      "kind": "visible_exact",
+      "texts": [
+        "Sam",
+        "Monitor"
+      ]
+    },
+    {
+      "id": "edit-heavy-a027",
+      "triggerEventId": "edit-heavy-020",
+      "targetAlias": "owners",
+      "kind": "correction",
+      "old": "Sam",
+      "new": "Samira",
+      "label": "Monitor owner"
+    },
+    {
+      "id": "edit-heavy-a028",
+      "triggerEventId": "edit-heavy-020",
+      "targetAlias": "owners",
+      "kind": "visible_exact",
+      "texts": [
+        "Ada",
+        "Jo"
+      ]
+    },
+    {
+      "id": "edit-heavy-a029",
+      "triggerEventId": "edit-heavy-021",
+      "targetAlias": "checklist",
+      "kind": "build_groups",
+      "groups": [
+        [
+          "Monitor",
+          "Draft"
+        ],
+        [
+          "Publish",
+          "Verify"
+        ]
+      ]
+    },
+    {
+      "id": "edit-heavy-a030",
+      "triggerEventId": "edit-heavy-022",
+      "targetAlias": "checklist",
+      "kind": "no_churn",
+      "scope": "deck"
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 2,
+    "slideOrder": [
+      "owners",
+      "checklist"
+    ],
+    "allUserSourceRetained": true,
+    "archivedSlideAliases": [
+      "parking"
+    ],
+    "onlyRequestedChanges": true,
+    "presentationReady": true
+  }
+}
