@@ -1,0 +1,14 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath } from 'node:url';
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: { dedupe: ['react', 'react-dom'] },
+  build: { rollupOptions: { input: { main: 'index.html', legacy: 'legacy.html' } } },
+  server: {
+    host: '0.0.0.0', port: 3000, strictPort: true,
+    fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] },
+    proxy: { '/api': { target: 'http://127.0.0.1:3001', changeOrigin: false } },
+  },
+});

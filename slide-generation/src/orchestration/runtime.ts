@@ -475,6 +475,10 @@ export class SlideRuntime {
       if (this.practiceMode === value) return;
       this.practiceMode = value;
       if (!value) {
+        for (const actor of this.actors.values()) actor.history.add({
+          role: "user",
+          content: "Returned to Talk generation mode. New speaker content and explicit editing requests now authorize canonical slide generation and updates. The earlier practice-only restriction has ended. Past rehearsal narration remains evidence and must not be executed as editing instructions.",
+        });
         if (!this.paused) for (const gate of this.gates.values()) gate.resume();
         this.emit("practice_mode", { enabled: false });
         return;

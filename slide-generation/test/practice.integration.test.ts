@@ -252,6 +252,24 @@ test("practice cancels old inference, never feeds narration to canonical generat
   }
 });
 
+test("returning to Talk explicitly supersedes the rehearsal-only instruction in persistent actor history", async () => {
+  let inputs: unknown[] = [];
+  const f = await setup({ async review() { return { summary: '', feedback: [], proposals: [] }; } }, {
+    async infer(input) { inputs = input.input; return done; },
+  });
+  try {
+    await f.actors.setPracticeMode(true);
+    await f.actors.setPracticeMode(false);
+    f.actors.pushToEdit('Generate from newly supplied Talk content.');
+    await f.actors.settle(2000);
+    const text = JSON.stringify(inputs);
+    assert.match(text, /Entered practice mode/);
+    assert.match(text, /Returned to Talk generation mode/);
+    assert.ok(text.indexOf('Returned to Talk generation mode') > text.indexOf('Entered practice mode'));
+    assert.match(text, /Past rehearsal narration remains evidence/);
+  } finally { await f.cleanup(); }
+});
+
 test("review records visits, earlier revisions, pauses and corrections without rewriting source evidence", async () => {
   const f = await setup({
     async review({ context }) {
