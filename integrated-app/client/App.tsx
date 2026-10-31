@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Plus, Presentation, Mic, Play, Pause, Square, Monitor, Maximize2, FileText, Upload, MessageSquare, Check, LoaderCircle, CircleAlert, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus, Presentation, Mic, Play, Pause, Square, Monitor, Maximize2, FileText, MessageSquare, Check, LoaderCircle, CircleAlert, Trash2 } from 'lucide-react';
 import { Button } from '../../frontend/src/components/ui/button';
-import { Input } from '../../frontend/src/components/ui/input';
 import { Textarea } from '../../frontend/src/components/ui/textarea';
 import { Transcript as TranscriptView } from '../../frontend/src/features/workspace/Transcript';
 import type { RawMicrophoneSnapshot } from '../../frontend/src/services/rawMicrophone';
 import type { PracticeRecord } from '../../slide-generation/src/practice/contracts';
 import type { IncomingMessage } from '../../slide-generation/src/viewer/protocol';
 import type { Mode, Project, Snapshot } from '../shared/protocol';
-import { createProject, projects, ProjectConnection } from './api';
+import { projects, ProjectConnection, uploadMaterial } from './api';
+import { NewProjectDialog } from './NewProjectDialog';
+import { AssetUploads } from './AssetUploads';
 import { CanonicalMicrophone } from './microphone';
 import { Viewer } from './Viewer';
 import type { NavigationTarget } from './navigation';
@@ -28,16 +29,16 @@ export function App() {
   return id ? <Workspace key={`${id}-${route.get('audience')}`} projectId={id} audience={route.get('audience') === '1'} onBack={() => navigate()} /> : <Projects onOpen={navigate} />;
 }
 function Projects({ onOpen }: { onOpen: (id: string) => void }) {
-  const [items, setItems] = useState<Project[]>([]), [name, setName] = useState(''), [context, setContext] = useState('');
-  const [creating, setCreating] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Project[]>([]);
+  const [creating, setCreating] = useState(false), [error, setError] = useState(''), [loading, setLoading] = useState(true);
   const load = () => { setLoading(true); void projects().then(setItems).catch(error => setError(messageOf(error))).finally(() => setLoading(false)); };
   useEffect(load, []);
   return <main className="project-home"><header className="home-header"><a className="brand" href="/"><span className="brand-icon"><Presentation /></span>Talkdeck</a></header>
-    <div className="projects-heading"><div><p className="eyebrow">Your workspace</p><h1>Projects</h1><p className="muted">Start with an idea. Talk it into a presentation.</p></div><Button onClick={() => setCreating(value => !value)}><Plus />New project</Button></div>
+    <div className="projects-heading"><div><p className="eyebrow">Your workspace</p><h1>Projects</h1><p className="muted">Start with an idea. Talk it into a presentation.</p></div><Button onClick={() => setCreating(true)}><Plus />New project</Button></div>
     {error && <div className="error-banner" role="alert"><CircleAlert />{error}<Button variant="ghost" size="sm" onClick={load}>Retry</Button></div>}
     {loading ? <p className="empty-state">Opening your projects…</p> : <div className="project-grid">{items.map(project => <button key={project.id} className="project-card" onClick={() => onOpen(project.id)}><div className="project-card-preview"><Presentation /></div><div><h2>{project.name}</h2><p>{project.context || 'No context added yet'}</p><small>Updated {new Date(project.updatedAt).toLocaleDateString()}</small></div></button>)}</div>}
     {!loading && !items.length && !creating && <div className="empty-state"><Presentation /><h2>A clear idea starts here</h2><p>Create a project, add your context, and start talking.</p><Button variant="secondary" onClick={() => setCreating(true)}><Plus />Create your first project</Button></div>}
-    {creating && <form className="create-project" onSubmit={async event => { event.preventDefault(); if (!name.trim() || busy) return; setBusy(true); setError(''); try { onOpen((await createProject(name.trim(), context)).id); } catch (error) { setError(messageOf(error)); } finally { setBusy(false); } }}><h2>New project</h2><label className="field">Project name<Input autoFocus value={name} onChange={event => setName(event.target.value)} placeholder="What are you presenting?" required maxLength={120} /></label><label className="field">Context<Textarea value={context} onChange={event => setContext(event.target.value)} placeholder="Audience, purpose, key facts, and the style you have in mind…" rows={4} /></label><div className="form-actions"><Button type="button" variant="ghost" onClick={() => setCreating(false)}>Cancel</Button><Button disabled={busy || !name.trim()}>{busy ? 'Creating…' : 'Create project'}<ArrowRight /></Button></div></form>}
+    {creating && <NewProjectDialog open={creating} onClose={() => { setCreating(false); load(); }} onOpen={onOpen} />}
   </main>;
 }
 function Workspace({ projectId, audience, onBack }: { projectId: string; audience: boolean; onBack: () => void }) {
@@ -205,10 +206,12 @@ function Workspace({ projectId, audience, onBack }: { projectId: string; audienc
     {(error || snapshot.error) && <div className="error-banner" role="alert"><CircleAlert /><span>{error || snapshot.error}</span><Button variant="ghost" size="sm" onClick={() => setError('')}>Dismiss</Button></div>}
     <div className="workspace-body"><aside className="editor-sidebar"><nav className="sidebar-tabs" aria-label="Project information">{(['transcript', 'context', 'notes'] as const).map(tab => <button key={tab} aria-current={panel === tab ? 'page' : undefined} onClick={() => setPanel(tab)}>{tab === 'transcript' ? <MessageSquare /> : tab === 'context' ? <FileText /> : <Presentation />}{tab.charAt(0).toUpperCase() + tab.slice(1)}</button>)}</nav>
       {panel === 'transcript' && <><div className="sidebar-heading"><strong>{snapshot.mode === 'practice' ? 'Rehearsal narration' : snapshot.mode === 'present' ? 'Presentation transcript' : 'Your words'}</strong><small>{snapshot.mode === 'practice' ? 'Saved for end-of-practice review' : snapshot.mode === 'present' ? 'Narration does not edit slides' : `Editing slide ${position + 1}`}</small></div><TranscriptView segments={segments} interim={pendingTranscript} sessionIds={currentIds} />{snapshot.mode === 'practice' && <p className="sidebar-note">Audio is retained while you rehearse. The final transcript is prepared when you finish.</p>}</>}
-      {panel === 'context' && <div className="context-panel"><h2>Project context</h2><p className="muted">Give your presentation a clear audience, purpose, and source of truth.</p><label className="field">Brief and instructions<Textarea rows={10} value={context} onChange={event => setContext(event.target.value)} /></label><Button size="sm" disabled={!!busy || context === snapshot.project.context} onClick={() => { void run('context', async () => { await connection.command({ type: 'context', context }); }); }}>Save context</Button><div className="context-files"><h3>Source material</h3><label className="upload-control"><Upload />Add a file<input type="file" aria-label="Upload source material" onChange={event => {
-        const file = event.target.files?.[0]; if (!file) return;
-        void run('upload', async () => { const form = new FormData(); form.set('file', file); const response = await fetch(`${connection.base}/materials`, { method: 'POST', headers: connection.headers(), body: form }); if (!response.ok) throw new Error((await response.json()).message ?? 'Upload failed'); await connection.refresh(); });
-      }} /></label>{snapshot.materials.map(file => <article key={file.id}><FileText /><div><strong>{file.name}</strong><small>{file.status === 'extracted' ? 'Text extracted and supplied as context' : 'Reference only · bytes saved, not interpreted'}</small></div></article>)}</div></div>}
+      {panel === 'context' && <div className="context-panel"><h2>Project context</h2><p className="muted">Give your presentation a clear audience, purpose, and source of truth.</p><label className="field">Brief and instructions<Textarea rows={10} value={context} onChange={event => setContext(event.target.value)} /></label><Button size="sm" disabled={!!busy || context === snapshot.project.context} onClick={() => { void run('context', async () => { await connection.command({ type: 'context', context }); }); }}>Save context</Button><div className="context-files"><h3>Assets</h3><AssetUploads materials={snapshot.materials} disabled={!!busy || network !== 'connected' || snapshot.mode === 'present'} onFiles={files => {
+        void run('upload', async () => {
+          try { for (const file of files) await uploadMaterial(projectId, connection.session, file); }
+          finally { await connection.refresh(); }
+        });
+      }} />{busy === 'upload' && <p className="upload-progress" role="status"><LoaderCircle className="spin" />Uploading assets…</p>}</div></div>}
       {panel === 'notes' && <div className="notes-panel"><h2>Presenter notes</h2><p className="muted">Slide {position + 1} · {selected?.title}</p><p className="notes-content">{selected?.notes || 'Notes will appear here as you build your presentation.'}</p></div>}
 
     </aside><main className="editor-main" ref={main}>

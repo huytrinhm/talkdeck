@@ -1,6 +1,6 @@
 import { navigationTarget, type NavigationTarget } from './navigation';
 import { NavigationTrace, type TraceEvent, type TraceFields } from './tracing';
-import type { Command, NavigationDeck, Project, Receipt, Session, Snapshot, Utterance } from '../shared/protocol';
+import type { Command, Material, NavigationDeck, Project, Receipt, Session, Snapshot, Utterance } from '../shared/protocol';
 import type { IncomingMessage, PublicationMessage, ViewerAcknowledgment } from '../../slide-generation/src/viewer/protocol';
 
 export class ApiError extends Error {
@@ -14,6 +14,12 @@ export async function json<T>(url: string, init?: RequestInit): Promise<T> {
 }
 export const projects = () => json<Project[]>('/api/projects');
 export const createProject = (name: string, context: string) => json<Project>('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, context }) });
+export function uploadMaterial(projectId: string, session: Session, file: File) {
+  const form = new FormData(); form.set('file', file);
+  return json<Material>(`/api/projects/${encodeURIComponent(projectId)}/materials`, {
+    method: 'POST', headers: { 'X-Session-Id': session.id, 'X-Session-Token': session.token }, body: form,
+  });
+}
 
 export class ProjectConnection {
   session!: Session;
