@@ -83,7 +83,8 @@ test('duplicate commands are project-scoped across attachments and reconnect, an
     const responses=await Promise.all([call(f.host,`${f.base}/commands`,body,f.session),call(f.host,`${f.base}/commands`,body,second)]);
     assert(responses.every(r=>r.status===200),JSON.stringify(responses));
     assert.equal((await state(f)).slides.length,before.slides.length+1);
-    const boundary=await command(f,{type:'mode',mode:'talk'});assert.equal(boundary.status,200);
+    // Talk is now the initial mode; cross a real mode boundary before testing stale epochs.
+    const boundary=await command(f,{type:'mode',mode:'practice',input:'transcript'});assert.equal(boundary.status,200);
     await call(f.host,`${f.base}/sessions/${f.session.id}`,undefined,f.session,'DELETE');
     f.session=(await call(f.host,`${f.base}/sessions`,{role:'editor'})).body;
     assert.equal((await call(f.host,`${f.base}/commands`,body,f.session)).status,200,'same durable command can replay its receipt after epoch changes');
