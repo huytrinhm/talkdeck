@@ -22,6 +22,7 @@ import {
 import { LiveTranscription } from "../../slide-generation/src/orchestration/transcription.js";
 import { models } from "../../slide-generation/src/orchestration/config.js";
 import { ProductProviders, safeError } from "./providers.js";
+import { serverNavigationTrace } from './tracing.js';
 import type {
   Command,
   NavigationDeck,
@@ -98,6 +99,7 @@ export class ProjectOwner {
     { transcriber: LiveTranscription; finals: string[] }
   >();
   private unsubscribe: (() => void)[] = [];
+  private commandTrace?: ReturnType<typeof serverNavigationTrace>;
   private timer?: ReturnType<typeof setInterval>;
   private error?: string;
   private closed = false;
@@ -119,10 +121,13 @@ export class ProjectOwner {
       client: this.providers.client,
       context: this.data.project.context,
       onSelection: async (id) => {
+        this.commandTrace?.('selection-callback', { slideId: id });
         this.data.selectedId = id;
         this.data.build = 0;
         await this.syncSurfaces();
+        this.commandTrace?.('surfaces-synced');
         await this.save();
+        this.commandTrace?.('selection-saved');
         this.broadcastSnapshot();
       },
       log: {
@@ -390,6 +395,7 @@ export class ProjectOwner {
     };
   }
   async syncSurfaces() {
+    this.commandTrace?.('surfaces-start', { attachments: this.sessions.size });
     await Promise.all(
       [...this.sessions.values()].map(async (a) => {
         if (a.dto.role === "audience" && this.data.mode !== "present") return;
@@ -442,7 +448,10 @@ export class ProjectOwner {
       );
   }
   async command(command: Command) {
+    const trace = serverNavigationTrace(command.id, command.type, this.data.project.id);
+    trace('received');
     return this.serialize(async () => {
+      trace('server-queue-released');
       const fingerprint = digest(command),
         previous = this.data.commands[command.id];
       if (previous) {
@@ -461,7 +470,9 @@ export class ProjectOwner {
       this.checkEpoch(command.epoch);
       this.data.commands[command.id] = { fingerprint, pending: true };
       await this.save();
+      trace('pending-saved');
       let result: unknown;
+      this.commandTrace = trace;
       try {
         if (command.type === "mode")
           result = await this.mode(command.mode!, command.input ?? "audio");
@@ -520,17 +531,23 @@ export class ProjectOwner {
             command.slideId ?? this.runtime.backend.selectedId,
           );
         }
+        trace('action-finished', { selectedId: this.runtime.backend.selectedId });
         this.data.commands[command.id] = { fingerprint, result };
         this.data.project.updatedAt = new Date().toISOString();
         await this.save();
+        trace('result-saved');
         this.broadcastSnapshot();
+        trace('snapshot-broadcast');
         return { snapshot: this.snapshot(), result };
       } catch (error) {
+        trace('error');
         this.data.commands[command.id] = { fingerprint, pending: true };
         this.error = safeError(error);
         await this.save();
         this.broadcastSnapshot();
         throw error;
+      } finally {
+        this.commandTrace = undefined;
       }
     });
   }
@@ -954,11 +971,14 @@ export class ProjectOwner {
     });
   }
   async navigationDeck(): Promise<NavigationDeck> {
+    const trace = serverNavigationTrace(randomUUID(), 'prepare-navigation', this.data.project.id);
+    trace('prepare-start');
     const { source } = this.runtime.local.engine.readDocument();
     const revision = this.runtime.local.engine.state().revision;
     const epoch = this.data.epoch;
     const mode = this.data.mode === "present" ? "presentation" : "editor";
     const report = await this.runtime.local.browser.check(source, { reusePublicationChecks: true });
+    trace('browser-check-finished');
     if (!report.complete) throw new ProductError("validation_unavailable", "Slide preparation did not complete");
     const presentationReady = ready(report);
     if (mode === "presentation" && !presentationReady)
@@ -978,6 +998,7 @@ export class ProjectOwner {
     }
     if (revision !== this.runtime.local.engine.state().revision || epoch !== this.data.epoch)
       throw new ProductError("revision_changed", "Deck changed during preparation");
+    trace('render-finished', { slides: slides.length });
     return { revision, epoch, mode, slides };
   }
   async image(slideId: string, revision?: string) {

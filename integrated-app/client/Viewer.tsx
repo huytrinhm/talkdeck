@@ -3,6 +3,7 @@ import { mountViewer, type ViewerBridge } from '../../slide-generation/src/viewe
 import type { IncomingMessage } from '../../slide-generation/src/viewer/protocol';
 import type { ProjectConnection } from './api';
 import type { NavigationTarget } from './navigation';
+import type { NavigationTrace } from './tracing';
 
 export function Viewer({ connection, message, navigation, blackout, onPaint, className = '', frameRef }: {
   connection: ProjectConnection; message?: IncomingMessage; navigation?: NavigationTarget; blackout: boolean;
@@ -14,6 +15,7 @@ export function Viewer({ connection, message, navigation, blackout, onPaint, cla
   // The mounted viewer has its own increasing display sequence. Only genuine server
   // publications are acknowledged, with their original issued sequence restored.
   const issued = useRef(new Map<number, IncomingMessage | undefined>());
+  const traces = useRef(new Map<number, NavigationTrace>());
   const [error, setError] = useState('');
   const render = () => {
     if (!ready.current) return;
@@ -27,6 +29,9 @@ export function Viewer({ connection, message, navigation, blackout, onPaint, cla
     if (key === lastKey.current) return;
     try {
       const displaySequence = ++sequence.current;
+      const trace = connection.traceViewer(next, target?.trace);
+      if (trace) traces.current.set(displaySequence, trace);
+      while (traces.current.size > 256) traces.current.delete(traces.current.keys().next().value!);
       issued.current.set(displaySequence, local ? undefined : next);
       while (issued.current.size > 256) issued.current.delete(issued.current.keys().next().value!);
       const switching = next.type === 'publish' && next.slideId !== displayedSlide.current;
@@ -41,6 +46,7 @@ export function Viewer({ connection, message, navigation, blackout, onPaint, cla
     let mounted = true; ready.current = false; sequence.current = 0; lastKey.current = ''; displayedSlide.current = ''; issued.current.clear();
     bridge.current = mountViewer(iframe.current, connection.session.channel, connection.session.viewerDocument, ack => {
       if (!mounted) return;
+      if (ack.sequence !== undefined) traces.current.get(ack.sequence)?.paint(ack.type, { sequence: ack.sequence });
       if (ack.type === 'ready') {
         ready.current = true; render();
         // Startup/reconnect recovery runs independently of already available content.

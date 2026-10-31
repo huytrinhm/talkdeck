@@ -1,4 +1,5 @@
 import { navigationTarget, type NavigationTarget } from './navigation';
+import { NavigationTrace, type TraceEvent, type TraceFields } from './tracing';
 import type { Command, NavigationDeck, Project, Receipt, Session, Snapshot, Utterance } from '../shared/protocol';
 import type { IncomingMessage, PublicationMessage, ViewerAcknowledgment } from '../../slide-generation/src/viewer/protocol';
 
@@ -32,6 +33,33 @@ export class ProjectConnection {
   private latestPublication?: PublicationMessage;
   private viewerSequence = -1;
   private retryTimer?: ReturnType<typeof setTimeout>;
+  private activeTrace?: NavigationTrace;
+  private traceEvents: TraceEvent[] = [];
+  private traceTimer?: ReturnType<typeof setTimeout>;
+  startTrace(action: string, fields: TraceFields = {}) {
+    const enabled = import.meta.env.VITE_TRACE_NAVIGATION === '1';
+    if (['next', 'previous', 'select', 'add', 'delete', 'build'].includes(action)) this.activeTrace?.supersede();
+    const trace = new NavigationTrace(action, this.snapshot?.revision, event => {
+      this.traceEvents.push(event);
+      if (!this.traceTimer) this.traceTimer = setTimeout(() => {
+        this.traceTimer = undefined;
+        const events = this.traceEvents.splice(0, 100);
+        if (this.session) void this.post('/debug/navigation-traces', { events }).catch(() => {});
+      }, 100);
+    }, enabled, { mode: this.snapshot?.mode, fromSlideId: this.navigation?.slideId ?? this.snapshot?.selectedId, ...fields });
+    if (['next', 'previous', 'select', 'add', 'delete', 'build'].includes(action)) this.activeTrace = trace;
+    return trace;
+  }
+  traceViewer(message: IncomingMessage, trace?: NavigationTrace) {
+    const candidate = trace ?? this.activeTrace;
+    if (!candidate || message.type !== 'publish') return;
+    const target = candidate.target;
+    const matches = target ? target.slideId === message.slideId && target.build === message.build && target.revision === message.revision
+      : ['add', 'delete'].includes(candidate.action) && message.revision !== candidate.originRevision;
+    if (!matches) return;
+    candidate.mark('viewer-send', { slideId: message.slideId, build: message.build, publicationId: message.publicationId });
+    return candidate;
+  }
   constructor(readonly projectId: string, private handlers: {
     snapshot: (snapshot: Snapshot) => void;
     viewer: (message: IncomingMessage) => void;
@@ -78,11 +106,14 @@ export class ProjectConnection {
     const key = `${this.session.id}:${this.snapshot.epoch}:${this.snapshot.revision}`;
     if (this.preparedKey === key) return;
     this.preparedKey = key; this.navigationDeck = undefined;
+    const trace = this.startTrace('prepare-navigation');
     try {
       const deck = await this.get<NavigationDeck>('/navigation');
-      if (this.disposed || this.preparedKey !== key || deck.revision !== this.snapshot.revision || deck.epoch !== this.snapshot.epoch) return;
+      if (this.disposed || this.preparedKey !== key || deck.revision !== this.snapshot.revision || deck.epoch !== this.snapshot.epoch) { trace.stop('stale'); return; }
       this.navigationDeck = deck;
+      trace.mark('prepared', { slides: deck.slides.length }); trace.complete();
     } catch {
+      trace.stop('error');
       // Canonical publication remains available; a later snapshot retries preloading.
       if (this.preparedKey === key) this.preparedKey = '';
     }
@@ -96,29 +127,37 @@ export class ProjectConnection {
     else return;
     this.handlers.viewer(this.latestPublication!);
   }
-  navigate(action: 'next' | 'previous' | 'select', slideId?: string) {
+  navigate(action: 'next' | 'previous' | 'select', slideId?: string, trace = this.startTrace(action, { requestedSlideId: slideId })) {
     if (!this.snapshot) return Promise.reject(new Error('Project handshake is not ready'));
     const target = navigationTarget(this.snapshot, this.navigationDeck, this.navigation, action, slideId);
     if (!target) {
-      if (this.snapshot.mode === 'present' && !this.navigationDeck) return this.command({ type: action, slideId });
+      if (this.snapshot.mode === 'present' && !this.navigationDeck) { trace.mark('server-fallback'); return this.command({ type: action, slideId }, trace); }
+      trace.stop('no-op');
       return Promise.resolve();
     }
+    trace.target = target; target.trace = trace;
+    if (target.slideId === (this.navigation?.slideId ?? this.snapshot.selectedId)
+      && target.build === (this.navigation?.build ?? this.snapshot.build)) trace.skipPaint();
+    trace.mark('target', { slideId: target.slideId, build: target.build, preparedPreview: !!target.preview });
     if (target.preview) target.preview.channel = this.session.channel;
     const previousId = this.navigation?.slideId ?? this.snapshot.selectedId;
     const epoch = this.snapshot.epoch;
     const batch = this.navigationBatch;
     const serial = ++this.navigationSerial;
     this.navigation = target; this.handlers.navigation?.(target);
+    trace.mark('optimistic-state');
     const input = previousId === target.slideId && action !== 'select'
       ? { type: 'build' as const, value: target.build }
       : { type: 'select' as const, slideId: target.slideId };
     const pending = this.navigationTail.catch(() => {}).then(async () => {
+      trace.mark('client-queue-released');
       if (this.disposed || this.snapshot?.epoch !== epoch || this.snapshot.revision !== target.revision || batch !== this.navigationBatch)
         throw new Error('Navigation cancelled because the deck, session, or a previous command changed');
-      const result = await this.sendCommand(input, epoch);
+      const result = await this.sendCommand(input, epoch, trace);
       if (serial === this.navigationSerial) this.clearNavigation();
       return result;
     }).catch(async error => {
+      trace.stop('error');
       if (batch === this.navigationBatch) this.navigationBatch++;
       if (serial === this.navigationSerial) {
         this.clearNavigation();
@@ -133,16 +172,22 @@ export class ProjectConnection {
   }
   async get<T>(path: string): Promise<T> { return json<T>(`${this.base}${path}`, { headers: this.headers() }); }
   async post<T>(path: string, body?: unknown): Promise<T> { return json<T>(`${this.base}${path}`, { method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(body ?? {}) }); }
-  private async sendCommand(input: Omit<Command, 'id' | 'epoch'>, epoch: number) {
-    const result = await this.post<{ snapshot: Snapshot; result?: unknown; viewer?: IncomingMessage }>('/commands', { ...input, id: crypto.randomUUID(), epoch });
+  private async sendCommand(input: Omit<Command, 'id' | 'epoch'>, epoch: number, trace?: NavigationTrace) {
+    trace?.mark('request-start', { command: input.type });
+    const result = await this.post<{ snapshot: Snapshot; result?: unknown; viewer?: IncomingMessage }>('/commands', { ...input, id: trace?.id ?? crypto.randomUUID(), epoch });
+    trace?.mark('response', { selectedId: result.snapshot.selectedId, revision: result.snapshot.revision });
+    if (trace && !trace.target) trace.target = { slideId: result.snapshot.selectedId, build: result.snapshot.build, revision: result.snapshot.revision };
     if (result.viewer) this.receiveViewer(result.viewer);
-    this.applySnapshot(result.snapshot); return result;
+    this.applySnapshot(result.snapshot); trace?.complete(); return result;
   }
   async waitForNavigation() { await this.navigationTail; }
-  async command(input: Omit<Command, 'id' | 'epoch'>) {
+  async command(input: Omit<Command, 'id' | 'epoch'>, trace = this.startTrace(input.type)) {
+    try {
     await this.navigationTail.catch(() => {});
+    trace.mark('client-queue-released');
     if (!this.snapshot) throw new Error('Project handshake is not ready');
-    return this.sendCommand(input, this.snapshot.epoch);
+    return await this.sendCommand(input, this.snapshot.epoch, trace);
+    } catch (error) { trace.stop('error'); throw error; }
   }
   async input(input: Omit<Utterance, 'id' | 'epoch'>) {
     await this.navigationTail;
@@ -221,6 +266,7 @@ export class ProjectConnection {
     return this.recovering;
   }
   close() {
+    this.activeTrace?.stop('connection-closed');
     clearTimeout(this.retryTimer);
     this.disposed = true; this.events?.close();
     if (this.session) void fetch(`${this.base}/sessions/${this.session.id}`, { method: 'DELETE', headers: this.headers(), keepalive: true }).catch(() => {});

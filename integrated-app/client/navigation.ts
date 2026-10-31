@@ -1,7 +1,9 @@
 import type { NavigationDeck, Snapshot } from '../shared/protocol.js';
 import type { PublicationMessage } from '../../slide-generation/src/viewer/protocol.js';
+import type { NavigationTrace } from './tracing.js';
 
 export interface NavigationTarget {
+  trace?: NavigationTrace;
   slideId: string;
   build: number;
   revision: string;

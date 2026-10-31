@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ProjectStore, ProductError, type RuntimeFactory } from "./host.js";
 import { safeError } from "./providers.js";
+import { navigationTracingEnabled, recordNavigationTrace } from './tracing.js';
 
 const id = z.string().min(1).max(256),
   epoch = z.number().int().nonnegative();
@@ -101,6 +102,16 @@ export function createProductApp(
     );
     return { owner, session };
   };
+  app.post('/api/projects/:project/debug/navigation-traces', async (c) => {
+    if (!navigationTracingEnabled()) return c.notFound();
+    await ownerAndSession(c, true);
+    const body = z.object({ events: z.array(z.object({
+      traceId: z.string().uuid(), action: z.string().max(64), phase: z.string().max(64),
+      elapsedMs: z.number().nonnegative(), at: z.string().max(40),
+    }).catchall(z.union([z.string().max(256), z.number(), z.boolean()]))).max(100) }).parse(await c.req.json());
+    for (const event of body.events) recordNavigationTrace({ ...event, source: 'client', projectId: c.req.param('project') });
+    return c.json({ recorded: body.events.length });
+  });
   app.get("/api/projects/:project/state", async (c) => {
     const { owner } = await ownerAndSession(c, true);
     return c.json(owner.snapshot());

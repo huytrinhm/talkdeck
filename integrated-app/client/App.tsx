@@ -136,15 +136,21 @@ function Workspace({ projectId, audience, onBack }: { projectId: string; audienc
     await connection.command({ type: 'mode', mode, input: inputMode }); setIntent(true);
   });
   const select = (action: 'next' | 'previous' | 'select', slideId?: string) => {
-    if (!connection || network !== 'connected' || busy) return;
-    setError(''); void connection.navigate(action, slideId).catch(error => setError(messageOf(error)));
+    if (!connection) return;
+    const trace = connection.startTrace(action, { requestedSlideId: slideId });
+    if (network !== 'connected' || busy) { trace.stop('ignored-unavailable'); return; }
+    setError(''); void connection.navigate(action, slideId, trace).catch(error => setError(messageOf(error)));
   };
   const control = (type: 'next' | 'previous' | 'add' | 'pause' | 'resume' | 'blackout', value?: boolean) => type === 'next' || type === 'previous' ? select(type) : run(type, async () => { await connection?.command({ type, value }); });
   const deleteSlide = (targetId?: string) => run('delete', async () => {
     if (!connection || !snapshot) return;
     const slideId = targetId ?? connection.navigation?.slideId ?? snapshot.selectedId;
-    await mic.current?.stopAndDrain();
-    await connection.command({ type: 'delete', slideId });
+    const trace = connection.startTrace('delete', { requestedSlideId: slideId });
+    try {
+      await mic.current?.stopAndDrain();
+      trace.mark('microphone-drained');
+      await connection.command({ type: 'delete', slideId }, trace);
+    } catch (error) { trace.stop('error'); throw error; }
   });
   const toggleCapture = () => run('microphone', async () => {
     const stopping = intent && (capture.phase === 'capturing' || capture.phase === 'requesting');
