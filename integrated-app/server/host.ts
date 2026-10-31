@@ -99,6 +99,7 @@ export class ProjectOwner {
   private timer?: ReturnType<typeof setInterval>;
   private error?: string;
   private closed = false;
+  private captureOwner?: string;
   constructor(
     readonly directory: string,
     readonly data: Persisted,
@@ -197,14 +198,12 @@ export class ProjectOwner {
       mode: this.data.mode,
       epoch: this.data.epoch,
       selectedId: backend.selectedId,
-      slides: backend
-        .list()
-        .map((s) => ({
-          id: s.id,
-          title: s.title,
-          notes: local.engine.readSpeakerNotes(s.id).notes,
-          thumbnail: `/api/projects/${this.data.project.id}/slides/${s.id}/image?revision=${local.engine.state().revision}`,
-        })),
+      slides: backend.list().map((s) => ({
+        id: s.id,
+        title: s.title,
+        notes: local.engine.readSpeakerNotes(s.id).notes,
+        thumbnail: `/api/projects/${this.data.project.id}/slides/${s.id}/image?revision=${local.engine.state().revision}`,
+      })),
       transcripts: this.data.transcripts.filter(
         (t) =>
           !["present", "practice"].includes(this.data.mode) ||
@@ -213,23 +212,19 @@ export class ProjectOwner {
       materials: this.data.materials,
       practiceId: this.data.practiceId,
       history: backend.historyStatus(),
-      actors: actors
-        .statuses()
-        .map((s) => ({
-          ...s,
-          error: s.error ? safeError(s.error) : undefined,
-        })),
+      actors: actors.statuses().map((s) => ({
+        ...s,
+        error: s.error ? safeError(s.error) : undefined,
+      })),
       build: this.data.build,
       blackout: this.data.blackout,
       generationPaused: actors.paused,
-      reviewList: practice
-        .list()
-        .map((r: any) => ({
-          id: r.id,
-          status: r.status,
-          startedAt: r.startedAt,
-          error: r.error,
-        })),
+      reviewList: practice.list().map((r: any) => ({
+        id: r.id,
+        status: r.status,
+        startedAt: r.startedAt,
+        error: r.error,
+      })),
       usage: this.providers.snapshot(),
       serverTimeMs: Date.now(),
       modeStartedAtMs: this.data.modeStartedAtMs,
@@ -315,6 +310,7 @@ export class ProjectOwner {
       },
     );
     this.sessions.set(dto.id, a);
+    if (role === "editor") this.captureOwner = dto.id;
     await a.publication.selectSlide(
       this.runtime.backend.selectedId,
       role === "audience" || this.data.mode === "present"
@@ -342,6 +338,13 @@ export class ProjectOwner {
         403,
       );
     return a;
+  }
+  authorizeCapture(a: Attachment) {
+    if (a.dto.role !== "editor" || this.captureOwner !== a.dto.id)
+      throw new ProductError(
+        "session_superseded",
+        "A newer editor attachment owns microphone input. Reconnect this editor to resume.",
+      );
   }
   async detach(a: Attachment) {
     this.sessions.delete(a.dto.id);
@@ -633,8 +636,11 @@ export class ProjectOwner {
     const next = slides[index + direction];
     if (next) await this.runtime.actors.selectSlide(next.id);
   }
-  async input(input: Utterance): Promise<Receipt> {
-    return this.serialize(() => this.retainInput(input));
+  async input(input: Utterance, attachment?: Attachment): Promise<Receipt> {
+    return this.serialize(() => {
+      if (attachment) this.authorizeCapture(attachment);
+      return this.retainInput(input);
+    });
   }
   private async retainInput(input: Utterance): Promise<Receipt> {
     const fingerprint = digest(input),
@@ -747,6 +753,7 @@ export class ProjectOwner {
     pcm: Buffer,
   ): Promise<Receipt> {
     return this.serialize(async () => {
+      this.authorizeCapture(a);
       const fingerprint = digest({
           ...input,
           pcm: createHash("sha256").update(pcm).digest("hex"),
@@ -832,6 +839,7 @@ export class ProjectOwner {
             this.providers.finishTranscription(reservation, failure);
           }
           if (text) {
+            this.authorizeCapture(a);
             delete this.data.inputs[input.id];
             const typed = await this.retainInput({ ...input, text });
             this.data.inputs[input.id] = { fingerprint, receipt: typed };

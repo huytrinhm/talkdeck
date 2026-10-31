@@ -168,9 +168,10 @@ export function createProductApp(
     return c.json(await owner.command(commandSchema.parse(await c.req.json())));
   });
   app.post("/api/projects/:project/input", async (c) => {
-    const { owner } = await ownerAndSession(c, true);
+    const { owner, session } = await ownerAndSession(c, true);
+    owner.authorizeCapture(session);
     return c.json(
-      await owner.input(inputSchema.parse(await c.req.json())),
+      await owner.input(inputSchema.parse(await c.req.json()), session),
       202,
     );
   });

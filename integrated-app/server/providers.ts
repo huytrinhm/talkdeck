@@ -34,7 +34,10 @@ export class ProductProviders {
       maxRetries: 0,
       timeout: 180000,
       fetch: async (url, init) => {
-        if (this.accountingFailure) throw new Error("Provider accounting failed; further paid requests are blocked");
+        if (this.accountingFailure)
+          throw new Error(
+            "Provider accounting failed; further paid requests are blocked",
+          );
         const endpoint = new URL(String(url)).pathname;
         const body =
           typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
@@ -117,7 +120,10 @@ export class ProductProviders {
     });
   }
   reserveTranscription() {
-    if (this.accountingFailure) throw new Error("Provider accounting failed; further paid requests are blocked");
+    if (this.accountingFailure)
+      throw new Error(
+        "Provider accounting failed; further paid requests are blocked",
+      );
     return this.budget.reserve(32768, 4096);
   }
   finishTranscription(
