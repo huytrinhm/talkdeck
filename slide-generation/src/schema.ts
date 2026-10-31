@@ -143,7 +143,11 @@ export function validateStructure(root: SourceNode, options: SchemaOptions = {})
       if (!binding && !node.props.kind) error(node, 'Slot declaration requires kind');
       if (binding && ['kind', 'role', 'optional', 'accepts'].some(k => node.props[k] !== undefined)) error(node, 'Slot styling belongs to its declaration');
     }
-    if (node.tag === 'Each' && [...nodes(node)].filter(n => n.tag === 'Item').length !== 1) error(node, 'Each requires exactly one Item placeholder');
+    if (node.tag === 'Each') {
+      const ownItems = (current: SourceNode): number => childNodes(current).reduce((count, child) =>
+        count + (child.tag === 'Each' ? 0 : child.tag === 'Item' ? 1 : ownItems(child)), 0);
+      if (ownItems(node) !== 1) error(node, 'Each requires exactly one Item placeholder');
+    }
     if (node.tag === 'Each' && (!def || children.length !== 1 || Number(node.props.min ?? 0) > Number(node.props.max ?? 8))) error(node, 'Each requires a definition, one wrapper, and min <= max');
     if (['Item', 'Index'].includes(node.tag) && !insideEach) error(node, `${node.tag} requires Each`);
     if (node.tag === 'Icon') {

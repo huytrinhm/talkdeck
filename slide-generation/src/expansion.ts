@@ -163,6 +163,27 @@ export function expandSource(source: string, options: SchemaOptions = {}): Expan
     if (node.tag === 'Split' && children.length !== 2) refuse(node, 'Expanded Split requires two children');
     for (const child of children) checkExpanded(child, depth + 1, node);
   }
+  // Validate every definition even when no slide references it. Fill optional/repeated
+  // declarations with representative leaves so empty bindings cannot conceal deep wrappers.
+  for (const [name, definition] of definitions) {
+    const instance: SourceNode = { ...definition, tag: name, id: `@probe:${definition.id}`, props: {}, children: [] };
+    const bindings = new Map<string, ExpandedNode[]>();
+    for (const slot of slots.get(name)!) {
+      const rule = rules[String(slot.props.kind)] ?? rules.any;
+      const accepts = slot.props.accepts as string[] | undefined ?? rule.accepts;
+      const tag = accepts[0] === '*' ? 'Text' : accepts[0];
+      const count = slot.tag === 'Each' ? Math.max(1, Number(slot.props.min ?? 0)) : 1;
+      const values = Array.from({ length: count }, (_, index): ExpandedNode => {
+        const id = `@probe:${definition.id}:${slot.id}:${index}`;
+        return { ...slot, id, tag, props: { id }, children: [], origin: { authoredId: slot.id! } };
+      });
+      bindings.set(String(slot.props[slot.tag === 'Each' ? 'slot' : 'name']), values);
+    }
+    const pendingBefore = pendingNodeIds.length;
+    for (const visual of expand(childNodes(definition)[0], { path: instance.id!, definition, instance, bindings }))
+      checkExpanded(visual, 1);
+    pendingNodeIds.length = pendingBefore;
+  }
   for (const slide of slides) checkExpanded(slide, 1);
   const normalizations = [...normalizationMap.values()];
   return { source: applyPatches(source, normalizations.map(n => setProp(n.node, n.key, n.value))), slides, pendingNodeIds, library,

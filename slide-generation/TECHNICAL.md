@@ -298,3 +298,15 @@ validation and broader adversarial coverage still require review before P4 is co
 
 Custom-font source references use provisional `Theme font={{id, version}}`, through the existing injected asset resolver;
 this adds no provider/storage contract. Renderer and browser work are ongoing in parallel.
+
+## Permission restart and validation review (2026-10-31)
+
+The permission restart removed the earlier browser/network blockers. A real Playwright Chromium 156.0.8078.4 probe
+launched with page JavaScript disabled and requests blocked, measured a 1920x1080 canvas and captured a JPEG. Evidence:
+`.artifacts/environment/browser-permission-probe.json` and matching JPEG. This is environment validation only, not P6
+qualification. Fetch/rebase, typecheck, 98 individual tests, and push through `0f84e18` succeeded.
+
+Independent measurements now include an optional stable Finding.subject, so an improving overlap/bound cannot hide a
+new violation at another partner/bound. All definitions now receive expanded-depth checks even when unused, with
+representative bindings ensuring optional/zero-minimum slots cannot conceal deep wrappers. Renderer/browser/viewer
+integration remains underway; earlier implementation status entries are historical checkpoints.

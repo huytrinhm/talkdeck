@@ -71,3 +71,14 @@ test('expanded depth is checked independently of authored depth and nesting', ()
   const library = '<Component name="Deep" description="Deep"><Stack><Stack><Stack><Stack><Slot name="x" kind="text"/></Stack></Stack></Stack></Stack></Component>';
   assert.throws(() => expandSource(deck(library, '<Panel><Deep><Slot name="x"><Text>A</Text></Slot></Deep></Panel>')), /Expanded visual depth/);
 });
+
+test('unused definitions cannot conceal excessive expanded depth through empty optional bindings', () => {
+  const library = '<Component name="Inner" description="Inner"><Stack><Stack><Stack><Stack><Slot name="x" kind="text" optional={true}/></Stack></Stack></Stack></Stack></Component>' +
+    '<Component name="Outer" description="Outer"><Panel><Panel><Inner><Slot name="x"><Slot name="title" kind="text" optional={true}/></Slot></Inner></Panel></Panel></Component>';
+  assert.throws(() => expandSource(deck(library, '<Text>Unrelated slide</Text>')), /Expanded visual depth/);
+});
+test('unused repeated wrappers are checked even when minimum item count is zero', () => {
+  const library = '<Component name="Deep" description="Deep"><Stack><Stack><Stack><Stack><Slot name="body" kind="text"/></Stack></Stack></Stack></Stack></Component>' +
+    '<Component name="Repeated" description="Repeated"><Stack><Each slot="items" kind="text" min={0}><Panel><Deep><Slot name="body"><Item/></Slot></Deep></Panel></Each></Stack></Component>';
+  assert.throws(() => expandSource(deck(library, '<Text>Unrelated</Text>')), /Expanded visual depth/);
+});
