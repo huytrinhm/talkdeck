@@ -28,3 +28,9 @@ it("presents timed phrases with clear narration and live hierarchy", () => {
   expect(screen.getByText("Speaking now")).toBeTruthy();
   expect(screen.getByText("Next thought")).toBeTruthy();
 });
+
+it("never creates an empty live box for whitespace-only interim input", () => {
+  const view = render(<Transcript segments={[]} interim="   " />);
+  expect(view.container.querySelector(".interim")).toBeNull();
+  expect(screen.getByText("Ready when you are")).toBeTruthy();
+});

@@ -174,3 +174,13 @@ it("an explicit settings pause revokes the earlier device mute resume intent", (
   expect(starts).toBe(1);
   expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
 });
+it("pauses Practice on hidden-page visibility change even without blur and rejects late speech", () => {
+  const { change } = setup("practice");
+  fireEvent.click(screen.getByRole("button", { name: "Resume (P)" }));
+  act(() => callbacks.onState?.({ status: "listening", muted: false }));
+  vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+  fireEvent(document, new Event("visibilitychange"));
+  expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
+  act(() => callbacks.onFinal?.("late hidden-page speech"));
+  expect(change).not.toHaveBeenCalled();
+});

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button, Popover } from "../components/ui";
 import "./annotations.css";
-import {canvasCursor,type CanvasTool as Tool} from './drawingCursor';
+import { canvasCursor, type CanvasTool as Tool } from "./drawingCursor";
 type Point = { x: number; y: number };
 type Stroke = {
   points: Point[];
@@ -78,7 +78,7 @@ export function Annotations({
     owner = useRef(slideId);
   const [tool, setToolState] = useState<Tool>(null),
     [color, setColor] = useState("#ef555e"),
-    [width, setWidth] = useState(3),
+    [width, setWidth] = useState(2),
     [revision, redraw] = useState(0),
     [mounted, setMounted] = useState(false),
     [position, setPosition] = useState<{ x: number; y: number } | null>(null);
@@ -118,7 +118,15 @@ export function Annotations({
   useEffect(() => {
     setMounted(true);
   }, []);
-  useEffect(()=>{const frame=frameRef.current;if(!frame)return;const previous=frame.style.cursor;frame.style.cursor=canvasCursor(tool);return()=>{frame.style.cursor=previous}},[tool,frameRef,mounted]);
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    const previous = frame.style.cursor;
+    frame.style.cursor = canvasCursor(tool);
+    return () => {
+      frame.style.cursor = previous;
+    };
+  }, [tool, frameRef, mounted]);
   useEffect(() => {
     active.current = null;
     pointer.current = null;
@@ -356,54 +364,90 @@ export function Annotations({
     held.current = null;
     changeTool(toolRef.current === next ? null : next);
   };
-  const options = (kind: "pen" | "highlighter") => (
-    <Popover
-      trigger={
-        <Button
-          variant="ghost"
-          className="ink-corner"
-          aria-label={`${kind} color and thickness`}
-        >
-          <ChevronDown size={10} />
-        </Button>
+  const options = (kind: "pen" | "highlighter") => {
+    const railBox = palette.current?.getBoundingClientRect();
+    const toolBox = palette.current
+      ?.querySelectorAll<HTMLElement>(".ink-tool")
+      [kind === "pen" ? 0 : 1]?.getBoundingClientRect();
+    const popupWidth = window.innerWidth <= 700 ? 242 : 382;
+    const popupHeight = window.innerWidth <= 700 ? 115 : 66;
+    let side: "right" | "left" | "top" | "bottom" = "right",
+      sideOffset = 8;
+    if (
+      toolBox &&
+      railBox &&
+      window.innerWidth - toolBox.right - 12 < popupWidth
+    ) {
+      if (toolBox.left - 12 >= popupWidth) side = "left";
+      else if (railBox.top - 8 >= popupHeight) {
+        side = "top";
+        sideOffset = toolBox.top - railBox.top + 8;
+      } else {
+        side = "bottom";
+        sideOffset = railBox.bottom - toolBox.bottom + 8;
       }
-    >
-      <div data-annotation-options className="ink-options">
-        <span>Color</span>
-        <div className="ink-colors">
-          {colors.map((c) => (
-            <button
-              key={c}
-              aria-label={`${colorNames[c]} ink`}
-              title={`${colorNames[c]} ink`}
-              aria-pressed={color === c}
-              style={{ background: c }}
-              onClick={() => {
-                commit();
-                setColor(c);
-              }}
-            />
-          ))}
-        </div>
-        <label>
-          Thickness{" "}
-          <select
-            value={width}
-            onChange={(event) => {
-              commit();
-              setWidth(Number(event.target.value));
+    }
+    return (
+      <Popover
+        side={side}
+        sideOffset={sideOffset}
+        align="center"
+        anchor={<span className="ink-popover-anchor" aria-hidden="true" />}
+        contentClassName="ink-options-popover"
+        trigger={
+          <Button
+            variant="ghost"
+            className="ink-corner"
+            aria-label={`${kind} color and thickness`}
+            onClick={() => {
+              held.current = null;
+              changeTool(kind);
             }}
           >
-            {[2, 3, 5, 8].map((n) => (
-              <option key={n} value={n}>
-                {n} px
-              </option>
+            <ChevronDown size={10} />
+          </Button>
+        }
+      >
+        <div data-annotation-options className="ink-options">
+          <div className="ink-colors">
+            {colors.map((c) => (
+              <button
+                key={c}
+                aria-label={`${colorNames[c]} ink`}
+                title={`${colorNames[c]} ink`}
+                aria-pressed={color === c}
+                style={{ background: c }}
+                onClick={() => {
+                  commit();
+                  setColor(c);
+                }}
+              />
             ))}
-          </select>
-        </label>
-      </div>
-    </Popover>
-  );
+          </div>
+          <span className="ink-options-divider" aria-hidden="true" />
+          <div className="ink-sizes" role="group" aria-label="Ink thickness">
+            {[2, 5, 8].map((n) => (
+              <button
+                key={n}
+                aria-label={`${n} px thickness`}
+                title={`${n} px thickness`}
+                aria-pressed={width === n}
+                onClick={() => {
+                  commit();
+                  setWidth(n);
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{ width: n + 3, height: n + 3 }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      </Popover>
+    );
+  };
   return (
     <>
       {createPortal(
@@ -411,7 +455,7 @@ export function Annotations({
           ref={canvas}
           className="ink-canvas"
           aria-label="Slide annotations"
-          data-canvas-tool={tool??'pointer'}
+          data-canvas-tool={tool ?? "pointer"}
           style={{
             pointerEvents: tool ? "auto" : "none",
             cursor: canvasCursor(tool),

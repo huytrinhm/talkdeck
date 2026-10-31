@@ -47,32 +47,6 @@ it("does not start capture when a route mounts under already-open app settings",
   expect(dispose).not.toHaveBeenCalled();
   expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
 });
-it("places visitor-scoped connections without account gating in global settings", () => {
-  render(<GlobalSettings open onOpenChange={() => {}} />);
-  expect(
-    screen.getByText("Your connections apply across your projects."),
-  ).toBeTruthy();
-  expect(screen.getByRole("heading", { name: "Voice devices" })).toBeTruthy();
-  expect(screen.getByRole("heading", { name: "Your API key" })).toBeTruthy();
-  expect(
-    screen.getByText("Phone connections are not available on this server yet."),
-  ).toBeTruthy();
-  expect(
-    screen.getByText("Personal API keys are not supported on this server yet."),
-  ).toBeTruthy();
-  expect(screen.queryByLabelText("OpenAI API key")).toBeNull();
-  expect(screen.queryByText("Connected")).toBeNull();
-  expect(screen.queryByRole("region", { name: "Account" })).toBeNull();
-  expect(
-    screen.getByText("Connections apply across your projects in this browser."),
-  ).toBeTruthy();
-  expect(screen.queryByRole("button", { name: /sign.in/i })).toBeNull();
-  fireEvent.mouseDown(screen.getByRole("tab", { name: "Coach" }), {
-    button: 0,
-    ctrlKey: false,
-  });
-  expect(screen.getByText("Live coach is not connected.")).toBeTruthy();
-});
 it("keeps project settings metadata-only and pauses speech before opening global settings", () => {
   const pause = vi.fn(),
     resume = vi.fn(),
@@ -117,4 +91,7 @@ it("keeps project settings metadata-only and pauses speech before opening global
   expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
   expect(open).toHaveBeenCalledTimes(1);
   expect(resume).not.toHaveBeenCalled();
+});
+it('first freeze exposes useful preferences but no connections, keys, phone or companion controls',()=>{
+ render(<GlobalSettings open onOpenChange={()=>{}}/>);expect(screen.queryByText('Connections')).toBeNull();expect(screen.queryByText('Practice coach')).toBeNull();expect(screen.queryByRole('heading',{name:'Voice devices'})).toBeNull();expect(screen.queryByRole('heading',{name:'Your API key'})).toBeNull();expect(screen.queryByLabelText('Show practice companion')).toBeNull();expect(screen.getByLabelText('Reduce motion')).toBeTruthy();
 });

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+test.skip(true, "Deferred: Phone, BYOK and companion UI/routes are intentionally unmounted for first freeze. Pure service tests remain active.");
 import { installSpeechSafety } from "./safety";
 test.use({ trace: "off" });
 test.beforeEach(async ({ page }) => installSpeechSafety(page));

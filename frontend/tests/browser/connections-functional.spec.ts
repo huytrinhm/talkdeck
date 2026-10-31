@@ -1,4 +1,5 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
+test.skip(true, "Deferred: Phone, BYOK and companion UI/routes are intentionally unmounted for first freeze. Pure service tests remain active.");
 import { installSpeechSafety } from "./safety";
 /** HTTP fixture only. Actual server ownership/crypto/CAS is verified by hosting tests. */
 function serviceFixture() {

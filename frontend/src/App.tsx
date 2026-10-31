@@ -5,8 +5,6 @@ import { Dashboard, ProjectSetup } from "./features/Projects";
 import { Workspace as WorkspaceScreen, type Mode } from "./features/Workspace";
 import { repository } from "./services/repository";
 import { GlobalSettings, type SettingsTab } from "./features/GlobalSettings";
-import { initializeConnections } from "./services/connectionsBootstrap";
-import { PhoneSender } from "./features/PhoneVoice";
 import { type Project, type Workspace } from "./domain/types";
 const go = (hash: string) => {
   location.hash = hash;
@@ -18,11 +16,17 @@ export default function App() {
     [saveError, setSaveError] = useState(""),
     [hash, setHash] = useState(location.hash || "#folder/all");
   const inputIntent = useRef<string | null>(null);
-  const phoneRoute = hash.split("?")[0] === "#phone";
+  const selectedByProject = useRef(new Map<string, string | null>());
   useEffect(() => {
-    if (!location.pathname.endsWith("audience.html"))
-      void initializeConnections(phoneRoute ? "sender" : "receiver");
-  }, [phoneRoute]);
+    if (hash.split("?")[0] === "#phone") {
+      history.replaceState(
+        null,
+        "",
+        location.pathname + location.search + "#folder/all",
+      );
+      setHash("#folder/all");
+    }
+  }, [hash]);
   const latest = useRef<Workspace | null>(null),
     lastSaved = useRef<Workspace | null>(null),
     pending = useRef<Promise<void>>(Promise.resolve()),
@@ -138,7 +142,6 @@ export default function App() {
         projectId={new URLSearchParams(location.search).get("project") ?? ""}
       />
     );
-  if (hash.split("?")[0] === "#phone") return <PhoneSender />;
   if (loadError)
     return (
       <main className="loading-page">
@@ -172,6 +175,10 @@ export default function App() {
           key={`${project.id}:${mode}`}
           project={project}
           mode={mode}
+          initialSelectedId={selectedByProject.current.get(project.id)}
+          onSelectionChange={(slideId) =>
+            selectedByProject.current.set(project.id, slideId)
+          }
           onChange={updateProject}
           onMode={(m) => {
             const route = `#project/${project.id}/${m}`;
@@ -187,7 +194,7 @@ export default function App() {
           }}
           onBack={() => go("#folder/all")}
           speechSuspended={Boolean(appSettings)}
-          onAppSettings={(tab) => setAppSettings(tab ?? "connections")}
+          onAppSettings={(tab) => setAppSettings(tab ?? "preferences")}
         />
       );
     else {
@@ -222,7 +229,7 @@ export default function App() {
         onChange={change}
         onOpen={(projectId) => go(`#project/${projectId}/edit`)}
         onNew={(folderId) => go(`#new/${folderId ?? "all"}`)}
-        onAppSettings={() => setAppSettings("connections")}
+        onAppSettings={() => setAppSettings("preferences")}
       />
     );
   return (

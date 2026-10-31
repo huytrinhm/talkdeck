@@ -19,7 +19,7 @@ async function create(page: any) {
     page.getByRole("heading", { name: "Start with an idea" }),
   ).toBeVisible();
 }
-test("sidebar starts open on desktop/mobile and can close and reopen; local phone setup is honest", async ({
+test("sidebar starts open on desktop/mobile and first-freeze preferences hide experimental services", async ({
   page,
 }) => {
   await create(page);
@@ -44,27 +44,14 @@ test("sidebar starts open on desktop/mobile and can close and reopen; local phon
   }
   await page.getByRole("button", { name: "App settings", exact: true }).click();
   await expect(
-    page.getByText("Phone connections are not available on this server yet.", {
-      exact: true,
-    }),
+    page.getByRole("heading", { name: "Preferences" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Create pairing QR" }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("link", { name: "Open phone sender" }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "This device" }),
-  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("Connections", { exact: true })).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Phone", exact: true }),
-  ).toBeDisabled();
-  await page.screenshot({
-    path: "docs/main-ui-report/capture-assets/phone-settings-unavailable-390.png",
-  });
+  ).toHaveCount(0);
 });
-test("@adapter-fixture mocked receiver pairs, explicitly selects phone, mutes, disconnects and never starts fallback microphone", async ({
+test.skip("@adapter-fixture mocked receiver pairs, explicitly selects phone, mutes, disconnects and never starts fallback microphone", async ({
   page,
 }) => {
   await create(page);
@@ -132,7 +119,7 @@ test("@adapter-fixture mocked receiver pairs, explicitly selects phone, mutes, d
   });
   await page.getByRole("button", { name: "Finish", exact: true }).click();
 });
-test("@adapter-fixture phone sender is safe when unavailable and mocked permission is requested only after Start", async ({
+test.skip("@adapter-fixture phone sender is safe when unavailable and mocked permission is requested only after Start", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });

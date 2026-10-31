@@ -1,3 +1,5 @@
+> Consolidated first freeze supersedes feature-availability statements below: companion, Phone/BYOK UI/routes are intentionally hidden; Connections does not bootstrap. See consolidated-first-freeze.md. This earlier wiring assessment is historical; latest compatibility is reported after deployed-freeze verification.
+
 # Integration readiness — stable main UI
 
 **Verdict: READY FOR WIRING.** The stable frontend and typed boundaries are ready for coordinated integration. End-to-end AI generation, physical phone operation and production readiness are not certified. Unfinished pet/Deep Refine work is excluded.

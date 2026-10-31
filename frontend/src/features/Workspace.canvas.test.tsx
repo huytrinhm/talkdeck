@@ -69,3 +69,6 @@ it("uses distinct tool cursors and restores pointer on held release, Escape and 
   fireEvent.keyDown(window, { key: "Escape" });
   expect(canvas.style.cursor).toBe("default");
 });
+it('has horizontal visual color and size choices rather than a thickness select',()=>{
+ setup();fireEvent.click(screen.getByRole('button',{name:'pen color and thickness'}));expect(screen.queryByRole('combobox')).toBeNull();expect(screen.getByRole('button',{name:'5 px thickness'})).toBeTruthy();
+});

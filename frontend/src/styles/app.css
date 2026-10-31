@@ -290,9 +290,6 @@ kbd {
 .interim {
   color: #a6c9f5;
 }
-.interim::after {
-  content: "▏";
-}
 .workspace {
   height: 100dvh;
   display: flex;
@@ -929,3 +926,7 @@ kbd {
 .talk-short{display:none}.header-end{align-items:center}.transcript .transcript-empty .idle{text-align:left;padding-top:0}.present-notes>div+div{margin-top:20px}@media(max-width:599px){.talk-label .talk-full{display:none}.talk-label .talk-short{display:inline}}
 
 .speaker-notes-heading{font-size:12px;font-weight:500;color:var(--muted);margin:0 0 10px}.speaker-notes-readonly{font-size:13px;line-height:1.65;min-height:100px;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Shared transcript invariant: separators belong between rows, never below the last phrase. */
+.transcript .transcript-phrase[data-last-phrase]{border-bottom-width:0}.transcript .phrase-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.transcript .phrase-meta>span{min-width:0;overflow-wrap:anywhere}.transcript .phrase-meta time{max-width:100%}.transcript-review{padding:0;overflow:visible}.transcript-review .review-comment{margin-top:8px}.transcript-presenter .transcript-phrase{border:0;border-bottom:1px solid #333c49}.transcript-presenter .transcript-phrase[data-last-phrase]{border-bottom:0}
+html[data-reduce-motion=true] *,html[data-reduce-motion=true] *::before,html[data-reduce-motion=true] *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}

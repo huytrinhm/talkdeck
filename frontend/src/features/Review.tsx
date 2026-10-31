@@ -24,7 +24,7 @@ import {
   wordCount,
 } from "../domain/review";
 import "./review.css";
-import { CoachReviewNotes } from "./PracticeCoach";
+import { Transcript } from "./workspace/Transcript";
 const time = (n: number) =>
   `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
 function MarkedTranscript({ segment }: { segment: TranscriptSegment }) {
@@ -36,13 +36,10 @@ function MarkedTranscript({ segment }: { segment: TranscriptSegment }) {
     return [prefix, <mark key={i}>{m.text}</mark>];
   });
   return (
-    <p>
-      <span className="review-time">
-        {time(segment.start)}–{time(segment.end)}
-      </span>{" "}
+    <>
       {parts}
       {segment.text.slice(end)}
-    </p>
+    </>
   );
 }
 export function Review({
@@ -252,16 +249,17 @@ export function Review({
               )}
             </TabsTrigger>
           </TabsList>
-          <Button
-            variant={pending.length ? "default" : "primary"}
-            onClick={() => (pending.length ? remaining() : setComplete(true))}
-          >
-            Done
-          </Button>
+          {tab === "changes" && (
+            <Button
+              variant={pending.length ? "default" : "primary"}
+              onClick={() => (pending.length ? remaining() : setComplete(true))}
+            >
+              Done
+            </Button>
+          )}
         </div>
         <TabsContent value="overview" className="review-overview">
           <h2>Your practice, at a glance</h2>
-          <CoachReviewNotes rehearsalId={rehearsal.id} />
           <p className="muted">
             Review your delivery and choose which slide changes to keep.
           </p>
@@ -559,24 +557,22 @@ export function Review({
               <section className="review-transcript">
                 <h3>Captured transcript</h3>
                 {segments.length ? (
-                  segments.map((t) => (
-                    <div key={t.id}>
-                      <MarkedTranscript segment={t} />
-                      {clarityMatches(t.text).length > 0 ? (
-                        <p className="review-comment">
-                          Name the specific concept instead of the highlighted
-                          phrase.
-                        </p>
-                      ) : (
-                        <p className="review-comment">
-                          {t.text.trim().toLowerCase() ===
-                          slide.title.trim().toLowerCase()
+                  <Transcript
+                    segments={segments}
+                    interim=""
+                    variant="review"
+                    renderText={(t) => <MarkedTranscript segment={t} />}
+                    renderDetail={(t) => (
+                      <p className="review-comment">
+                        {clarityMatches(t.text).length > 0
+                          ? "Name the specific concept instead of the highlighted phrase."
+                          : t.text.trim().toLowerCase() ===
+                              slide.title.trim().toLowerCase()
                             ? "Go beyond the heading and explain what it means."
                             : "Connect this explanation to the key idea on your slide."}
-                        </p>
-                      )}
-                    </div>
-                  ))
+                      </p>
+                    )}
+                  />
                 ) : (
                   <p className="muted">No captured speech.</p>
                 )}

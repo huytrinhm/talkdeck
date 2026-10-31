@@ -26,6 +26,10 @@ it("shows useful empty practice guidance without chart-method or development cop
   expect(
     screen.queryByText(/local rules|heuristics|word timestamps/),
   ).toBeNull();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: /Slide changes/ }), {
+    button: 0,
+    ctrlKey: false,
+  });
   fireEvent.click(screen.getByRole("button", { name: "Done" }));
   expect(screen.getByText("1 slide was not rehearsed.")).not.toBeNull();
   expect(screen.queryByText("1 slides were not rehearsed.")).toBeNull();
@@ -52,8 +56,35 @@ it("omits coach and empty feedback on Overview, changes and completion without a
     expect(document.querySelector(".review-feedback")).toBeNull();
   };
   absent();
-  fireEvent.click(screen.getByRole("tab", { name: /Slide changes/ }));
+  fireEvent.mouseDown(screen.getByRole("tab", { name: /Slide changes/ }), {
+    button: 0,
+    ctrlKey: false,
+  });
   absent();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: /Slide changes/ }), {
+    button: 0,
+    ctrlKey: false,
+  });
   fireEvent.click(screen.getByRole("button", { name: "Done" }));
   absent();
+});
+it("has no premature Done on Overview and retains completion through Slide changes", () => {
+  const p = newProject([]);
+  p.slides = [blankSlide()];
+  p.rehearsals = [buildRehearsal(p.slides, [], 0)];
+  render(
+    <Review
+      project={p}
+      onChange={() => {}}
+      onAgain={() => {}}
+      onPresent={() => {}}
+      onDone={() => {}}
+    />,
+  );
+  expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: /Slide changes/ }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByRole("button", { name: "Done" })).toBeTruthy();
 });

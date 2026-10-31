@@ -42,8 +42,6 @@ import { phoneVoice } from "../services/phoneVoice";
 import { Filmstrip } from "../components/Filmstrip";
 import { Audience } from "../components/Audience";
 import { Materials } from "./Materials";
-import { PracticeCoach } from "./PracticeCoach";
-import { PracticeCoachController } from "../services/practiceCoach";
 import { Review } from "./Review";
 import { Annotations } from "./Annotations";
 import { type SpeechState } from "../services/speech";
@@ -113,6 +111,8 @@ export function Workspace({
   onAppSettings,
   speechSuspended = false,
   claimInputStart,
+  initialSelectedId,
+  onSelectionChange,
 }: {
   project: Project;
   mode: Mode;
@@ -122,10 +122,17 @@ export function Workspace({
   onAppSettings?: (tab?: SettingsTab) => void;
   speechSuspended?: boolean;
   claimInputStart?: () => boolean;
+  initialSelectedId?: string | null;
+  onSelectionChange?: (id: string | null) => void;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(
-    project.slides[0]?.id ?? null,
+    project.slides.some((s) => s.id === initialSelectedId)
+      ? initialSelectedId!
+      : (project.slides[0]?.id ?? null),
   );
+  useEffect(() => {
+    onSelectionChange?.(selectedId);
+  }, [selectedId]);
   const [sidebar, setSidebar] = useState(true),
     [tab, setTab] = useState("transcript");
   const [settings, setSettings] = useState(false);
@@ -172,42 +179,6 @@ export function Workspace({
     snapshot: structuredClone(project.slides),
     transcript: [] as TranscriptSegment[],
   });
-  const [coach] = useState(
-    () =>
-      new PracticeCoachController(() => ({
-        projectId: projectRef.current.id,
-        rehearsalId: practice.current.id,
-        slideId: selectionRef.current ?? "",
-        slideTitle:
-          projectRef.current.slides.find((s) => s.id === selectionRef.current)
-            ?.title ?? "",
-        transcript: practice.current.transcript.map(
-          ({ text, slideId, start, end }) => ({ text, slideId, start, end }),
-        ),
-      })),
-  );
-  useEffect(() => {
-    const pauseCoach = () => {
-      if (mode === "practice") {
-        preserveRef.current();
-        speech.current?.pause();
-        coach.pause();
-      }
-    };
-    const hide = () => {
-      if (document.hidden) pauseCoach();
-    };
-    const leave = () => coach.dispose();
-    window.addEventListener("pagehide", leave);
-    window.addEventListener("blur", pauseCoach);
-    document.addEventListener("visibilitychange", hide);
-    return () => {
-      coach.dispose();
-      window.removeEventListener("pagehide", leave);
-      window.removeEventListener("blur", pauseCoach);
-      document.removeEventListener("visibilitychange", hide);
-    };
-  }, [coach, mode]);
   const preserveRef = useRef<() => void>(() => {});
   const stage = useRef<HTMLDivElement>(null),
     frame = useRef<HTMLDivElement>(null);
@@ -467,6 +438,13 @@ export function Workspace({
     // a Workspace instance is keyed by project+mode; callbacks read latest refs
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voiceSource]);
+  useEffect(() => {
+    const hide = () => {
+      if (document.hidden && enabled) speech.current?.pause();
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => document.removeEventListener("visibilitychange", hide);
+  }, [enabled]);
   const payload: AudiencePayload = {
     projectId: project.id,
     slide: selected ? publicSlide(selected) : null,
@@ -549,7 +527,6 @@ export function Workspace({
         projectRef.current.materials,
       );
       rehearsal.id = practice.current.id;
-      coach.finish(rehearsal.id);
       mutate(
         {
           ...projectRef.current,
@@ -560,10 +537,9 @@ export function Workspace({
       onMode("review");
     } else onMode("edit");
   }
-  function openAppSettings(tab: SettingsTab = "connections") {
+  function openAppSettings(tab: SettingsTab = "preferences") {
     preserveUnfinished();
     speech.current?.pause();
-    coach.pause();
     setHeld(false);
     onAppSettings?.(tab);
   }
@@ -575,7 +551,6 @@ export function Workspace({
       preserveUnfinished();
       speech.current?.pause();
     } else {
-      if (mode === "practice") coach.resumePractice();
       speech.current?.resume();
     }
   }
@@ -888,17 +863,6 @@ export function Workspace({
                 )}
               </div>
               <aside className="present-notes">
-                {mode === "practice" && (
-                  <PracticeCoach
-                    controller={coach}
-                    onPausePractice={() => {
-                      preserveUnfinished();
-                      speech.current?.pause();
-                    }}
-                    onResumePractice={() => speech.current?.resume()}
-                    onSettings={() => openAppSettings("coach")}
-                  />
-                )}
                 <div>
                   <span className="muted next-label">Next slide</span>
                   {project.slides[index + 1] ? (

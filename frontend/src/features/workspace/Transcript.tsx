@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { TranscriptSegment } from "../../domain/types";
 const time = (n: number) =>
   `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
@@ -6,15 +7,20 @@ export function Transcript({
   interim,
   sessionIds = new Set<string>(),
   variant = "sidebar",
+  renderText,
+  renderDetail,
 }: {
   segments: TranscriptSegment[];
   interim: string;
   sessionIds?: ReadonlySet<string>;
-  variant?: "sidebar" | "presenter";
+  variant?: "sidebar" | "presenter" | "review";
+  renderText?: (segment: TranscriptSegment) => ReactNode;
+  renderDetail?: (segment: TranscriptSegment) => ReactNode;
 }) {
+  const live = interim.trim();
   return (
     <div className={`transcript transcript-${variant}`}>
-      {!segments.length && !interim && (
+      {!segments.length && !live && (
         <div className="transcript-empty">
           <strong>Ready when you are</strong>
           <p className="idle">Your words appear here as you speak.</p>
@@ -37,7 +43,13 @@ export function Transcript({
               }
             >
               {phrases.map((s) => (
-                <li className="transcript-phrase" key={s.id}>
+                <li
+                  className="transcript-phrase"
+                  data-last-phrase={
+                    (!live && s.id === segments.at(-1)?.id) || undefined
+                  }
+                  key={s.id}
+                >
                   <div className="phrase-meta">
                     <span>
                       {current ? "Narration" : "Saved narration"}
@@ -49,7 +61,8 @@ export function Transcript({
                       {time(s.start)} – {time(s.end)}
                     </time>
                   </div>
-                  <p>{s.text}</p>
+                  <p>{renderText ? renderText(s) : s.text}</p>
+                  {renderDetail?.(s)}
                   {s.provisional && (
                     <small className="muted">Unfinished phrase</small>
                   )}
@@ -59,13 +72,13 @@ export function Transcript({
           </section>
         );
       })}
-      {interim && (
-        <div className="transcript-phrase interim">
+      {live && (
+        <div className="transcript-phrase interim" data-last-phrase>
           <div className="phrase-meta">
             <span>Speaking now</span>
             <span className="transcript-live-dot" aria-hidden="true" />
           </div>
-          <p>{interim}</p>
+          <p>{live}</p>
         </div>
       )}
     </div>
