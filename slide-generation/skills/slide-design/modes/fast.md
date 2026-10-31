@@ -1,5 +1,11 @@
 # Incremental drafting
 
+An opening requires an actual named subject. Greetings and unfinished preambles
+("Alright, today we are presenting about…", "Hôm nay chúng ta sẽ nói về…")
+are not titles. Leave the slide unchanged until the subject arrives, even if the
+host dispatched that fragment. Strip conversational setup from visible headings;
+retain the original speech as evidence/notes.
+
 Represent newly complete meanings promptly on the working slide. Use the compact
 pattern index as vocabulary, not a planning checklist. On a blank opening slide, a recognizable topic introduction is sufficient for an
 intentional title composition immediately: large title, purposeful alignment,
