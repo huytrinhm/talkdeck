@@ -219,3 +219,14 @@ References for the editing design: OMP's current source-edit documentation at
 https://github.com/can1357/oh-my-pi/blob/main/docs/tools/edit.md and its historical hashline explanation at
 https://stencil.so/blog/the-harness-problem . This implementation intentionally uses **per-line hashes** and node scopes,
 not OMP's current file-level snapshot-tag wire format. No universal model accuracy claim is assumed.
+
+## P0 implementation update (2026-10-31)
+
+Added strict five-talk loading and evaluator-only expectation validation (`src/evaluation/fixtures.ts`), a host-safe
+spoken-input projection, strict credential-free manifest fields/run directories, typed causal trace events, and separate
+capability reporting. Engine reads and refused transactions emit ordered trace metadata. See `docs/HOST_PORT.md` for
+the proposed integration boundary and the confirmed old-Publisher mismatch. The evaluator/runner remain unimplemented.
+
+Environment probes: baseline `dae4a82`; initial typecheck and four test files passed. Git fetch failed with
+`Could not resolve host: github.com`. Installed Playwright Chromium failed at launch with `sandbox_host_linux.cc:41`,
+`Operation not permitted`. Browser validation and pushes cannot be verified in this environment; no live scores exist.

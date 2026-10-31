@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { Trace } from './telemetry/trace.js';
+import { lineHash } from './hashline.js';
 import { SourceError, transactionSchema, type DeckDocument, type ValidationPipeline } from './contracts.js';
 import { SnapshotStore } from './hashline.js';
 import { nodeById, nodes, parseSource, textContent } from './parser.js';
@@ -8,12 +11,16 @@ export class SlideEngine {
   readonly snapshots = new SnapshotStore();
   private document: DeckDocument;
   private tail: Promise<unknown> = Promise.resolve();
-  constructor(document: DeckDocument, private validation: ValidationPipeline = new UnavailableValidation()) {
+  constructor(document: DeckDocument, private validation: ValidationPipeline = new UnavailableValidation(), private trace = new Trace()) {
     this.document = { ...document, source: document.source.replace(/\r\n?/g, '\n') };
     parseSource(this.document.source);
   }
   readDocument(): DeckDocument { return { ...this.document }; }
-  readSource(nodeId: string) { return this.snapshots.read(this.document.source, nodeId); }
+  readSource(nodeId: string) {
+    const read = this.snapshots.read(this.document.source, nodeId);
+    this.trace.emit('source.read', { deckId: parseSource(this.document.source).id!, revision: lineHash(this.document.source), toolCallId: read.snapshotId });
+    return read;
+  }
   readSpeakerNotes(slideId: string) {
     const slide = nodeById(parseSource(this.document.source), slideId);
     if (slide.tag !== 'Slide') throw new SourceError('not_slide', 'Expected a slide ID', slideId);
@@ -29,7 +36,19 @@ export class SlideEngine {
   async readiness() { const report = await this.validation.check(this.document.source); return { ready: ready(report), ...report }; }
   edit(input: unknown) {
     // Serializes reads of the current committed state, validation, and publication.
-    const run = this.tail.then(() => this.transact(input));
+    const transactionId = randomUUID();
+    const run = this.tail.then(async () => {
+      const cause = { deckId: parseSource(this.document.source).id!, revision: lineHash(this.document.source), transactionId };
+      this.trace.emit('edit.started', cause);
+      try {
+        const result = await this.transact(input);
+        this.trace.emit('edit.refused', cause, 'new_errors');
+        return result;
+      } catch (error) {
+        this.trace.emit('edit.refused', cause, error instanceof SourceError ? error.code : 'internal');
+        throw error;
+      }
+    });
     this.tail = run.catch(() => undefined);
     return run;
   }

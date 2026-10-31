@@ -1,3 +1,4 @@
+import { capabilities } from './capabilities.js';
 import { Hono } from 'hono';
 import { ZodError } from 'zod';
 import { CANVAS, SourceError } from './contracts.js';
@@ -5,7 +6,7 @@ import { SlideEngine } from './engine.js';
 
 export function createApp(engine: SlideEngine) {
   const app = new Hono();
-  app.get('/health', c => c.json({ status: 'scaffold', canvas: CANVAS, mutationsReady: false }));
+  app.get('/health', c => c.json({ status: 'scaffold', canvas: CANVAS, mutationsReady: false, capabilities: capabilities() }));
   app.get('/source/:nodeId', c => c.json(engine.readSource(c.req.param('nodeId'))));
   app.get('/slides/:slideId/speaker-notes', c => c.json(engine.readSpeakerNotes(c.req.param('slideId'))));
   app.get('/presentation-readiness', async c => c.json(await engine.readiness()));
