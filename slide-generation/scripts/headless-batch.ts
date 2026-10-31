@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { atomicWrite } from '../src/storage/files.js';
 import { verifyFrozenBaseline } from '../src/evaluation/freeze.js';
+import { loadFixture } from '../src/evaluation/fixtures.js';
 
 const { values } = parseArgs({ options: {
   out: { type: 'string' }, baseline: { type: 'string' }, candidate: { type: 'string' }, repetitions: { type: 'string' },
@@ -47,14 +48,21 @@ else {
     job.status = 'running'; await save();
     console.log(JSON.stringify({ event: 'batch-run-started', index: index + 1, total: selected.length, ...job }));
     const log = createWriteStream(join(out, `run-${String(index + 1).padStart(3, '0')}.log`), { flags: 'wx' });
+    const fixture = await loadFixture(join(root, 'fixtures/talks', `${job.fixture}.json`)), last = fixture.events.at(-1)!;
     const child = spawn(process.execPath, ['--import', 'tsx', 'scripts/headless-run.ts', '--fixture', `fixtures/talks/${job.fixture}.json`,
       '--out', job.output, '--frozen', versions[job.version], '--repetition', String(job.repetition),
       '--max-calls', String(budget.calls), '--max-input-tokens', String(budget.inputTokens), '--max-output-tokens', String(budget.outputTokens)],
     { cwd: root, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
     child.stdout.pipe(log, { end: false }); child.stderr.pipe(log, { end: false });
-    job.exitCode = await new Promise<number | null>((done, reject) => { child.once('error', reject); child.once('close', done); });
+    let timedOut = false, forceStop: ReturnType<typeof setTimeout> | undefined;
+    const watchdog = setTimeout(() => {
+      timedOut = true; child.kill('SIGTERM');
+      forceStop = setTimeout(() => child.kill('SIGKILL'), 5000);
+    }, last.endMs + last.silenceAfterMs + fixture.timing.postTalkObservationMs + fixture.timing.maxDrainMs + 120_000);
+    try { job.exitCode = await new Promise<number | null>((done, reject) => { child.once('error', reject); child.once('close', done); }); }
+    finally { clearTimeout(watchdog); clearTimeout(forceStop); }
     await new Promise<void>(done => log.end(done));
-    job.status = job.exitCode === 0 ? 'completed' : 'failed';
+    job.status = timedOut ? 'timeout' : job.exitCode === 0 ? 'completed' : 'failed';
     try { const location = JSON.parse(await readFile(join(job.output, 'run-location.json'), 'utf8')); job.runDirectory = join(job.output, location.runDirectory); } catch { /* Failed before export; original log remains. */ }
     await save(); console.log(JSON.stringify({ event: 'batch-run-finished', index: index + 1, total: selected.length, ...job }));
     if (job.runDirectory) {
