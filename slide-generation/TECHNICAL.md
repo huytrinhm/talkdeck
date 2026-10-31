@@ -55,6 +55,7 @@ direct generation smoke passed using six real requests, real edits/checks and th
 | source candidates | formatting-preserving IDs/normalization, system ownership, exact evidence, corrections, archival, versions | Semantic notes fidelity remains agent responsibility |
 | expansion | definitions, cycles/depth, duplicate slot shapes, Each/slots/Index, stable derived IDs, dependency graph | No automatic layout repair or fallback |
 | renderer | Hono JSX primitives, Tailwind v4, paired/derived theme colors, font floors, exact font/image/catalog bytes | Asset/provider contract intentionally provisional |
+| practice asset injection | `createPracticeRuntime` forwards an optional `AssetResolver` to the canonical local renderer, including validation, screenshots and review previews | Storage and upload registration belong to the calling product; no implicit latest version |
 | browser | mandatory measured overflow/overlap/wrap/contrast/floors/shape checks, bounded pool, JPEG captures | See quantitative policies and unsupported measurement cases in docs/BROWSER_CHECKS.md |
 | engine/storage | normalized validated CAS commit, revisioned reads, durable inbox, restart recovery, input/edit races | Single process; host owns stable input/slide attribution |
 | tools/API | unified edit_source plus source/notes/library/palette/icons/render/check/screenshot/readiness tools | No legacy specialized mutation tools |

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import OpenAI from "openai";
 export { OpenAI };
 import { createLocalRuntime } from "../runtime.js";
+import type { AssetResolver } from "../contracts.js";
 import { JsxBackend } from "../host/jsx-backend.js";
 import { SlideRuntime } from "../orchestration/runtime.js";
 import {
@@ -22,6 +23,7 @@ import { loadDesignSkills } from "../design/skills.js";
 export interface PracticeRuntimeOptions {
   directory: string;
   storageRoot?: string;
+  assets?: AssetResolver;
   context?: string;
   onSelection?(slideId: string): void | Promise<void>;
   log?: ActorOptions["log"];
@@ -47,6 +49,7 @@ export async function createPracticeRuntime(options: PracticeRuntimeOptions) {
   const local = await createLocalRuntime({
     directory: joinPath(directory, "deck"),
     storageRoot: options.storageRoot,
+    assets: options.assets,
   });
   let actors: SlideRuntime | undefined;
   try {
