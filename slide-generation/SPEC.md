@@ -157,6 +157,7 @@ have a nonnegative integer `build`. Metadata is never rendered as slide content.
 | Bullets | marker disc/number/dash/none, size body/lead; Text children; <=3 points outside cards default to lead |
 | Quote | by; body contains quoted words without quotation marks |
 | Image | alt and typed versioned asset reference; automatic box allocation; contain only |
+| Icon | dedicated Lucide SVG; name, catalogVersion, alt, optional theme color and transform; no children or stroke overrides |
 | Rule | color, length short/full/bleed, weight bold/hair, orient h/v |
 | Badge | fill; tag text |
 | Shape | kind disc/ring/blob/pill/arc/dots/grid/glow/sparkle; fill, at tl/t/tr/l/c/r/bl/b/br, size sm/md/lg/xl, bleed, opacity faint/soft/solid |
@@ -172,12 +173,30 @@ Tree depth is at most six in **both authored and expanded visual trees**; compon
 six, with cycles rejected. Count a visual Slide root as depth one; Deck/Theme/Library/evidence envelopes do not consume
 visual depth. Definitions are checked from their visual root. Metadata literal nesting has separate parser resource limits.
 
-Content-only ad-hoc overrides: theme color and typed transform `{scale, translate: [x,y]}`. Scale is one of
+Content nodes and Icon support ad-hoc overrides: theme color and typed transform `{scale, translate: [x,y]}`. Scale is one of
 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8; translation components within +/-0.5 of the node's own box. Render scale using zoom
 so neighbors reflow. All effective font floors remain enforced. Asset transforms use the same mechanism.
 
 `class` is permitted only inside Layout/Component definitions. Lint against an explicit allowlist of layout and
 decoration utilities on scale steps; reject arbitrary values, text-size utilities, and text/background color utilities.
+For Icon, also reject utilities that override SVG strokes; definition classes cannot bypass its fixed stroke policy.
+
+### 5.1 Lucide icon access
+
+Agents have searchable access to the **full Lucide SVG catalog**, not just a curated prompt list. Use the dedicated
+`Icon` primitive rather than Image references, raw SVG markup, or executable framework components. Resolve `name` against
+an explicitly pinned `catalogVersion`; discovery tools return both. Unknown names/versions refuse validation.
+
+Icons inherit the effective surrounding text color, including surface foregrounds. An optional `color` refers to a
+theme token. Keep Lucide's bundled stroke geometry and width: no stroke, strokeWidth, fill, path, or equivalent styling
+overrides. Layout allocates the box; preserve the viewBox/aspect ratio and use the existing transform rules for ad-hoc
+adjustments. Every Icon has the standard system ID and supports build groups and stable animation identity.
+
+Render trusted catalog SVG inline through Hono so currentColor inherits correctly, with identical pinned data in both
+renderers and no runtime CDN requests. Agent-authored raw SVG is still outside the source grammar. A decorative icon
+uses empty alt; a meaningful icon has an accessible label and must not replace user-provided words silently. Icon remains
+a visual primitive, not an alias for Image or a new image slot kind. It can appear in definitions and ordinary node
+containers; existing text-only/slot contracts still apply. Detailed implementation handoff: [Lucide icons](docs/LUCIDE_ICONS.md).
 
 ## 6. Layouts and components
 
@@ -257,6 +276,8 @@ refuse the edit. The agent chooses another layout or correction itself.
 - `read_source(nodeId)`: anchored source; convenience scopes may resolve deck/theme/library/slide IDs.
 - `read_speaker_notes(slideId)`: full cleaned notes, original transcript, revision, archived association when applicable.
 - `list_library()`: descriptions, slot kinds/counts, versions, and dependent slides; no character budgets.
+- `search_icons(query, cursor?, limit?)`: search the full pinned Lucide catalog, returning canonical names, versions, and pagination.
+- `read_icon(name, catalogVersion)`: inspect catalog metadata and a trusted SVG preview; read-only, with no slide mutation.
 - `palette_report()`: readable foreground for each fill, APCA |Lc| >= 45, plus role-specific thresholds.
 - `render(slideId)`: normalized HTML/CSS for a final layout; rendering alone is not validation.
 - `check(slideIds)`: structural and browser findings; deterministic suggested corrections, never mutations.

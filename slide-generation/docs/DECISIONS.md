@@ -61,6 +61,9 @@ additional product decisions. Append decisions; mark supersession instead of del
 | D50 | Verification | Automated tests after each change, including replays of prior model responses without new model calls |
 | D51 | Comparison | Same scripts against a frozen previous version, side by side; report improvement and remaining failures |
 | D52 | Cleanup | Once stable, several refactoring passes, each checked independently |
+| D53 | Icon representation | Dedicated Lucide Icon primitive; user answer: "icons are dedicated" |
+| D54 | Icon discovery | Read-only searchable access to the full catalog; user answer: "agent have a searchable access to the full catalog" |
+| D55 | Icon styling | Inherit text color plus optional theme-color override; no stroke customization; user answer: "inherit text-color plus theme-color overrides, no stroke" |
 
 D49 strengthens the operational fidelity criteria: use exact substantive excerpts and conservative formatting on slides,
 not model-authored paraphrases of user claims. Explicit user corrections, deletions, renamed headings, and note cleanup
