@@ -129,3 +129,17 @@ must stay bounded and settle on the exact requested target. Preserve intermediat
 visible latency still requires the requested exact value, not a merely intermediate number.
 
 Resolves O01; clarifies D49 without relaxing substantive source fidelity. SPEC.md and agent guidance updated. Accepted.
+
+## D57 — Fast mode for API calls (2026-10-31)
+
+User instruction (verbatim): **“use fast mode for all api calls”**. Accepted without reopening model selection.
+
+All live model inference requests use `service_tier: "fast"`, as documented in the
+[official Fast mode guide](https://developers.openai.com/api/docs/guides/fast-mode). Record requested service tier in
+new evaluation manifests and retain the provider's actual tier in raw response evidence. Do not silently retry using
+standard processing. Keep historical requests/results immutable for exact replay; service-tier changes are a changed
+comparison condition, not a measured code-only speed improvement. Existing directory and shell-sourcing rules remain.
+
+Verification: a shell-sourced, bounded one-request probe using the updated client and `gpt-6-luna` returned HTTP 200,
+`service_tier: "fast"`, completed output `OK`, and 23 total tokens. Exact request/response/result evidence is under
+`.artifacts/environment/fast-mode-2026-10-31T05-47-08-017Z/`. This verifies API configuration, not generation latency.

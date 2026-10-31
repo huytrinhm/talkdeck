@@ -35,7 +35,7 @@ const recorder = await RunRecorder.create(directory, {
   dirty: execFileSync('git', ['status', '--porcelain', '--', '.'], { cwd: root, encoding: 'utf8' }).trim().length > 0,
   nodeVersion: process.version, platform: `${process.platform}/${process.arch}`, startedAt: new Date().toISOString(),
   lockSha256: hash(lock), promptSha256: hash(instructions), fixtureSha256: hash(utterance), dependencies: [],
-  model: { provider: 'openai', name: model, maxCalls: 8, maxTokens: 8000 }, mode: 'live',
+  model: { provider: 'openai', name: model, serviceTier: 'fast', maxCalls: 8, maxTokens: 8000 }, mode: 'live',
 }, [credential]);
 // Snapshot only explicit credential-free source paths; never copy an environment file.
 await mkdir(join(directory, 'source-snapshot'));

@@ -33,9 +33,12 @@ npm run smoke:generation
 ```
 
 The smoke makes at most eight real Responses requests, each capped at 8,000 output tokens. It uses `FAST_MODEL`
-(default `gpt-6-luna`) and `OPENAI_API_KEY` or `OPENAI_KEY`. It checks one exact-content slide through real tools, mandatory
+(default `gpt-6-luna`), Fast mode (`service_tier: "fast"`), and `OPENAI_API_KEY` or `OPENAI_KEY`. It checks one exact-content slide through real tools, mandatory
 browser validation and the packaged viewer. It records provider usage and replay cassettes; it is not the five-talk
 actor-host evaluation. [First recorded result](docs/rounds/subsystem-smoke-2026-10-31.md).
+
+All live inference requests use Fast mode per the user's instruction. The request tier is recorded in new run manifests;
+the exact provider response records the tier actually served. Historical recordings retain their original settings.
 
 `npm run eval:talks -- --help` describes the actual-host adapter required for timed runs. Replay, freeze, compare and
 report commands are also available as `eval:replay`, `eval:freeze`, `eval:compare` and `eval:report`. Output stays under

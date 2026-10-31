@@ -7,3 +7,5 @@
 - SPEC.md is the behavior contract; TECHNICAL.md must accurately distinguish implemented features from scaffold seams.
 - Run npm run check and npm test. Never substitute fake browser success for unavailable validation.
 - Keep asset/provider integration provisional; do not invent a provider-specific contract outside the resolver boundary.
+- Use Fast mode (`service_tier: "fast"`) for all live model API calls. Keep credentials shell-sourced and read only
+  process environment in code. Preserve historical recordings; never rewrite replay requests to add Fast mode.

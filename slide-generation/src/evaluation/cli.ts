@@ -75,6 +75,7 @@ export async function main(argv: string[]) {
   if (command === 'talks') {
     const hostFile = required('host'), fixture = await loadFixture(required('fixture')), manifest = manifestSchema.parse(await json(required('manifest')));
     if (manifest.mode !== 'live' || !manifest.model) throw new Error('Live runs require a model/budget manifest and mode=live');
+    if (manifest.model.serviceTier !== 'fast') throw new Error('Live runs require model.serviceTier=fast; the host must request Fast mode');
     if (manifest.fixtureSha256 !== lineHash(await readFile(required('fixture'), 'utf8'))) throw new Error('Fixture bytes differ from manifest');
     const repetition = Number(values.repetition ?? '1'); if (!Number.isSafeInteger(repetition) || repetition < 1) throw new Error('Repetition must be positive');
     const module = await import(pathToFileURL(resolve(hostFile)).href);

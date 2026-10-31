@@ -8,12 +8,25 @@ test('live Responses transport enforces caps before requests, does not retry, an
   const client = new BoundedResponsesClient('test-secret', 'configured-model', 1, 120, fetcher);
   const body = client.requestBody('instructions', [{ role: 'user', content: 'exact words' }], []);
   assert.equal(body.includes('test-secret'), false);
+  assert.equal(JSON.parse(body).service_tier, 'fast');
   assert.equal((await client.respond(body)).status, 429);
   await assert.rejects(client.respond(body), /cap reached/);
   assert.deepEqual(bodies, [body]);
   assert.equal(client.calls, 1);
   assert.throws(() => new BoundedResponsesClient('x', 'm', 9), /budget/);
   assert.throws(() => new BoundedResponsesClient('x', 'm', 8, 8001), /budget/);
+});
+
+test('transport refuses missing or changed Fast mode before dispatch', async () => {
+  let dispatched = false;
+  const client = new BoundedResponsesClient('test-secret', 'configured-model', 1, 120,
+    async () => { dispatched = true; throw new Error('should not dispatch'); });
+  const body = JSON.parse(client.requestBody('instructions', [], []));
+  for (const service_tier of [undefined, 'auto', 'default', 'flex']) {
+    await assert.rejects(client.respond(JSON.stringify({ ...body, service_tier })), /Fast mode/);
+  }
+  assert.equal(dispatched, false);
+  assert.equal(client.calls, 0);
 });
 
 test('transport refuses changed model and token limit before dispatch', async () => {

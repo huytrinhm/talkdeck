@@ -32,6 +32,8 @@ test('comparison refuses changed workload/model or a relabeled baseline, and exp
   const baseline = run(false, true), candidate = run(true, true);
   assert.throws(() => compareRuns([baseline], [{ ...candidate, manifest: { ...candidate.manifest, sourceSha: frozen.sourceSha } }], frozen), /distinct committed/);
   assert.throws(() => compareRuns([baseline], [{ ...candidate, manifest: { ...candidate.manifest, fixtureSha256: 'e'.repeat(64) } }], frozen), /common conditions/);
+  assert.throws(() => compareRuns([baseline], [{ ...candidate, manifest: { ...candidate.manifest,
+    model: { ...candidate.manifest.model!, serviceTier: 'fast' } } }], frozen), /common conditions/);
   const incomplete = { ...candidate, metrics: { ...candidate.metrics, observations: [{ ...candidate.metrics.observations[0], firstCorrectVisibleAtMs: undefined, evidence: [] }] } };
   const compared = compareRuns([baseline], [incomplete], frozen);
   assert.equal(compared.pairs[0].missingOrIncomplete, true); assert.equal(compared.pairs[0].p50ChangeMs, null);

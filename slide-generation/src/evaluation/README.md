@@ -4,6 +4,10 @@ This package supplies the P10 recording, paced driver, replay and comparison fou
 
 Commands are `npm run eval:talks -- ...`, `eval:replay`, `eval:compare`, `eval:report` and `eval:freeze`; each supports `--help`. Output directories must be new paths below `.artifacts/`. Live runs require an explicit host module, fixture, manifest and budget. Missing audits become censored manual-review observations. Unknown costs or token counts remain null. Unknown host integrations are refused.
 
+Per D57, new live runs require `model.serviceTier: "fast"` in the manifest; the actual host must set
+`service_tier: "fast"` on every inference request. Historical manifests may omit this field and stay replayable.
+The exact raw response preserves the tier served by the provider. Comparisons reject changed requested service tiers.
+
 `driver.ts` schedules every input against its absolute monotonic deadline independently of model/retention promises, preserves the last event's silence, then permits bounded drain. Async recorder callbacks are observed without serializing delivery; errors and unfinished writes make recording incomplete. Hosts must return durable receipts in the same clock domain and honor abort. A Promise timeout cannot terminate an uncooperative host process; production adapters still need worker/process lifecycle control.
 
 `RunRecorder` records exact request/response strings, raw tool arguments/results, input, events, normalized source/check/render state, viewer acknowledgments and separately identified frames. The host adapter is responsible for wiring every inference/tool/state/frame to it. Credentials and request headers are forbidden. Artifact manifests and files are exclusive; existing evidence is never rewritten. Viewer clocks require explicit offset and uncertainty. Evaluator screenshots are not model feedback.
