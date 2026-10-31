@@ -249,3 +249,37 @@ test("durable receipt precedes decisions, duplicate receipts do not dispatch twi
     await rt.close();
   }
 });
+
+test('failed canonical Fast edit triggers one eligibility decision even without a publication', async () => {
+  for (const throws of [false, true]) {
+    const p = backend({
+      definitions: () => [{ type: 'function', name: 'edit_source', description: 'Edit', parameters: { type: 'object', properties: {} }, strict: false }],
+      invoke: async () => {
+        if (throws) throw new Error('candidate overflow');
+        return { output: { accepted: false, findings: [{ check: 'overflow' }] } };
+      },
+    });
+    let fastCalls = 0, slowCalls = 0, decisions = 0;
+    const rt = await SlideRuntime.create({ ...options, backend: p,
+      slowDecider: { async evaluate(input) {
+        decisions++;
+        assert.equal(input.current.fastWatermark, 0);
+        assert.equal(input.messages.length, 1);
+        assert.match(input.messages[0].text, /failed_content_attempt/);
+        assert.match(input.messages[0].text, /Supported content/);
+        return 'wake';
+      } },
+      model: { async infer(input) {
+        if (input.role === 'slow') { slowCalls++; return done; }
+        return ++fastCalls === 1 ? { output: [call('edit_source')] } : done;
+      } },
+    });
+    try {
+      await rt.deliverUtterance({ id: 'u1', slideId: p.selectedId, text: 'Supported content', deliveredAtMs: 0 });
+      await rt.gate.tick(); await rt.settle();
+      assert.equal(decisions, 1); assert.equal(slowCalls, 1);
+      assert.equal(p.fastWatermark, 0);
+      await rt.settle(); assert.equal(decisions, 1);
+    } finally { await rt.close(); }
+  }
+});

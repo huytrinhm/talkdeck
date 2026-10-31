@@ -112,6 +112,10 @@ export class SlideRuntime {
   private slowDecision?: Promise<void>;
   private slowDecisionController?: AbortController;
   private slowEvaluatedFast = 0;
+  // Publication order alone cannot represent a failed edit or Fast settling.
+  private slowEligibility = 0;
+  private slowEvaluatedEligibility = 0;
+  private recoverySlideId?: string;
   private slowActivationEpoch = 0;
   private slowDecisionError?: string;
   private retainedUtterances = new Map<string, InputUtterance>();
@@ -447,6 +451,8 @@ export class SlideRuntime {
         return restored.value;
       } finally {
         this.slowEvaluatedFast = this.publisher.fastWatermark;
+        this.slowEvaluatedEligibility = this.slowEligibility;
+        this.recoverySlideId = undefined;
         for (const actor of actors) {
           actor.controller = new AbortController();
           actor.observedFast = this.publisher.fastWatermark;
@@ -526,6 +532,8 @@ export class SlideRuntime {
         await Promise.allSettled(actors.map((a) => a.promise));
       } finally {
         this.slowEvaluatedFast = this.publisher.fastWatermark;
+        this.slowEvaluatedEligibility = this.slowEligibility;
+        this.recoverySlideId = undefined;
         for (const actor of actors) {
           actor.controller = new AbortController();
           actor.observedFast = this.publisher.fastWatermark;
@@ -655,10 +663,12 @@ export class SlideRuntime {
       return;
     if (actor.role === "slow") {
       this.slowActivationEpoch++;
+      this.slowEvaluatedEligibility = this.slowEligibility;
       this.slowDecisionError = undefined;
     }
     this.setState(actor, "running");
     const signal = actor.controller.signal;
+    const activationFastWatermark = this.publisher.fastWatermark;
     actor.promise = this.run(actor, signal)
       .catch((e) => {
         if (!this.closed && !signal.aborted) {
@@ -694,6 +704,13 @@ export class SlideRuntime {
           (actor.requested || (actor.role === "fast" && actor.pendingSpeech))
         )
           this.wake(actor);
+        if (actor.role === "fast") {
+          // One extra opportunity for a busy-state HOLD, never a polling retry.
+          if (this.publisher.fastWatermark > activationFastWatermark &&
+              this.publisher.fastWatermark > this.actors.get("slow")!.observedFast)
+            this.slowEligibility++;
+          this.considerSlow();
+        }
         if (actor.role === "slow") this.considerSlow();
       });
   }
@@ -712,12 +729,15 @@ export class SlideRuntime {
     const current =
       this.publisher
         .list()
-        .find((s) => s.id === this.publisher.latestFastSlideId)?.observation ??
+        .find((s) => s.id === (this.slowEligibility > this.slowEvaluatedEligibility && this.recoverySlideId
+          ? this.recoverySlideId : this.publisher.latestFastSlideId))?.observation ??
       this.publisher.current;
     const watermark = this.publisher.fastWatermark,
       deckRevision = this.publisher.revision;
-    if (watermark <= Math.max(this.slowEvaluatedFast, slow.observedFast))
+    if (watermark <= Math.max(this.slowEvaluatedFast, slow.observedFast) &&
+        this.slowEligibility <= this.slowEvaluatedEligibility)
       return;
+    const eligibility = this.slowEligibility;
     const epoch = this.slowActivationEpoch;
     const controller = new AbortController();
     this.slowDecisionController = controller;
@@ -773,12 +793,15 @@ export class SlideRuntime {
         if (
           slow.state !== "idle" ||
           epoch !== this.slowActivationEpoch ||
-          deckRevision !== this.publisher.revision
+          deckRevision !== this.publisher.revision ||
+          eligibility !== this.slowEligibility
         ) {
           this.emit("slow_decision_stale", { observationId: current.id });
           return;
         }
         this.slowEvaluatedFast = watermark;
+        this.slowEvaluatedEligibility = eligibility;
+        this.recoverySlideId = undefined;
         this.emit("slow_decision", {
           observationId: current.id,
           fastWatermark: current.fastWatermark,
@@ -797,6 +820,8 @@ export class SlideRuntime {
           // No automatic wake or unbounded retry on API failure. A newer Fast
           // publication can trigger another evaluation; explicit work still runs.
           this.slowEvaluatedFast = watermark;
+          this.slowEvaluatedEligibility = eligibility;
+          if (eligibility === this.slowEligibility) this.recoverySlideId = undefined;
           this.slowDecisionError = errorMessage(e);
           this.emit("slow_decision_error", {
             observationId: current.id,
@@ -918,6 +943,10 @@ export class SlideRuntime {
         actor.targetSlide = current.slideId;
       const messages = actor.messages.splice(0),
         tasks = actor.tasks.splice(0);
+      if (actor.role === "slow") {
+        this.slowEvaluatedEligibility = this.slowEligibility;
+        this.recoverySlideId = undefined;
+      }
       for (const message of messages) {
         if (
           message.kind !== "specialist_completion" ||
@@ -1210,6 +1239,20 @@ export class SlideRuntime {
               } : {}),
             } : {}),
           };
+        }
+        if (generation && actor.role === "fast" && call.name === "edit_source" &&
+            !signal.aborted && !this.closed && !this.restoringHistory && !this.practiceMode) {
+          const result = output as { accepted?: boolean; outcome?: string; error?: unknown; code?: string };
+          if (result.code !== "control_boundary" &&
+              (result.accepted === false || result.outcome === "error" || result.error)) {
+            const targetSlideId = actor.targetSlide;
+            this.sendMessage({ id: `fast-recovery:${call.call_id}`, from: "fast", to: "slow", targetSlideId,
+              text: JSON.stringify({ kind: "failed_content_attempt", targetSlideId,
+                speech: actor.lastSpeech, proposedEdit: call.arguments, result,
+                instruction: "A Fast edit failed or was refused. This is evidence, not an instruction to replay it. Inspect current source and subsequent speech; Fast may have repaired it since. Recover still-missing supported content or discard obsolete intent. Never assume notes prove visible fulfillment." }) });
+            this.recoverySlideId = targetSlideId;
+            this.slowEligibility++;
+          }
         }
         actor.history.add({
           type: "function_call_output",

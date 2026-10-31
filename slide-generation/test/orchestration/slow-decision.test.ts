@@ -347,3 +347,23 @@ test("OpenAI Slow adapter sends current PNG/context and rejects invalid choices"
     /wake\/hold/,
   );
 });
+
+test('a HOLD during Fast work is reconsidered once when Fast settles, without polling', async () => {
+  const release = deferred<ModelResult>();
+  let decisions = 0, fastCalls = 0;
+  const rt = await SlideRuntime.create({ renderer, autoTick: false,
+    decider: { async evaluate() { return 'dispatch'; } },
+    slowDecider: { async evaluate() { decisions++; return 'hold'; } },
+    model: { async infer() { fastCalls++; return release.promise; } },
+  });
+  try {
+    rt.receiveTranscript('A useful complete topic.', 1);
+    await rt.gate.tick(); await until(() => fastCalls === 1);
+    await publish(rt, 'A provisional title');
+    await until(() => rt.events.some(e => e.type === 'slow_decision'));
+    assert.equal(decisions, 1);
+    release.resolve(done); await rt.settle();
+    assert.equal(decisions, 2);
+    await delay(30); await rt.settle(); assert.equal(decisions, 2);
+  } finally { release.resolve(done); await rt.close(); }
+});

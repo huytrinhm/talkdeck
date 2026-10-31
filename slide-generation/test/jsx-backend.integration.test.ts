@@ -126,7 +126,7 @@ test("actual scheduler commits via canonical hashline tools and real Chromium; u
     assert.doesNotMatch(source, /<html|<!doctype/i);
     assert.equal((await f.local.engine.readiness()).ready, true);
     assert.equal(f.backend.fastWatermark, 1);
-    assert.equal(slowInputs.length, 1);
+    assert(slowInputs.length >= 1 && slowInputs.length <= 2, "publication and one settling reconsideration coalesce");
     assert.match(slowInputs[0].current.source, /Measured growth/);
     assert.match(slowInputs[0].current.source, /Growth is 42%, provisionally/);
     assert.equal(slowInputs[0].spokenEdits, true);
