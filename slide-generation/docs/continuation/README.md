@@ -10,10 +10,35 @@ control boundaries. The real packaged iframe runs headlessly with actual acknowl
 video. Recorded provider adapters enforce shared budgets and explicit Fast Responses requests; Decisions has no supported
 service-tier parameter and records endpoint-default policy. Code reads shell-sourced environment only.
 
-The integrated live pilot has not yet completed. Next: freeze a clean functioning baseline, run a bounded pilot and
-inspect each failure, then execute the five timed talks with repetitions, replay recorded evidence and compare. Human
-semantic/design review and separately verified refactors remain required. Never count deterministic tests, the historical
-direct smoke, or legacy HTML measurements as that completed loop.
+Current verified revision: `16a1671`, pushed after typecheck and 302 passing tests
+(`.artifacts/environment/pre-push-headless-suite.tap`). Check Git status/log before resuming; this identifies a verified
+checkpoint, not a claim about subsequent edits.
+
+The integrated three-input pilot completed: 26 provider calls, two accepted visual edits, three exact retained inputs,
+two final slides. Its qualifier scoring limitation remains documented without rewriting raw results. Actual scheduler
+replay verified 26 provider requests, 12 tools and six commits with exact final source and real browser checks, without
+live fallback. See [pilot review](../rounds/headless-integration-2026-10-31/README.md) and
+`.artifacts/review/actor-replay-pilot-attempt3/report.json`. Replay is not live-latency evidence.
+
+Full edit-heavy round 01 failed useful output: both versions remained blank. The context candidate attempted one edit
+against a private-notes anchor changed by incoming input, never recovered, then ended host-error when an unperformed
+rename made a named target unresolved. Receipt retention and canonical source integration differ. Read
+[baseline case](../rounds/headless-round-01/cases/edit-heavy-baseline-01-no-visible-generation.md) and
+[candidate case](../rounds/headless-round-01/cases/edit-heavy-candidate-context-01-anchor-conflict.md). Never call structural
+ready=true faithfulness. Current scoring rejects removal credit for never-visible content; preserve old metrics and use
+the same current evaluator/observer on both sides.
+
+A fresh frozen pair is running under `.artifacts/runs/headless-round-02/`: baseline `5f970fb` from
+`.artifacts/baselines/headless-pre-fix/`, candidate `16a1671` from `.artifacts/baselines/headless-candidate-16a1671/`.
+Inspect `batch.json` and each container's `run-location.json` before review; the latter points to nested raw evidence.
+No candidate quality result is claimed while that pair is unfinished.
+
+Commands are current in [README](../../README.md): `headless:run --frozen`, `headless:batch --plan-only`,
+`headless:replay`, `headless:actor-replay`, and report-only `headless:run --recover`. Batch defaults to 30 sequential runs
+(three repetitions × five talks × two versions), so inspect the plan/budgets before executing. Recovery never replaces
+reports or upgrades failed trials. Next: inspect each real failure and screenshot, make small verified fixes, replay, then
+repeat compatible frozen comparisons. All-five-talk qualification, human semantic/design review and separately verified
+refactors remain unfinished. Historical direct smoke or legacy HTML results cannot substitute for that loop.
 
 ## Previous continuation — after permission restart
 

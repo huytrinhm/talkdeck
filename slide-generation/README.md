@@ -42,8 +42,20 @@ This runs the actual actor scheduler through the canonical backend and packaged 
 Use a new output directory for every run. The run records input, model/tool bodies, source/check/render states, routing,
 viewer acknowledgments, PNG/video, final slide JPEGs, audit and `review.md`. Exact native content checks are automated;
 unsupported semantic/design checks remain explicit manual-review misses. This command is a runner, not evidence of a
-completed five-talk qualification. The consolidated live pilot and repeated frozen-baseline comparison have not yet
-been completed.
+completed five-talk qualification. The integrated three-input pilot completed with 26 real provider calls, two accepted
+visual edits and three exact retained inputs; [pilot evidence](docs/rounds/headless-integration-2026-10-31/README.md)
+records its limited successes and the qualifier scoring limitation. Offline actor replay verified all 26 provider
+requests, 12 tools and six commits with the exact final source and real browser checks. Replay establishes reproducibility,
+not live latency.
+
+The first full edit-heavy baseline and context candidate both ended with blank slides. The candidate additionally had
+an unresolved named-target input; durable receipt and canonical integration are distinct. See the
+[baseline case](docs/rounds/headless-round-01/cases/edit-heavy-baseline-01-no-visible-generation.md) and
+[candidate case](docs/rounds/headless-round-01/cases/edit-heavy-candidate-context-01-anchor-conflict.md).
+The implementation through `16a1671` was pushed after typecheck and 302 passing tests
+(`.artifacts/environment/pre-push-headless-suite.tap`). A frozen A/B edit-heavy pair under
+`.artifacts/runs/headless-round-02/` is in progress; no candidate quality result is claimed. The repeated five-talk
+qualification and subsequent verified refactoring remain unfinished.
 
 Responses requests use `service_tier: "fast"`; provider records distinguish requested and actually returned tiers.
 The Decisions endpoint exposes no `service_tier` field, so its policy is recorded as `endpoint-default`, without an
@@ -51,6 +63,36 @@ unsupported field or header. Model defaults are Luna for Fast/Decisions and Sol 
 variables `FAST_MODEL`, `DECISION_MODEL`, `SLOW_MODEL` and `SPECIALIST_MODEL` override them. Shared budgets reserve
 capacity before concurrent calls. Missing usage remains unknown and charged conservatively. Asset integration stays
 provisional.
+
+Frozen runs verify the exported source inventory, unchanged fixture/lock bytes and packaged viewer compatibility.
+They execute copied generator code with a common current observer/evaluator. `run-location.json` identifies the nested
+run directory; raw evidence is normally under `execution/slide-generation/.artifacts/run/`. Compare matching evaluator
+and observer hashes, recorded separately from generator SHA. A frozen export alone is not a measured baseline.
+
+The batch runner defaults to three repetitions of all five talks for both versions (30 sequential runs), alternates pair
+order by repetition, records budgets/statuses and keeps failed trials. Review a plan without paid calls first:
+
+```sh
+npm run headless:batch -- --baseline .artifacts/baselines/headless-pre-fix --candidate .artifacts/baselines/headless-candidate-16a1671 --out .artifacts/runs/new-comparison --plan-only
+```
+
+Remove `--plan-only` to execute within the approved budget. `--fixtures edit-heavy --repetitions 1 --max-runs 2` limits
+execution to one pair. Use `--max-calls`, `--max-input-tokens` and `--max-output-tokens` for per-run limits. A single frozen
+run uses `headless:run -- --fixture FILE --out NEW_DIR --frozen FROZEN_DIR`; add `--verify-only` for preparation without
+model calls. Output directories must be new and under this package's `.artifacts/`.
+
+Offline commands require the actual evidence directory, not its frozen execution container:
+
+```sh
+npm run headless:replay -- --run .artifacts/runs/headless-integration-2026-10-31/pilot-01 --out .artifacts/replay/new-pilot-transactions
+npm run headless:actor-replay -- --run .artifacts/runs/headless-integration-2026-10-31/pilot-01 --out .artifacts/replay/new-pilot-actors
+```
+
+Transaction replay checks canonical operations; actor replay additionally checks the actual scheduler/gates and recorded
+provider requests without live fallback. Compatibility failures remain failures. For a failed run whose cleanup finished
+but report export did not, `headless:run -- --fixture FILE --out FAILED_EVIDENCE_DIR --recover` reconstructs missing reports
+offline. It requires original failure/driver/source evidence, refuses existing reports, records recovery provenance and
+keeps a failing exit status. It does not resume generation or convert a failed trial into a success.
 
 `npm run smoke:generation` is the smaller direct model-to-tools smoke, capped at eight requests and 8,000 output tokens
 per request. Its [recorded result](docs/rounds/subsystem-smoke-2026-10-31.md) predates the combined host and must not be

@@ -3,9 +3,10 @@
 `SPEC.md` is the behavior contract. The subsystem now has a working canonical-source → Hono/Tailwind → Chromium checks
 → durable commit path, exercised by real-browser integration tests. The packaged viewer also has real Chromium tests.
 The actual actor scheduler is now connected through an injected canonical JSX backend in this consolidated package.
-A real headless iframe records viewer acknowledgments and frames without a product frontend. The consolidated live pilot,
-five timed-talk qualification, frozen live-model comparison and improvement/refactoring rounds remain unfinished.
-Passing integration tests does not establish those measured results.
+A real headless iframe records viewer acknowledgments and frames without a product frontend. The integrated three-input
+pilot and exact offline actor replay completed. Full edit-heavy trials exposed blank-output and routing failures; repeated
+five-talk qualification and improvement/refactoring rounds remain unfinished. A new frozen pair is in progress.
+Passing integration tests or structural readiness does not establish faithful visible generation.
 
 Read `AGENTS.md`, `IMPLEMENTATION_PLAN.md`, `docs/DECISIONS.md`, `docs/LUCIDE_ICONS.md` and
 `docs/IMPROVEMENT_LOOP.md` when continuing. Historical pause checkpoints are under `docs/continuation/`; their browser
@@ -59,7 +60,7 @@ direct generation smoke passed using six real requests, real edits/checks and th
 | tools/API | unified edit_source plus source/notes/library/palette/icons/render/check/screenshot/readiness tools | No legacy specialized mutation tools |
 | viewer | sandbox/CSP/channel protocol, fixed canvas, builds, retargeted motion, exact settlement, headless acknowledgments/video | Product frontend wiring remains separate |
 | orchestration | Persistent real Fast/Slow actor scheduler, Decision gates, backend injection, canonical JSX tool/context adapter and control epochs | Live quality and provisional specialist assets require measurement |
-| headless/evaluation | Real packaged iframe, durable input routing, bounded recorded providers, paced driver, audits/reports, replay and comparison foundations | Integrated live pilot, repeated five-talk runs and human semantic/design qualification unfinished |
+| headless/evaluation | Real packaged iframe, durable input routing, bounded recorded providers, paced driver, audits/reports, replay and comparison foundations | Pilot and actor replay recorded; full-talk faithfulness, repeated comparison and human semantic/design qualification unfinished |
 
 ## Canonical source and safe data language
 
@@ -162,10 +163,25 @@ than treating this count as permanent. Artifacts live under ignored `.artifacts/
 Explicit new-slide/return commands control harness selection from actual input, never evaluator aliases. The legacy HTML
 publisher remains available only as an explicit alternate backend. See `docs/HOST_PORT.md`.
 
-The consolidated tests cover injected actor scheduling, canonical checked edits and control boundaries, requested-only
-screenshots, real editor/audience iframe frames and video, typed model records, shared budgets and offline provider
-replay. The 185-test artifact above is the historical standalone implementation run; it is not the current consolidated
-suite count or live-loop evidence. Use fresh check/test output for the current tree.
+The consolidated tree through `16a1671` was pushed after typecheck and all 302 tests passed; exact output is
+`.artifacts/environment/pre-push-headless-suite.tap`. Tests cover injected actor scheduling, canonical checked edits and
+control boundaries, requested-only screenshots, real editor/audience iframe frames and video, typed model records, shared
+budgets and offline provider replay. Test-level audience coverage is not evidence of audience build behavior in the live
+talk harness. Counts identify a verified revision, not a permanent guarantee for later edits.
+
+The integrated pilot used 26 real calls, retained three inputs and committed two visual edits. Its reported qualifier miss
+was manually traced to whole-node exact-match granularity; original results remain unchanged. The recorded-event actor
+replay verified 26 exact provider requests, 12 tools and six commits with final source SHA-256
+`35a6018667fb0162a1dec61a33c1ab3ea9d2973cb548cf1c7caad4d2541010de`, real browser checks and no live fallback.
+Evidence: `docs/rounds/headless-integration-2026-10-31/README.md` and
+`.artifacts/review/actor-replay-pilot-attempt3/report.json`. Replay does not measure live response times.
+
+Round 01 full edit-heavy baseline/candidate trials produced blank slides despite ready=true. Baseline made no edits;
+the context candidate made one correctly refused private-notes anchor edit, then failed to recover. A later unknown
+renamed target remained durably received but absent from canonical source and ended the candidate with host-error. Cases
+are in `docs/rounds/headless-round-01/cases/`. Neither readiness nor absence of a requested deletion target on a blank slide
+establishes useful output. Those original scores are preserved. The current evaluator refuses removal credit without
+prior visible content; evaluator changes must apply equally to both comparison versions.
 
 `npm run headless:run -- --fixture fixtures/talks/edit-heavy.json --out .artifacts/runs/edit-heavy-baseline-1` runs the
 actual integrated timed path after shell-sourcing credentials. Responses uses Fast tier; Decisions exposes no service-tier
@@ -178,8 +194,20 @@ require actual sampled content in the current slide, coherent publication identi
 readiness and offscreen final JPEGs cannot substitute for visible latency. Unsupported semantic/design assertions remain
 manual-review misses. Reports include coverage/censoring and link the original PNG/video and final slide gallery.
 
-Still required: run the integrated live pilot and all five paced talks with complete histories; diagnose individual
-failures; replay recorded responses without live fallback; compare a frozen functioning baseline with repeated candidate
-runs; then perform separately verified refactoring passes. Frontend integration can proceed separately and is not a
-headless-run prerequisite. No full qualification, latency target, cost improvement or completed improvement-loop claim
-is made yet.
+`headless:batch` executes verified frozen baseline/candidate copies sequentially, with three repetitions of all five
+fixtures by default. `--plan-only` makes no model calls; `--fixtures`, `--repetitions`, `--max-runs` and per-run token/call
+limits bound execution. Generator SHA is distinct from common evaluator/observer hashes. Frozen execution artifacts live
+at the directory in the container's `run-location.json`, normally `execution/slide-generation/.artifacts/run/`.
+The current pair under `.artifacts/runs/headless-round-02/` compares baseline `5f970fb` with candidate `16a1671`; its quality
+results are not yet reviewed here. See README for exact commands.
+
+`headless:replay` replays canonical transactions; `headless:actor-replay` also exercises the actual scheduler with exact
+recorded provider requests, completion ordering and semantic clocks. Neither has a live fallback. `headless:run --recover`
+is report-only recovery after failed cleanup/export: it requires the original failure, driver and source evidence,
+refuses to replace reports, records recovery provenance and returns failure status. It neither resumes generation nor
+claims successful completion.
+
+Still required: resolve demonstrated full-talk failures, run all five paced talks with repetitions and complete histories,
+review actual visible/audience behavior and semantic/design outcomes, replay each fix, compare compatible frozen versions,
+then perform separately verified refactoring passes. Frontend integration remains separate. No full qualification,
+latency target, cost improvement or completed improvement-loop claim is made.
