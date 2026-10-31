@@ -10,7 +10,7 @@ type PublicationIdentity = Pick<PublicationMessage, 'publicationId' | 'sequence'
 export interface ViewerClock { offsetMs: number; uncertaintyMs: number }
 export interface CapturedFrame extends VisibleFrame {
   publicationId: string; surface: 'editor' | 'audience'; captureStartedAtMs: number; captureFinishedAtMs: number;
-  trigger: 'painted' | 'settled'; coherent: boolean;
+  trigger: 'painted' | 'settled'; coherent: boolean; visibilityVerified?: boolean; domEquivalent?: boolean;
 }
 export interface HeadlessViewerOptions {
   recorder: RunRecorder; channel?: string; timeoutMs?: number;
@@ -88,11 +88,11 @@ export class HeadlessViewer {
     await this.handler?.(ack, clock);
     await this.options.recorder.viewer({ acknowledgment: ack, receivedAtMs, clockOffsetMs: clock.offsetMs, clockUncertaintyMs: clock.uncertaintyMs,
       surface: publication?.mode === 'presentation' ? 'audience' : 'editor' });
-    if (publication && (ack.type === 'painted' || ack.type === 'settled')) await this.capture(publication, ack.type);
+    if (publication && (ack.type === 'painted' || ack.type === 'settled')) await this.capture(publication, ack.type, ack.domEquivalent === true);
     if (ack.type === 'refused') throw new Error(`Viewer refused ${ack.publicationId}: ${ack.code}`);
     if (ack.type === 'settled' && !ack.domEquivalent) throw new Error('Viewer did not settle to exact final DOM');
   }
-  private async capture(triggerPublication: PublicationIdentity, trigger: 'painted' | 'settled') {
+  private async capture(triggerPublication: PublicationIdentity, trigger: 'painted' | 'settled', domEquivalent: boolean) {
     const latest = () => this.page.evaluate(() => (window as any).viewerAcks.findLast((a: any) => a.type === 'applied') as ViewerAcknowledgment | undefined);
     const before = await latest();
     if (!before?.publicationId) return;
@@ -101,37 +101,62 @@ export class HeadlessViewer {
     const frame = this.page.frames().find(frame => frame.parentFrame() === this.page.mainFrame());
     if (!frame) throw new Error('Viewer iframe disappeared');
     const projection = await frame.evaluate(() => {
-      const visible = [(element: Element) => {
-        const box = element.getBoundingClientRect();
-        if (!box.width || !box.height || box.right <= 0 || box.bottom <= 0 || box.left >= innerWidth || box.top >= innerHeight) return false;
+      let uncertain = false;
+      // Return 0 for fully hidden, 1 for partly visible/unreadable, 2 for full visible text.
+      const visibility = [(element: Element) => {
+        let opacity = 1, clip = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
         for (let node: Element | null = element; node; node = node.parentElement) {
-          const style = getComputedStyle(node); if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) <= 0) return false;
+          const style = getComputedStyle(node);
+          if (style.display === 'none' || style.visibility !== 'visible') return 0;
+          opacity *= Number(style.opacity);
+          if (node !== element && /(hidden|clip|scroll|auto)/.test(`${style.overflowX} ${style.overflowY}`)) {
+            const box = node.getBoundingClientRect();
+            if (/(hidden|clip|scroll|auto)/.test(style.overflowX)) { clip.left = Math.max(clip.left, box.left); clip.right = Math.min(clip.right, box.right); }
+            if (/(hidden|clip|scroll|auto)/.test(style.overflowY)) { clip.top = Math.max(clip.top, box.top); clip.bottom = Math.min(clip.bottom, box.bottom); }
+          }
         }
-        return true;
+        if (opacity <= 0) return 0;
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT), rects: DOMRect[] = [];
+        let textNode: Node | null;
+        while ((textNode = walker.nextNode())) {
+          if (!textNode.textContent?.trim()) continue;
+          const range = document.createRange(); range.selectNodeContents(textNode); rects.push(...range.getClientRects());
+        }
+        const painted = rects.filter(rect => rect.width > 0 && rect.height > 0);
+        if (!painted.length || !painted.some(rect => rect.right > clip.left && rect.left < clip.right && rect.bottom > clip.top && rect.top < clip.bottom)) return 0;
+        if (opacity < 0.99) return 1;
+        for (const rect of painted) {
+          if (rect.left < clip.left || rect.top < clip.top || rect.right > clip.right || rect.bottom > clip.bottom) return 1;
+          const top = document.elementFromPoint((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+          if (top && !element.contains(top) && !top.contains(element)) return 1;
+        }
+        return 2;
       }][0];
-      const content = [...document.querySelectorAll('#stage [data-node]')].filter(visible).flatMap<VisibleContent>(node => {
+      const content = [...document.querySelectorAll('#stage [data-node]')].flatMap<VisibleContent>(node => {
         const kind = node.getAttribute('data-primitive') ?? 'Text', nodeId = node.getAttribute('data-node')!;
-        const owned = [...node.querySelectorAll('[data-content]')].filter(el => el.closest('[data-node]') === node && visible(el));
+        const owned = [...node.querySelectorAll('[data-content]')].filter(el => el.closest('[data-node]') === node);
         if (node.matches('[data-content]')) owned.unshift(node);
-        if (!owned.length) return [];
+        const statuses = new Map(owned.map(element => [element, visibility(element)]));
+        if ([...statuses.values()].includes(1)) uncertain = true;
+        if (![...statuses.values()].includes(2)) return [];
         if (kind === 'Stat') {
           const value = node.querySelector('[data-stat-value]'), label = node.querySelector('.td-secondary');
-          return value && visible(value) ? [{ nodeId, kind, text: value.textContent ?? '', label: label && visible(label) ? label.textContent ?? '' : undefined }] : [];
+          return value && statuses.get(value) === 2 ? [{ nodeId, kind, text: value.textContent ?? '', label: label && statuses.get(label) === 2 ? label.textContent ?? '' : undefined }] : [];
         }
         if (kind === 'Quote') {
           const body = node.querySelector('.td-quote-body'), by = node.querySelector('cite');
-          return body && visible(body) ? [{ nodeId, kind, text: body.textContent ?? '', by: by && visible(by) ? by.textContent ?? '' : undefined }] : [];
+          return body && statuses.get(body) === 2 ? [{ nodeId, kind, text: body.textContent ?? '', by: by && statuses.get(by) === 2 ? by.textContent ?? '' : undefined }] : [];
         }
-        return owned.map(element => ({ nodeId, kind, text: element.textContent ?? '', role: element.getAttribute('data-role') ?? undefined }));
+        return owned.filter(element => statuses.get(element) === 2).map(element => ({ nodeId, kind, text: element.textContent ?? '', role: element.getAttribute('data-role') ?? undefined }));
       });
-      return { content, pending: [...document.querySelectorAll('[data-pending]')].some(visible), sampledEpochMs: performance.timeOrigin + performance.now() };
+      return { content, visibilityVerified: !uncertain, pending: [...document.querySelectorAll('[data-pending]')].some(element => visibility(element) > 0), sampledEpochMs: performance.timeOrigin + performance.now() };
     });
     const name = `frame-${String(++this.frameNumber).padStart(6, '0')}.png`;
     await this.options.recorder.binary('viewer', name, await this.page.screenshot({ type: 'png' }));
     const after = await latest(), captureFinishedAtMs = performance.now();
-    const coherent = before.sequence === after?.sequence && before.publicationId === triggerPublication.publicationId;
+    const coherent = before.sequence === after?.sequence && before.sequence === this.lastSequence && before.publicationId === triggerPublication.publicationId;
     const captured: CapturedFrame = { content: projection.content, pending: projection.pending, revision: publication.revision, slideId: publication.slideId, publicationId: publication.publicationId,
-      atMs: projection.sampledEpochMs + this.epochOffsetMs, painted: coherent, coherent, trigger, surface: publication.mode === 'presentation' ? 'audience' : 'editor',
+      atMs: projection.sampledEpochMs + this.epochOffsetMs, painted: coherent, coherent, trigger, visibilityVerified: projection.visibilityVerified, domEquivalent: coherent && trigger === 'settled' && domEquivalent, surface: publication.mode === 'presentation' ? 'audience' : 'editor',
       captureStartedAtMs, captureFinishedAtMs, evidence: `viewer/${name}` };
     this.captured.push(captured); await this.options.recorder.visibleFrame(captured);
   }

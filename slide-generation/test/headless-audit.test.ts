@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureSchema } from '../src/evaluation/fixtures.js';
 import type { TalkRun } from '../src/evaluation/driver.js';
-import { auditHeadless } from '../src/headless/audit.js';
+import { auditHeadless, buildCreationEvidence } from '../src/headless/audit.js';
 import { renderMarkdownReport } from '../src/headless/report.js';
 import type { CapturedFrame } from '../src/headless/viewer.js';
 import { createDeck } from '../src/bootstrap.js';
@@ -13,7 +13,7 @@ import { nodeById, parseSource } from '../src/parser.js';
 function scenario() {
   const fixture = fixtureSchema.parse({ schemaVersion: 1, id: 'synthetic-audit', title: 'Synthetic audit controls', purpose: 'Test evaluator', initialContext: 'Synthetic only',
     timing: { mode: 'utterance-end', speed: 1, wordsPerSecond: 2, postTalkObservationMs: 10, maxDrainMs: 10 },
-    events: [{ id: 'u1', startMs: 0, endMs: 10, kind: 'utterance', text: 'Revenue was 42%.', targetAlias: 'overview', silenceAfterMs: 0 },
+    events: [{ id: 'u1', startMs: 0, endMs: 10, kind: 'utterance', text: 'Create a slide titled Overview. Revenue was 42%.', targetAlias: 'overview', silenceAfterMs: 0 },
       { id: 'u2', startMs: 11, endMs: 20, kind: 'utterance', text: 'Correct revenue to 40.2%.', targetAlias: 'overview', silenceAfterMs: 0 }],
     expectations: [
       { id: 'e1', triggerEventId: 'u1', targetAlias: 'overview', kind: 'number_exact', value: '42%', label: 'Revenue' },
@@ -26,10 +26,10 @@ function scenario() {
     recordingComplete: true, settled: true, termination: 'settled', pendingInputIds: [], undeliveredInputIds: [], errors: [] };
   let source = createDeck().source;
   for (const e of fixture.events) source = ingestCandidate(source, { id: e.id, slideId: 'n10', text: e.text, deliveredAtMs: e.endMs }).source;
-  return { fixture, run, source, routes: fixture.events.map(e => ({ utteranceId: e.id, slideId: 'n10' })), readiness: { complete: true, ready: true, revision: lineHash(source) } };
+  return { fixture, run, source, creationEvidence: [{ utteranceId: 'u1', slideId: 'n10', beforeSource: createDeck().source, afterSource: source, kind: 'seed' as const }], routes: fixture.events.map(e => ({ utteranceId: e.id, slideId: 'n10' })), readiness: { complete: true, ready: true, revision: lineHash(source) } };
 }
 function frame(atMs: number, text: string, extra: Partial<CapturedFrame> = {}): CapturedFrame {
-  return { revision: 'r1', slideId: 'n10', publicationId: 'p1', atMs, painted: true, pending: false, coherent: true, trigger: 'settled', surface: 'editor',
+  return { revision: 'r1', slideId: 'n10', publicationId: 'p1', atMs, painted: true, pending: false, coherent: true, visibilityVerified: true, domEquivalent: true, trigger: 'settled', surface: 'editor',
     captureStartedAtMs: atMs, captureFinishedAtMs: atMs + 1, evidence: `viewer/frame-${atMs}.png`, content: [{ nodeId: 'stat', kind: 'Stat', text, label: 'Revenue' }], ...extra };
 }
 test('temporal corrections preserve prior misses, exact labels and timed readiness independently', () => {
@@ -51,7 +51,8 @@ test('offscreen, wrong-label, unpainted, pending, post-run and incoherent frames
     assert.equal(auditHeadless({ ...data, frames: [bad] }).observations[0].firstCorrectVisibleAtMs, undefined);
   }
   const ambiguous = auditHeadless({ ...data, routes: [data.routes[0], { utteranceId: 'u2', slideId: 'other' }], frames: [frame(15, '42%')] });
-  assert.equal(ambiguous.audit.ambiguousAliases.length, 1); assert.equal(ambiguous.observations[0].missingReason, 'manual-review');
+  assert.equal(ambiguous.audit.ambiguousAliases.length, 0); assert.equal(ambiguous.observations[0].firstCorrectVisibleAtMs, 15);
+  assert.deepEqual(ambiguous.audit.wrongTargetRoutes, [{ utteranceId: 'u2', expectedSlideId: 'n10', actualSlideId: 'other' }]);
 });
 test('native ordered text, quote, absent tokens and attached qualifiers use actual frames', () => {
   const data = scenario();
@@ -88,4 +89,41 @@ test('report exposes censored coverage, unknown usage, actual served tiers and o
   assert.match(report, /Qualification complete: false/); assert.match(report, /Input tokens: unknown/); assert.match(report, /Actual served tiers: fast/);
   assert.match(report, /viewer-gallery\.html/); assert.match(report, /final\/slide-1\.jpg/); assert.match(report, /Miss\/censored/);
   assert.throws(() => renderMarkdownReport({ ...data, ...evaluated, model: { calls: 0, inputTokens: 0, outputTokens: 0 }, finalSlides: [{ slideId: 'n10', path: '../../secret' }] }), /relative run artifacts/);
+});
+
+
+test('routes cannot establish expected identity or score a wrong target; rejected creation stays unresolved', () => {
+  const data = scenario();
+  const wrong = auditHeadless({ ...data, routes: data.routes.map(route => ({ ...route, slideId: 'wrong' })), frames: [frame(15, '42%', { slideId: 'wrong' })] });
+  assert.equal(wrong.audit.bindings.overview, 'n10'); assert.equal(wrong.observations[0].firstCorrectVisibleAtMs, undefined);
+  const unbound = auditHeadless({ ...data, creationEvidence: [], frames: [frame(15, '42%')] });
+  assert.equal(unbound.observations[0].missingReason, 'manual-review'); assert.deepEqual(unbound.audit.bindings, {});
+  const invalid = auditHeadless({ ...data, creationEvidence: [{ ...data.creationEvidence[0], afterSource: data.source.replace('Overview.', 'Wrong.') }], frames: [frame(15, '42%')] });
+  assert.equal(invalid.audit.rejectedCreationEvidence.length, 1); assert.equal(invalid.observations[0].firstCorrectVisibleAtMs, undefined);
+});
+
+test('absence/correction requires verified settled DOM; animated or historical unverified samples stay manual', () => {
+  const data = scenario();
+  for (const extra of [{ trigger: 'painted' as const, domEquivalent: false }, { domEquivalent: undefined }, { visibilityVerified: false }, { visibilityVerified: undefined }]) {
+    const audit = auditHeadless({ ...data, frames: [frame(30, '40.2%', extra)] });
+    assert.equal(audit.observations[1].firstCorrectVisibleAtMs, undefined); assert.equal(audit.observations[1].missingReason, 'manual-review');
+  }
+});
+
+test('creation evidence validates exact source chain and create-input association without route answer leakage', () => {
+  const data = scenario(), initial = createDeck();
+  const first = ingestCandidate(initial.source, { id: 'u1', slideId: 'n10', text: data.fixture.events[0].text, deliveredAtMs: 10 }).source;
+  const commits = [{ beforeSourceSha: lineHash(initial.source), afterSourceSha: lineHash(first), source: first }];
+  const operations = [{ kind: 'input', input: { id: 'u1', slideId: 'n10', text: data.fixture.events[0].text }, sourceSha256: lineHash(first) }];
+  assert.equal(buildCreationEvidence(initial, commits, operations)[0].kind, 'seed');
+  assert.throws(() => buildCreationEvidence(initial, [{ ...commits[0], afterSourceSha: '0'.repeat(64) }], operations), /source\/hash chain/);
+  assert.equal(buildCreationEvidence(initial, commits, [{ ...operations[0], input: { ...operations[0].input, slideId: 'wrong' } }]).length, 0);
+  const created = first.replace('</Deck>', '<Slide id="n100" version={1} freeForm={{reason:"test"}}><Transcript id="n101"/><SpeakerNotes id="n102"/></Slide></Deck>');
+  const text = 'New slide titled Second. Add facts.';
+  const retained = ingestCandidate(created, { id: 'u3', slideId: 'n100', text, deliveredAtMs: 30 }).source;
+  const allCommits = [...commits, { beforeSourceSha: lineHash(first), afterSourceSha: lineHash(created), source: created }, { beforeSourceSha: lineHash(created), afterSourceSha: lineHash(retained), source: retained }];
+  const input = { kind: 'input', input: { id: 'u3', slideId: 'n100', text }, sourceSha256: lineHash(retained) };
+  assert.equal(buildCreationEvidence(initial, allCommits, [...operations, input]).length, 1);
+  const evidence = buildCreationEvidence(initial, allCommits, [...operations, { kind: 'create', slideId: 'n100', sourceSha256: lineHash(created) }, input]);
+  assert.equal(evidence.length, 2); assert.equal(evidence[1].kind, 'created'); assert.equal(evidence[1].beforeSource, first);
 });

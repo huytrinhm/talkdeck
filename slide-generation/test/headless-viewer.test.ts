@@ -78,3 +78,29 @@ test('canonical headless recording session records durable source/check/render r
     assert.ok(values.some(value => value.reason === 'edit' && value.source.includes('Headless canonical title') && value.renders.length === 1));
   } finally { await recording.close(); await runtime.close(); }
 });
+
+test('full native text capture excludes viewport clipping, ancestor clipping and near-transparent words', async () => {
+  const record = await recorder('visibility'), viewer = await HeadlessViewer.create({ recorder: record });
+  try {
+    const html = '<div data-node="slide"><p data-node="ok" data-content="true" style="position:absolute;left:100px;top:100px">Fully visible</p><p data-node="partial" data-content="true" style="position:absolute;left:1900px;top:200px;white-space:nowrap">Partly clipped words</p><div style="position:absolute;left:100px;top:300px;width:70px;height:65px;overflow:hidden"><p data-node="clip" data-content="true" style="width:900px;white-space:nowrap;margin:0">Ancestor clipped words</p></div><p data-node="faint" data-content="true" style="position:absolute;left:100px;top:500px;opacity:.01">Almost transparent</p></div>';
+    await viewer.send({ ...message(viewer.channel, 1, ''), html }); await viewer.settled();
+    const frame = viewer.frames().findLast(frame => frame.trigger === 'settled')!;
+    assert.equal(frame.domEquivalent, true); assert.equal(frame.visibilityVerified, false);
+    assert.deepEqual(frame.content.map(content => content.text), ['Fully visible']);
+  } finally { await viewer.close(); }
+});
+
+test('exit transition samples do not assert exact final DOM before settlement', async () => {
+  const record = await recorder('exits'), viewer = await HeadlessViewer.create({ recorder: record });
+  try {
+    await viewer.send({ ...message(viewer.channel, 1, ''), html: '<div data-node="slide"><p data-node="old" data-content="true">Old visible claim</p></div>' });
+    await viewer.settled();
+    await viewer.send({ ...message(viewer.channel, 2, ''), motion: { ...DEFAULT_MOTION, durationMs: 500 }, html: '<div data-node="slide"><p data-node="new" data-content="true">Correct replacement</p></div>' });
+    await viewer.settled();
+    const samples = viewer.frames().filter(frame => frame.publicationId === 'p2');
+    assert.equal(samples.find(frame => frame.trigger === 'painted')?.domEquivalent, false);
+    const settled = samples.find(frame => frame.trigger === 'settled')!;
+    assert.equal(settled.domEquivalent, true); assert.equal(settled.visibilityVerified, true);
+    assert.deepEqual(settled.content.map(content => content.text), ['Correct replacement']);
+  } finally { await viewer.close(); }
+});

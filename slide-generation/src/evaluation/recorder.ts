@@ -31,7 +31,7 @@ const driverEventSchema = z.object({ kind: z.enum(['input.delivered', 'input.ret
 const viewerSchema = z.object({ acknowledgment: acknowledgmentSchema, receivedAtMs: ms, clockOffsetMs: z.number().finite(),
   clockUncertaintyMs: ms, surface: z.enum(['editor', 'audience']), framePath: z.string().optional() }).strict();
 const visibleFrameSchema = z.object({ revision: id, slideId: id, publicationId: id, atMs: ms,
-  painted: z.boolean(), pending: z.boolean(), coherent: z.boolean(), trigger: z.enum(['painted', 'settled']),
+  painted: z.boolean(), pending: z.boolean(), coherent: z.boolean(), visibilityVerified: z.boolean().optional(), domEquivalent: z.boolean().optional(), trigger: z.enum(['painted', 'settled']),
   surface: z.enum(['editor', 'audience']), captureStartedAtMs: ms, captureFinishedAtMs: ms, evidence: id,
   content: z.array(z.object({ nodeId: id, text: z.string(), kind: id, role: z.string().optional(), label: z.string().optional(), by: z.string().optional() }).strict()),
 }).strict();

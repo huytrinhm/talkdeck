@@ -7,10 +7,11 @@ import { nodes, parseSource, textContent } from '../parser.js';
 import { lineHash } from '../hashline.js';
 
 export interface InputRoute { utteranceId: string; slideId: string; retainedAtMs?: number }
+export interface CreationEvidence { utteranceId: string; slideId: string; beforeSource: string; afterSource: string; kind: 'created' | 'seed' }
 export interface AuditHeadlessInput {
   fixture: TalkFixture; run: TalkRun; frames: readonly CapturedFrame[]; routes: readonly InputRoute[]; source: string;
   readiness: { complete: boolean; ready: boolean; revision?: string };
-  readinessAtMs?: number; readinessEvidence?: string;
+  readinessAtMs?: number; readinessEvidence?: string; creationEvidence?: readonly CreationEvidence[];
 }
 export interface CheckResult { outcome: 'pass' | 'fail' | 'manual-review'; reason: string; evidence: string[] }
 type Expectation = { id: string; triggerEventId: string; targetAlias: string; kind: string; [field: string]: unknown };
@@ -25,6 +26,9 @@ const strings = (e: Expectation) => 'texts' in e ? e.texts as string[] : [];
 const result = (outcome: CheckResult['outcome'], reason: string, evidence: string[] = []): CheckResult => ({ outcome, reason, evidence });
 
 function inspect(e: Expectation, frame: CapturedFrame): CheckResult {
+  if (frame.visibilityVerified === undefined) return result('manual-review', 'Historical frame lacks full text visibility measurement; review original video without upgrading its evidence', [frame.evidence]);
+  if ((e.kind === 'visible_absent' || e.kind === 'correction') && (frame.trigger !== 'settled' || frame.domEquivalent !== true || frame.visibilityVerified !== true))
+    return result('manual-review', 'Absence/correction requires a settled exact DOM and verified full text visibility; exit ghosts may still be visible', [frame.evidence]);
   const content = frame.content, texts = visibleStrings(frame);
   const exact = (text: string) => texts.includes(normalize(text));
   let passed: boolean;
@@ -73,6 +77,51 @@ function supersedes(previous: Expectation, next: Expectation) {
   return previous.kind === 'number_exact' && next.kind === 'number_exact' && same(previous.label as string, next.label as string) && !same(previous.value as string, next.value as string);
 }
 
+const declaresCreation = (text: string) => /^(?:new|create)\s+(?:(?:a|an|the)\s+)?(?:(?:opening|closing|section|temporary)\s+)?slide\s+titled\s+\S/i.test(text);
+function validateCreation(evidence: CreationEvidence, text?: string): string | undefined {
+  if (!text || !declaresCreation(text)) return 'Utterance does not explicitly declare creation';
+  try {
+    const before = parseSource(evidence.beforeSource), after = parseSource(evidence.afterSource);
+    const previous = childNodes(before).filter(node => node.tag === 'Slide'), target = childNodes(after).find(node => node.tag === 'Slide' && node.id === evidence.slideId);
+    if (!target) return 'Recorded creation target is not a live slide';
+    const prompts = [...nodes(target)].filter(node => node.tag === 'Prompt' && node.props.utteranceId === evidence.utteranceId);
+    if (prompts.length !== 1 || textContent(prompts[0]) !== text) return 'Creation target does not retain the exact triggering Prompt once';
+    if (evidence.kind === 'seed') {
+      if (previous.length !== 1 || previous[0].id !== evidence.slideId || [...nodes(before)].some(node => node.tag === 'Prompt')) return 'Seed was not the untouched initial singleton';
+    } else if (previous.some(node => node.id === evidence.slideId)) return 'Created target already existed before the recorded creation';
+  } catch { return 'Creation source snapshot is invalid'; }
+  return undefined;
+}
+/** Derive identity evidence from original recorded operations and a hash-verified source chain. */
+export function buildCreationEvidence(initial: string | { source: string }, commits: readonly unknown[], operations: readonly unknown[]): CreationEvidence[] {
+  const initialSource = typeof initial === 'string' ? initial : initial.source;
+  const sources = new Map([[lineHash(initialSource), initialSource]]), introduced = new Map<string, string>();
+  let previous = initialSource, previousHash = lineHash(previous);
+  for (const raw of commits) {
+    const commit = raw as { beforeSourceSha?: string; afterSourceSha?: string; source?: string };
+    if (!commit || typeof commit.source !== 'string' || commit.beforeSourceSha !== previousHash || commit.afterSourceSha !== lineHash(commit.source))
+      throw new Error('Creation evidence requires an unbroken exact recorded source/hash chain');
+    const priorIds = new Set(childNodes(parseSource(previous)).filter(node => node.tag === 'Slide').map(node => node.id));
+    for (const slide of childNodes(parseSource(commit.source)).filter(node => node.tag === 'Slide')) if (!priorIds.has(slide.id) && !introduced.has(slide.id!)) introduced.set(slide.id!, previous);
+    sources.set(commit.afterSourceSha, commit.source); previous = commit.source; previousHash = commit.afterSourceSha;
+  }
+  const evidence: CreationEvidence[] = [], creates = new Set<string>();
+  let inputCount = 0;
+  for (const raw of operations) {
+    const operation = raw as { kind?: string; slideId?: string; sourceSha256?: string; input?: { id?: string; text?: string; slideId?: string } };
+    if (operation?.kind === 'create' && operation.slideId && operation.sourceSha256 && sources.has(operation.sourceSha256)) creates.add(operation.slideId);
+    if (operation?.kind !== 'input') continue;
+    const input = operation.input; inputCount++;
+    if (!input?.id || !input.slideId || !input.text || !declaresCreation(input.text)) continue;
+    const afterSource = operation.sourceSha256 ? sources.get(operation.sourceSha256) : undefined;
+    const beforeSource = creates.has(input.slideId) ? introduced.get(input.slideId) : inputCount === 1 ? initialSource : undefined;
+    if (!afterSource || !beforeSource) continue;
+    const candidate: CreationEvidence = { utteranceId: input.id, slideId: input.slideId, beforeSource, afterSource, kind: creates.has(input.slideId) ? 'created' : 'seed' };
+    if (!validateCreation(candidate, input.text)) { evidence.push(candidate); creates.delete(input.slideId); }
+  }
+  return evidence;
+}
+
 /** Runs only after generation. Aliases/expectations never reach the host/model. */
 export function auditHeadless(input: AuditHeadlessInput) {
   const { fixture, run, frames, routes, source, readiness } = input;
@@ -82,14 +131,20 @@ export function auditHeadless(input: AuditHeadlessInput) {
     if (!fixture.events.some(event => event.id === route.utteranceId)) throw new Error('Route contains an unknown utterance');
     const targets = routeMap.get(route.utteranceId) ?? new Set<string>(); targets.add(route.slideId); routeMap.set(route.utteranceId, targets);
   }
-  const aliases = new Map<string, Set<string>>();
-  for (const event of fixture.events) {
-    const targets = aliases.get(event.targetAlias) ?? new Set<string>();
-    for (const target of routeMap.get(event.id) ?? []) targets.add(target);
-    aliases.set(event.targetAlias, targets);
+  const aliases = new Map<string, Set<string>>(), rejectedCreationEvidence: { utteranceId: string; reason: string }[] = [];
+  for (const evidence of input.creationEvidence ?? []) {
+    const event = fixture.events.find(event => event.id === evidence.utteranceId);
+    const failure = validateCreation(evidence, event?.text);
+    if (!event || failure) { rejectedCreationEvidence.push({ utteranceId: evidence.utteranceId, reason: failure ?? 'Unknown creation utterance' }); continue; }
+    const targets = aliases.get(event.targetAlias) ?? new Set<string>(); targets.add(evidence.slideId); aliases.set(event.targetAlias, targets);
   }
   const bindings = Object.fromEntries([...aliases].filter(([, ids]) => ids.size === 1).map(([alias, ids]) => [alias, [...ids][0]]));
   const ambiguousAliases = [...aliases].filter(([, ids]) => ids.size > 1).map(([alias, ids]) => ({ alias, slideIds: [...ids] }));
+  const wrongTargetRoutes = fixture.events.flatMap(event => {
+    const expectedSlideId = bindings[event.targetAlias];
+    return expectedSlideId ? [...(routeMap.get(event.id) ?? [])].filter(actualSlideId => actualSlideId !== expectedSlideId)
+      .map(actualSlideId => ({ utteranceId: event.id, expectedSlideId, actualSlideId })) : [];
+  });
   const delivered = new Map(run.inputs.map(entry => [entry.id, entry]));
   const scheduled = new Map(fixture.events.map(event => [event.id, run.startMs + event.endMs]));
   const sortedFrames = [...frames].sort((a, b) => a.atMs - b.atMs);
@@ -117,7 +172,7 @@ export function auditHeadless(input: AuditHeadlessInput) {
       const results = candidates.map(frame => ({ frame, check: inspect(e, frame) }));
       const success = results.find(r => r.check.outcome === 'pass');
       if (success) {
-        observation.firstVisibleAtMs = candidates[0].atMs; observation.firstCorrectVisibleAtMs = success.frame.atMs;
+        observation.firstVisibleAtMs = success.frame.atMs; observation.firstCorrectVisibleAtMs = success.frame.atMs;
         observation.evidence = success.check.evidence;
         const settled = candidates.find(frame => frame.trigger === 'settled' && frame.atMs >= success.frame.atMs && inspect(e, frame).outcome === 'pass');
         if (settled) observation.settledAtMs = settled.atMs;
@@ -147,7 +202,7 @@ export function auditHeadless(input: AuditHeadlessInput) {
     presentationReady: result(readiness.complete && readiness.ready && readiness.revision === lineHash(source) ? 'pass' : 'fail', 'Final complete-deck readiness must match the exact canonical source revision'),
   };
   for (const key of Object.keys(fixture.finalExpectations)) if (!(key in finalChecks)) finalChecks[key] = result('manual-review', 'Requires semantic, design, history or full-video review');
-  return { observations, audit: { schemaVersion: 1, fixtureId: fixture.id, qualificationComplete: false, bindings, ambiguousAliases, checks, finalChecks, retainedInputs,
+  return { observations, audit: { schemaVersion: 1, fixtureId: fixture.id, qualificationComplete: false, bindings, ambiguousAliases, rejectedCreationEvidence, wrongTargetRoutes, checks, finalChecks, retainedInputs,
     sourceSha256: lineHash(source), framesObserved: frames.length,
     limitations: ['Native DOM samples are not screenshot timestamps; inspect capture intervals and video.', 'Exit ghosts and unsampled intermediate digits require full-video review.', 'Final source/readiness checks do not establish earlier visible success.', 'Unsupported semantic/design expectations remain misses and require review.'] } };
 }
