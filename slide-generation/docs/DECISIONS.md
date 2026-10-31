@@ -81,6 +81,7 @@ story. There is no evidence that this subsystem achieves them. Treat them as tar
 | O01 (resolved by D56) | Approved Stat counting vs “never invented numbers” | User explicitly chose bounded counting on 2026-10-31; intermediate digits are animation rather than factual claims. See D56 and the preserved evidence/question below. |
 | O02 (headless ownership resolved by D58) | Exact host API hooks and ownership for JSX publication, multi-slide attribution, frontend bridge | User authorized consolidating both packages and connecting the actual scheduler. Backend injection and headless publication are implemented. Product frontend integration remains outside this headless task. |
 | O03 | Asset/font provider API and selected licensed bundled font | Provisional by explicit request. Use an injected versioned resolver; do not lock a provider/storage/cropping contract prematurely. Routine selection can be documented unless it adds a real product constraint. |
+| O04 | Follow-up speech after a named offscreen edit | Asked from the Pass 2 Practice/Timebox routing failure. No answer yet; existing routing is not changed by the question. |
 
 These are not reasons to pause all work. Continue independent milestones. Ask product questions only when the relevant
 implementation/evidence makes the choice concrete. Do not ask the user to approve routine parser tests or isolated fixes.
@@ -190,3 +191,20 @@ replay and finalized-review retry do not silently receive revised guidance.
 
 See [DESIGN-SKILLS.md](DESIGN-SKILLS.md). No improved generation-quality or latency
 claim follows from the standalone HTML study or prompt integration alone.
+
+## O04 — follow-up focus after an offscreen named edit (pending)
+
+Evidence: [Pass 2 style-switch case](rounds/pass-02/cases/style-switch.md). Both frozen versions route the explicit
+Practice edit correctly while Timebox stays displayed, then route “Keep the new point in the new dark theme, even if an
+older styling operation finishes late” to Timebox. The expected follow-up concerns the prior Practice point.
+
+Question asked: “The style test exposed a routing choice: while Timebox is displayed, ‘On Practice, add a point’ correctly
+edits Practice, but ‘Keep the new point in the dark theme’ goes back to Timebox. After an edit names another slide, where
+should follow-up speech go until the user explicitly changes slides?”
+
+Options: keep editing the named slide while leaving the displayed slide unchanged (recommended); return follow-up speech
+to the displayed slide; or infer each follow-up target and ask when ambiguous. This is an editing-focus policy choice,
+not permission to weaken source retention or use evaluator aliases as model context.
+
+User answer: pending. Do not treat elapsed time as approval. Continue unrelated measurement and document current failures;
+implement dependent routing behavior only after the answer. The current frozen runs and original recordings stay unchanged.
