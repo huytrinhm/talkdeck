@@ -145,7 +145,7 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
         const targetId = command ? backend.selectedId : namedInputTarget(input.text, routingTitles(backend.list(), pendingTitles)) ?? backend.selectedId;
         const utterance = { id: input.id, text: input.text, deliveredAtMs: input.deliveredAtMs, slideId: targetId };
         await actors.deliverUtterance(utterance);
-        const rename = requestedTitle(input.text);
+        const rename = requestedTitle(input.text, routingTitles(backend.list(), pendingTitles));
         if (rename) pendingTitles.set(targetId, rename);
         routes.push({ utteranceId: input.id, slideId: utterance.slideId, retainedAtMs: receipt.retainedAtMs });
         operations.push({ kind: 'input', input: utterance, sourceSha256: local.engine.state().revision });

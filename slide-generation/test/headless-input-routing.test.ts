@@ -32,3 +32,30 @@ test('named edits target live identities independently of current audience selec
   assert.throws(() => namedInputTarget('On Missing, add a line.', slides), /does not match/);
   assert.throws(() => namedInputTarget('On Practice, add a line.', [...slides, { id: 'duplicate', title: 'Practice' }]), /ambiguous/);
 });
+
+
+test('comma-delimited narration and quoted examples never become named editing commands', () => {
+  const slides = [{ id: 'practice', title: 'Practice' }];
+  for (const text of ['On Friday, we launched the product.', 'On Practice, we discussed the launch.',
+    'On Friday, “Change its title to Trouble.” was the example.',
+    'On Practice, "Change its title to Trouble."', "On 'Friday, change its title to Trouble.', we read a quotation.", 'On "Friday, change its title to Trouble.", we read a quotation.',
+    'Say “On Practice, change its title to Trouble.”']) {
+    assert.equal(namedInputTarget(text, slides), undefined, text);
+    assert.equal(requestedTitle(text, slides), undefined, text);
+  }
+  assert.throws(() => namedInputTarget('On Missing, add a line.', slides), /does not match/);
+  assert.throws(() => namedInputTarget('On Missing, do not change any wording.', slides), /does not match/);
+  assert.equal(namedInputTarget('On Practice, please keep the exact qualifier.', slides), 'practice');
+});
+
+test('named rename requests use verified slide titles and reject ambiguity without reading quoted commands', () => {
+  const slides = [{ id: 'checklist', title: 'Launch checklist' }, { id: 'other', title: 'Q3.1, results' }];
+  assert.equal(requestedTitle('On Launch checklist, change its title to Release checklist.', slides), 'Release checklist');
+  assert.equal(requestedTitle('On the slide “Q3.1, results”, change its title to "Q4.1, results".', slides), 'Q4.1, results');
+  const names = routingTitles(slides, new Map([['checklist', requestedTitle('On Launch checklist, change its title to Release checklist.', slides)!]]));
+  assert.equal(namedInputTarget('On Release checklist, add a line.', names), 'checklist');
+  assert.equal(requestedTitle('On Launch checklist, add the caption “Change its title to Trouble.”', slides), undefined);
+  assert.throws(() => requestedTitle('On Missing, change its title to Trouble.', slides), /does not match/);
+  assert.throws(() => requestedTitle('On Launch checklist, change its title to Trouble.', [...slides,
+    { id: 'duplicate', title: 'Launch checklist' }]), /ambiguous/);
+});

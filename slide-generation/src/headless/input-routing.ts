@@ -15,9 +15,9 @@ export function navigationCommand(text: string): NavigationCommand | undefined {
   return undefined;
 }
 /** A literal rename request supplies a routing alias, never an unvalidated visible title. */
-export function requestedTitle(text: string): string | undefined {
+export function requestedTitle(text: string, slides: readonly { id: string; title: string }[] = []): string | undefined {
   const navigation = text.match(/^(?:go back|return)\s+to\s+(.+)/i);
-  const directive = navigation ? readTitle(navigation[1]).rest : text;
+  const directive = navigation ? readTitle(navigation[1]).rest : namedDirective(text, slides)?.directive ?? text;
   const rename = directive.match(/^change\s+(?:its|this|the)\s+title\s+to\s+(.+)/i);
   return rename ? readTitle(rename[1]).title || undefined : undefined;
 }
@@ -27,23 +27,42 @@ export function routingTitles(slides: readonly { id: string; title: string }[], 
     return alias && alias.toLowerCase() !== slide.title.toLowerCase() ? [slide, { id: slide.id, title: alias }] : [slide];
   });
 }
-export function namedInputTarget(text: string, slides: readonly { id: string; title: string }[]): string | undefined {
-  // Named editing does not navigate the audience. Matching uses the actual live
-  // titles, longest first, so a title that contains commas can still be resolved.
+// This is a limited explicit command grammar, not general language understanding.
+// A comma alone is narration; quoted examples are not imperative directives.
+function isEditDirective(text: string): boolean {
+  return /^(?:please\s+)?(?:(?:do\s+not|don't)\s+)?(?:add|change|remove|replace|update|delete|rename|show|hide|reveal|keep|move|set|insert|use|make|put|include|exclude|resize|align|preserve|turn|split|merge|reorder|restore|undo|redo|reword|rewrite|reduce|increase|decrease|switch|leave|retain|drop|swap|highlight|emphasize|bold|italicize)\b/i.test(text.trim());
+}
+function unquotedComma(text: string): number {
+  let quote: string | undefined;
+  for (let index = 0; index < text.length; index++) {
+    const character = text[index];
+    if (quote) { if (character === quote) quote = undefined; }
+    else if (character === '"' || character === '“') quote = character === '“' ? '”' : '"';
+    else if ((character === "'" || character === '‘') && (index === 0 || /\s/.test(text[index - 1]))) quote = character === '‘' ? '’' : "'";
+    else if (character === ',') return index;
+  }
+  return -1;
+}
+function namedDirective(text: string, slides: readonly { id: string; title: string }[]): { slideId: string; directive: string } | undefined {
   const prefix = text.match(/^on\s+(?:(?:the\s+)?slide\s+)?(.+)/i);
   if (!prefix) return undefined;
   const rest = prefix[1];
-  const matching = slides.filter(slide => {
+  const matching = slides.flatMap(slide => {
     const names = [slide.title, `"${slide.title}"`, `“${slide.title}”`];
-    return names.some(name => rest.slice(0, name.length).toLowerCase() === name.toLowerCase() && /^\s*,/.test(rest.slice(name.length)));
-  }).sort((a, b) => b.title.length - a.title.length);
+    const name = names.find(name => rest.slice(0, name.length).toLowerCase() === name.toLowerCase() && /^\s*,/.test(rest.slice(name.length)));
+    if (!name) return [];
+    const directive = rest.slice(name.length).replace(/^\s*,\s*/, '');
+    return isEditDirective(directive) ? [{ slideId: slide.id, length: slide.title.length, directive }] : [];
+  }).sort((a, b) => b.length - a.length);
   if (!matching.length) {
-    // Only recognize an explicit comma-delimited editing directive, not narration
-    // such as “On Friday we launched”. Preserve unknown targets as an error.
-    if (rest.includes(',')) throw new Error('Named editing target does not match a live slide title');
+    const comma = unquotedComma(rest);
+    if (comma >= 0 && isEditDirective(rest.slice(comma + 1))) throw new Error('Named editing target does not match a live slide title');
     return undefined;
   }
-  const longest = matching.filter(slide => slide.title.length === matching[0].title.length);
-  if (longest.length !== 1) throw new Error('Named editing target is ambiguous');
-  return longest[0].id;
+  const longest = matching.filter(slide => slide.length === matching[0].length);
+  if (new Set(longest.map(slide => slide.slideId)).size !== 1) throw new Error('Named editing target is ambiguous');
+  return longest[0];
+}
+export function namedInputTarget(text: string, slides: readonly { id: string; title: string }[]): string | undefined {
+  return namedDirective(text, slides)?.slideId;
 }
