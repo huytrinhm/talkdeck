@@ -77,5 +77,13 @@ partial evidence and cleanup survive readiness/screenshot/viewer failures, with 
 `npm run headless:replay -- --run .artifacts/runs/headless-integration-2026-10-31/pilot-01 --out .artifacts/replays/headless-pilot-01`
 passed 10 recorded steps with real browser checks and no model fallback. Final source SHA-256:
 `35a6018667fb0162a1dec61a33c1ab3ea9d2973cb548cf1c7caad4d2541010de`; final readiness passed.
-This is transaction replay, explicitly **not actor replay**. Actor replay, five timed talks × three fresh repetitions per
-version, frozen A/B comparison, complete semantic/audience review and separately verified refactoring remain unfinished.
+This command is transaction replay, explicitly **not actor replay**. A separate recorded-event actor replay subsequently
+passed at implementation commit `b3f8511`: 26 byte-exact provider requests, 12 tool results, six commits, five verified
+snapshot handles and two transaction UUID mappings. Its result is under `pilot-01-actor-replay/report.json` beside the
+pilot directory. Real Chromium readiness passed; no live fallback was available. It uses recorded event ordering, not
+live latency, and explicitly refuses unsupported specialist, history-control, image and later delegation traces.
+Changed prompts/context must fail old request compatibility rather than silently accepting a historical response.
+
+Five timed talks × three fresh repetitions per version, complete frozen A/B comparison, semantic/audience review and
+separately verified refactoring remain unfinished. The first full edit-heavy trial exposed blank output despite readiness;
+see [the measured failure](../headless-round-01/cases/edit-heavy-baseline-01-no-visible-generation.md).
