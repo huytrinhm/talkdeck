@@ -27,6 +27,7 @@ fragments. Text children are literal text; quote/escape JSX delimiters as needed
   `center`, `end`, `stretch`; justification is
   `start`, `center`, `end`, `between`, `around`, `evenly`. Do not infer that every
   node accepts these props: Grid accepts cols/gap/grow, not pad or align.
+- `Center` accepts gap, not grow/align/justify. For full-height centered composition use Stack grow={true} justify="center".
 - `Text` roles: title, subtitle, heading, lead, body, caption, label, display,
   numeral (default body). Text alignment is left/center/right. Supported inline
   bold/italic/code markup stays inside text; no custom font or CSS props. `Bullets` contains Text

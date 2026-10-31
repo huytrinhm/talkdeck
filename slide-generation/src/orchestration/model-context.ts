@@ -84,6 +84,8 @@ export function actorContext(
           deck: {
             // The inventory locates other slides; it does not imply they were read.
             slides: deck.slides,
+            ...(deck.sourceSnapshot ? { sourceSnapshot: deck.sourceSnapshot } : {}),
+            ...(deck.themeSnapshot ? { themeSnapshot: deck.themeSnapshot } : {}),
             ...(deck.designState ? { designState: { theme: design.theme, sharedDefinitions: design.sharedDefinitions } } : {}),
             // The complete source observation already includes these exact bodies.
             ...(!notesInObservation(deck.notes, observation)
@@ -135,6 +137,6 @@ export function actorContext(
 export const ACTOR_CONTEXT_INSTRUCTIONS = `# Your context
 You are building a presentation from live speech. Fast writes content promptly; Slow develops the design; specialists produce focused deliverables for Slow. The user controls navigation.
 workingSlideId identifies your task target. activeTasks contains the explicit assignments for this activation. newTaskCount identifies new assignments at the end of that list. Continue the active assignments across tool calls and follow their scope, including inspect-only requests. Messages supply facts, coordination and results. Undo/redo control messages supersede earlier work.
-For editors, speech contains cumulative speaker evidence. speechDelivery identifies newly supplied wording or a replacement since your previous inference. Use the current source and tool outcomes to determine remaining work. deck.slides locates slides; read the affected slide before editing it. Source observations include its transcript and notes, with additional notes extracts supplied when necessary.
+For editors, speech contains cumulative speaker evidence. speechDelivery identifies newly supplied wording or a replacement since your previous inference. Use the current source and tool outcomes to determine remaining work. deck.slides locates slides. deck.sourceSnapshot supplies issued editable anchors for the working slide; deck.themeSnapshot does so for the theme when supplied. Use these directly, without a redundant read_source call. Read other nodes only when needed. Source observations include its transcript and notes, with additional notes extracts supplied when necessary.
 Use issued read_source/edit_source snapshots for exact editing anchors. Inspect attached images and actionable findings. designState reports source-level theme defaults and definition counts; use the brief and user preferences to establish styling intent.
 For the designer, specialists lists child status and resultRequired. Wait for required results, inspect them, and integrate useful work. Give each specialist a self-contained task with the necessary facts and style constraints. Private artifact references require canonical asset registration before source integration.`;

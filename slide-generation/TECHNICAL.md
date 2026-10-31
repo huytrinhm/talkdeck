@@ -159,11 +159,19 @@ actual JPEG dimensions, composited contrast, font/image failures, timeouts/crash
 reparenting and build changes. The exact output is `.artifacts/environment/final-implementation-suite.tap`; use current results rather
 than treating this count as permanent. Artifacts live under ignored `.artifacts/`.
 
-Publication checks can reuse browser evidence for exactly matching rendered artifacts within a bounded,
-in-memory cache owned by the browser pipeline. Every lookup resolves the current render dependencies;
-HTML, CSS, source, fonts, asset/dependency digests, pending IDs, artifact key and check-policy versions
-participate in the key. Failed inspections are evicted. Normal authoring and practice validation stay
-fresh; only publication opts into reuse. This avoids remeasuring the entire unchanged deck on navigation.
+Canonical edit validation and publication share bounded browser evidence for identical rendered
+HTML/CSS, slide identity, pinned fonts/assets/dependencies and check-policy versions. Each lookup
+resolves the render again; private transcript changes or unrelated slides do not invalidate unchanged
+pixels. Returned evidence is rebound to the exact current source/artifact digest. Pending metadata
+is collected from each current artifact, not copied from a prior deck. Failures are evicted. Explicit
+check tools and practice review remain fresh. Add/Delete still normalize, check structural/reference
+validity, compare findings and publish atomically; they no longer remeasure unchanged slides three times.
+
+Actor boundaries supply issued working-slide hashline snapshots (and a theme snapshot for Slow),
+so initial content can be written without a read-source round trip. The speech gate ticks every
+200 ms but coalesces identical in-flight/evaluated transcript revisions. New revisions still evaluate
+concurrently; corrections invalidate superseded decisions. Topic introductions warrant immediate
+dispatch; Fast owns an intentional first composition, with Slow refining only for audience benefit.
 
 `GenerationSession` remains a publication/ack adapter. The actual `SlideRuntime` is under `src/orchestration/` and accepts
 `GenerationBackend`; `JsxBackend` binds its immutable inference contexts and role-scoped tools to the canonical engine.

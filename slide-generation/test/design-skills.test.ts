@@ -71,10 +71,9 @@ test("skills affect actor instructions only, preserve legacy mode, and do not ad
       inferenceId: "i",
       signal: new AbortController().signal,
     };
-    assert.deepEqual(
-      enabled.generation.context(invocation),
-      legacy.generation.context(invocation),
-    );
+    const semanticContext = (backend: JsxBackend) => JSON.parse(JSON.stringify(backend.generation.context(invocation)),
+      (key, value) => key === 'snapshotId' ? '<issued anchor ID>' : value);
+    assert.deepEqual(semanticContext(enabled), semanticContext(legacy));
     assert.deepEqual(
       enabled.generation.definitions("slow"),
       legacy.generation.definitions("slow"),

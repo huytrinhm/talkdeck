@@ -25,7 +25,7 @@ precedence over aesthetic preferences.
 ## Runtime use
 
 The host preloads this skill without giving agents filesystem tools. Fast receives
-common guidance, the authoring reference, and compact style/pattern indexes. Slow
+common guidance, the authoring reference, a compact opening-title recipe, and compact style/pattern indexes. Slow
 and practice review receive the full recipes. The current source/theme remains
 the authoritative design state; there is no second model-maintained layout graph.
 No new Decision API call, skill-retrieval tool or mandatory specialist is added.

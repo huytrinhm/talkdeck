@@ -134,6 +134,7 @@ Send explanations or limitations to the supplied parent recipient with send_mess
   };
   const sections = [read("common.md"), read("authoring.md"), read(`modes/${mode}.md`)];
   if (mode === "fast") {
+    sections.push("## Opening title composition\n" + read("patterns/L01.md"));
     sections.push(
       "## Available style intentions (preserve the current theme)\n" +
         catalog.styles

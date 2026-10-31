@@ -255,6 +255,29 @@ export async function replayRecordedActors(
       return (await actualInvoke(executing.input, name, args)).output;
     },
   );
+  const actualContext = backend.generation.context.bind(backend.generation);
+  backend.generation.context = input => {
+    const current = actualContext(input) as Record<string, any>;
+    if (!current.sourceSnapshot) return current;
+    const record = providerOrder.find(r => !seenProviders.has(r.id) && r.agent === input.agent &&
+      r.role === input.role && r.endpoint === "/v1/responses");
+    if (!record) refuse("Missing provider boundary for issued source anchors");
+    const messages = json(record.requestBody).input;
+    let deck: any;
+    for (const message of messages) for (const content of typeof message.content === "string"
+      ? [{ type: "input_text", text: message.content }] : message.content ?? []) {
+      if (content.type !== "input_text") continue;
+      try { const value = JSON.parse(content.text); if (value.kind === "current_boundary") deck = value.deck; } catch {}
+    }
+    for (const key of ["sourceSnapshot", "themeSnapshot"]) if (current[key]) {
+      if (!deck?.[key]) refuse(`Missing recorded ${key}`);
+      // This verifies every source byte, hash, scope and revision before remapping
+      // only the ephemeral handle. No model context is silently substituted.
+      verifiedTools.snapshots.bind(deck[key], current[key]);
+      current[key] = deck[key];
+    }
+    return current;
+  };
   backend.generation.invoke = async (input, name, args) => {
     try {
       const operation = canonical.find(
@@ -642,6 +665,7 @@ export async function replayRecordedActors(
     for (const pending of inputPending.values()) pending.release.resolve();
     await actors.close();
     unsubscribe();
+    backend.generation.context = actualContext;
     backend.generation.invoke = actualInvoke;
     backend.generation.deliverUtterance = actualDeliver;
   }

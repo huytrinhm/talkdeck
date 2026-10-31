@@ -147,6 +147,7 @@ export function buildIntegratedTransactionCassette(
     step: z.infer<typeof operationSchema>;
   }[] = [];
   const ignoredObservationTools: string[] = [];
+  const boundarySnapshots = new Set<string>();
   for (const [index, raw] of recording.operations.entries()) {
     if (!raw || typeof raw !== "object")
       fail(`Operation ${index} is not an object`);
@@ -154,6 +155,19 @@ export function buildIntegratedTransactionCassette(
     let rank: number,
       mutation = false,
       step: z.infer<typeof operationSchema>;
+    // Preloaded boundary anchors are real issued reads, even without a model
+    // read_source call. Replay them at their recorded source revision, including
+    // anchors that were already stale when the eventual edit executed.
+    for (const key of ["sourceSnapshot", "themeSnapshot"]) {
+      const read = event.context?.[key];
+      if (!read || boundarySnapshots.has(read.snapshotId)) continue;
+      boundarySnapshots.add(read.snapshotId);
+      ranked.push({ rank: rankOf(read.revision), phase: 1, index: index - .5,
+        step: toolSchema.parse({ kind: "tool", name: "read_source", agent: event.agent,
+          role: event.role, slideId: event.slideId, context: event.context,
+          argumentsJson: JSON.stringify({ nodeId: read.nodeId }), resultJson: JSON.stringify(read),
+          sourceSha256: read.revision }) });
+    }
     if (event.kind === "tool") {
       if (!["read_source", "edit_source"].includes(event.name)) {
         if (

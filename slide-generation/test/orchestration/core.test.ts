@@ -179,11 +179,13 @@ test("gate holds without dropping text, ignores stale corrections, permits dispa
   promises[1].resolve("hold");
   await t2;
   assert.equal(gate.latest?.revision, 2);
-  const t3 = gate.tick();
+  await gate.tick();
+  assert.equal(promises.length, 2, "unchanged held speech is not billed repeatedly");
   gate.receive("forty-eight students", 3);
+  const t3 = gate.tick();
   promises[2].resolve("dispatch");
   await t3;
-  assert.deepEqual(dispatched, [2]);
+  assert.deepEqual(dispatched, [3]);
   assert.equal(gate.latest?.revision, 3);
   gate.close();
 });
@@ -204,15 +206,18 @@ test("overlapping gate decisions do not dispatch duplicate baselines or exceed c
     2,
   );
   gate.receive("Complete meaning.", 1);
-  const a = gate.tick(),
-    b = gate.tick();
+  const a = gate.tick();
+  await gate.tick();
+  assert.equal(ps.length, 1, "same revision has only one in-flight evaluation");
+  gate.receive("Complete meaning. Another idea.", 2);
+  const b = gate.tick();
   await gate.tick();
   assert.equal(ps.length, 2);
   ps[1].resolve("dispatch");
   await b;
   ps[0].resolve("dispatch");
   await a;
-  assert.deepEqual(out, [1]);
+  assert.deepEqual(out, [2]);
   gate.close();
 });
 test("transcription reconciles out-of-order final events and ignores late deltas", () => {

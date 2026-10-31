@@ -6,6 +6,7 @@ export class SpeechGate {
   lastDispatched: Speech | null = null;
   lastEvaluatedRevision = 0;
   private timer?: ReturnType<typeof setInterval>;
+  private evaluating = new Set<number>();
   private controllers = new Set<AbortController>();
   private firstUndispatchedAt = 0;
   private backoffUntil = 0;
@@ -60,6 +61,8 @@ export class SpeechGate {
       !this.latest ||
       (!this.latest.text.trim() && !this.latest.corrections.length) ||
       this.latest.revision === (this.lastDispatched?.revision ?? 0) ||
+      this.evaluating.has(this.latest.revision) ||
+      this.latest.revision === this.lastEvaluatedRevision ||
       this.inFlight >= this.maxInFlight ||
       now < this.backoffUntil
     )
@@ -68,6 +71,7 @@ export class SpeechGate {
       baseline = this.lastDispatched?.revision ?? 0;
     const controller = new AbortController();
     this.controllers.add(controller);
+    this.evaluating.add(speech.revision);
     const timeout = setTimeout(
       () => controller.abort(new Error("Decision deadline exceeded")),
       this.deadlineMs,
@@ -122,6 +126,7 @@ export class SpeechGate {
     } finally {
       clearTimeout(timeout);
       this.controllers.delete(controller);
+      this.evaluating.delete(speech.revision);
     }
   }
   /** Preserve speech, but do not replay old narration after a user history action. */
