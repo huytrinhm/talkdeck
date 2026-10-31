@@ -23,6 +23,8 @@ export interface Finding {
   magnitude: number;
   message: string;
   suggestion?: string;
+  /** Stable bound/run/overlap partner within a check; prevents masking separate regressions. */
+  subject?: string;
 }
 export const editSchema = z.object({
   snapshotId: z.string().min(1),

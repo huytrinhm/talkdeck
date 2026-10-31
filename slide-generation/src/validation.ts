@@ -10,7 +10,7 @@ export class UnavailableValidation implements ValidationPipeline {
   }
 }
 export function introducedErrors(before: Finding[], after: Finding[]): Finding[] {
-  const key = (finding: Finding) => JSON.stringify([finding.check, finding.slideId, finding.nodeId]);
+  const key = (finding: Finding) => JSON.stringify([finding.check, finding.slideId, finding.nodeId, finding.subject ?? '']);
   const prior = new Map<string, number>();
   for (const finding of before) if (finding.severity === 'error') prior.set(key(finding), Math.max(prior.get(key(finding)) ?? -1, finding.magnitude));
   return after.filter(finding => finding.severity === 'error' && finding.magnitude > (prior.get(key(finding)) ?? -1));

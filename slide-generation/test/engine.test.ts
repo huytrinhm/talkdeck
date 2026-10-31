@@ -49,3 +49,10 @@ test('relative findings allow unchanged errors but reject worsening and new erro
   assert.equal(ready({ complete: false, pendingNodeIds: [], findings: [] }), false);
   assert.equal(ready({ complete: true, pendingNodeIds: [], findings: [] }), true);
 });
+
+test('one improving violation cannot mask a new or worsening independent measurement', () => {
+  const finding: Finding = { check: 'overlap', slideId: 'n10', nodeId: 't1', severity: 'error', magnitude: 100, message: 'Overlap', subject: 'pair:t2' };
+  const next = [{ ...finding, magnitude: 50 }, { ...finding, subject: 'pair:t3', magnitude: 2 }];
+  assert.deepEqual(introducedErrors([finding], next), [next[1]]);
+  assert.deepEqual(introducedErrors([finding, { ...finding, subject: 'pair:t3', magnitude: 1 }], next), [next[1]]);
+});
