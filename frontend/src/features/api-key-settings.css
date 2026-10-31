@@ -45,7 +45,7 @@
 }
 .api-key-notice {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .api-key-settings [role="alert"] {
   font-size: 13px;

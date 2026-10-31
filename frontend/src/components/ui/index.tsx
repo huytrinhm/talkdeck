@@ -62,7 +62,9 @@ export function Modal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={className}
+        className={["max-h-[90dvh] overflow-y-auto", className]
+          .filter(Boolean)
+          .join(" ")}
         aria-describedby={description ? "dialog-description" : undefined}
         onOpenAutoFocus={() => {
           const target = document.activeElement;

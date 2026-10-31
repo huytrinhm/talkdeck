@@ -1,21 +1,20 @@
-// Adapted from official shadcn/ui registry b8d7baa15b1dca5716f13153e63795fc3d741f6b.
-// MIT license, upstream source and adaptations: docs/shadcn-adoption/.
-"use client"
+// Stock shadcn/ui styles, pinned upstream source: docs/shadcn-adoption/.
+"use client";
 
-import * as React from "react"
-import { cn } from "../../lib/utils"
-import * as PopoverPrimitive from "@radix-ui/react-popover"
+import * as React from "react";
+import { cn } from "../../lib/utils";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 function Popover({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
 
 function PopoverTrigger({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
 function PopoverContent({
@@ -30,38 +29,40 @@ function PopoverContent({
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
-        className={cn("shadcn-popover-content", className
+        className={cn(
+          "z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+          className,
         )}
         {...props}
       />
     </PopoverPrimitive.Portal>
-  )
+  );
 }
 
 function PopoverAnchor({
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
 }
 
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="popover-header"
-      className={cn("shadcn-popover-header", className)}
+      className={cn("flex flex-col gap-1 text-sm", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
     <div
       data-slot="popover-title"
-      className={cn("shadcn-popover-title", className)}
+      className={cn("font-medium", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PopoverDescription({
@@ -71,10 +72,10 @@ function PopoverDescription({
   return (
     <p
       data-slot="popover-description"
-      className={cn("shadcn-popover-description", className)}
+      className={cn("text-muted-foreground", className)}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -85,4 +86,4 @@ export {
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,
-}
+};

@@ -47,7 +47,7 @@
   height: auto;
   min-height: 30px;
   display: block;
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 .coach-turn {
   padding-top: 8px;

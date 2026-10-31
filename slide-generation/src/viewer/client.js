@@ -161,7 +161,7 @@
   }
   function painted(message, token) {
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (token !== generation) return;
+      if (token !== generation || message.sequence !== current?.sequence) return;
       emit('painted', message, { visibleNodeIds: visibleIds() });
     }));
   }
@@ -311,7 +311,12 @@
       if (!current || current.revision !== message.revision) { emit('refused', current, { code: 'build_revision' }); return; }
       sequence = message.sequence; current = { ...current, build: message.build, holdIds: message.holdIds, sequence };
       if (lastVisible && lastVisible.message.revision === current.revision) lastVisible.message = current;
-      if (!preparing) { applyBuild(current); painted(current, generation); }
+      if (!preparing) {
+        applyBuild(current);
+        emit('applied', current);
+        painted(current, generation);
+        if (!animations.size) emit('settled', current, { domEquivalent: domEquivalent(current), visibleNodeIds: visibleIds() });
+      }
     }
   });
   emit('ready');

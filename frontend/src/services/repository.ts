@@ -1,4 +1,4 @@
-import { validWorkspace } from "../domain/validation";
+import { readWorkspace } from "../domain/validation";
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import { emptyWorkspace, type Workspace } from "../domain/types";
 interface TalkdeckDB extends DBSchema {
@@ -29,9 +29,7 @@ export class WorkspaceRepository implements WorkspaceRepositoryPort {
   async load(): Promise<Workspace> {
     const data = await (await this.db()).get("workspace", "current");
     if (!data) return emptyWorkspace();
-    if (!validWorkspace(data))
-      throw new Error("Saved workspace is incompatible or damaged.");
-    return data;
+    return readWorkspace(data);
   }
   async save(workspace: Workspace): Promise<void> {
     const tx = (await this.db()).transaction("workspace", "readwrite");

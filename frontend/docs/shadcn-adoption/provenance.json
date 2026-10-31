@@ -1,0 +1,84 @@
+{
+  "repository": "shadcn-ui/ui",
+  "commit": "b8d7baa15b1dca5716f13153e63795fc3d741f6b",
+  "license": "MIT (LICENSE.md retained)",
+  "components": [
+    {
+      "component": "button",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/button.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/button.tsx.txt",
+      "snapshotSha256": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",
+      "adoptedFile": "src/components/ui/button.tsx",
+      "adoptedSha256": "27fdebee03625b40680488c92a014394528953170a7a575c6535b3c984d04a39"
+    },
+    {
+      "component": "context-menu",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/context-menu.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/context-menu.tsx.txt",
+      "snapshotSha256": "bcde5df1ed9887bb050f0badabfb5f79912eb53bdc883dbe6c003d05914d99a4",
+      "adoptedFile": "src/components/ui/context-menu.tsx",
+      "adoptedSha256": "e52cc4dfb3cbef9d97498da6b170347d993019d178ca84b8577b06ed75a4df59"
+    },
+    {
+      "component": "dialog",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/dialog.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/dialog.tsx.txt",
+      "snapshotSha256": "2ade6074e5fad0a4eb171ead44c43d3301a3c83d186d7236fb1fdbea80ee556b",
+      "adoptedFile": "src/components/ui/dialog.tsx",
+      "adoptedSha256": "fd8f74f40e44762a08a7786a04e5a1605fc8bbb8534228c2d8f104e3654feb95"
+    },
+    {
+      "component": "dropdown-menu",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/dropdown-menu.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/dropdown-menu.tsx.txt",
+      "snapshotSha256": "d954efb735f13734751207ad22cb0cddd7f6ec53c59d16675d103dae08cb61fb",
+      "adoptedFile": "src/components/ui/dropdown-menu.tsx",
+      "adoptedSha256": "5ae9be26dde23ef1e7a86f23999103bc6a755680a87649b634f0d31e504d1ca0"
+    },
+    {
+      "component": "input",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/input.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/input.tsx.txt",
+      "snapshotSha256": "0c9457181f6ddc80969bcf854e92c362903a55b6e889fbef3fd85343ecc4af5b",
+      "adoptedFile": "src/components/ui/input.tsx",
+      "adoptedSha256": "c12aec974e7e20a6b0f0a2e05b03ec5230c554746ad0fa48017b00940419cdbe"
+    },
+    {
+      "component": "popover",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/popover.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/popover.tsx.txt",
+      "snapshotSha256": "3f99d3add6c9fa4f03721e81297ee10e1310785ee1d9d9d4c82a114d84ab0757",
+      "adoptedFile": "src/components/ui/popover.tsx",
+      "adoptedSha256": "a0896d590aa5a56a6afb5fbcf5d2a6185915e6de9ed19e0e55d0c9dcf2e51698"
+    },
+    {
+      "component": "tabs",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/tabs.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/tabs.tsx.txt",
+      "snapshotSha256": "e1df6e2f95ece373ca909c1d54b8ba8cf4c47dd425c1784bbb9a01c38dd0936b",
+      "adoptedFile": "src/components/ui/tabs.tsx",
+      "adoptedSha256": "b6b67b4cc67a9e5c89b0bd1170e586571bed5683d7006bc5fbe15dc962bee630"
+    },
+    {
+      "component": "textarea",
+      "upstream": "https://github.com/shadcn-ui/ui/blob/b8d7baa15b1dca5716f13153e63795fc3d741f6b/apps/v4/registry/new-york-v4/ui/textarea.tsx",
+      "snapshot": "docs/shadcn-adoption/upstream/textarea.tsx.txt",
+      "snapshotSha256": "5cafcfeeee29534f449387a16b585f5923d2faab1a0cdc50a874416b175f59ce",
+      "adoptedFile": "src/components/ui/textarea.tsx",
+      "adoptedSha256": "1ea43940c35d7a81646c3792050c63386cebd5484dc30494e02e5372aca5b94f"
+    }
+  ],
+  "adaptations": [
+    "Repoint cn to the local shared utility and use the installed per-component Radix packages.",
+    "Preserve original upstream visual utility classes. Add only nonvisual button/input/textarea/dialog-content markers used by application layout.",
+    "Retain primary/danger compatibility variant names mapped to stock primary/destructive styles.",
+    "Modal facade adds max-height/scroll containment and preserves keyboard focus restoration. Menu/Popover facades retain typed application composition."
+  ],
+  "verification": "Local candidate: typecheck, units and build pass; final consolidated browser check recorded separately.",
+  "theme": {
+    "source": "https://ui.shadcn.com/docs/theming",
+    "baseColor": "neutral",
+    "mode": "dark",
+    "file": "src/styles/theme.css"
+  }
+}

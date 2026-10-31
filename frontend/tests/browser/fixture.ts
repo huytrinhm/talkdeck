@@ -121,12 +121,7 @@ export function fixture(): Workspace {
         : {}),
   }));
   return {
-    version: 2,
-    folders: [
-      { id: "presentations", name: "Presentations", parentId: null },
-      { id: "launches", name: "Product launches", parentId: "presentations" },
-      { id: "ideas", name: "Ideas & experiments", parentId: null },
-    ],
+    version: 3,
     projects: [
       {
         id: "fixture",
@@ -134,7 +129,6 @@ export function fixture(): Workspace {
         description: "A first-year lecture using a fictional café dataset.",
         systemPrompt:
           "Teach database fundamentals to beginners using the provided fictional café example. Keep one idea per slide. Preserve exact sample rows and SQL results.",
-        folderId: "presentations",
         materials: [],
         slides,
         transcript: [],

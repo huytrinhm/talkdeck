@@ -4,13 +4,13 @@
 → durable commit path, exercised by real-browser integration tests. The packaged viewer also has real Chromium tests.
 The actual actor scheduler is now connected through an injected canonical JSX backend in this consolidated package.
 A real headless iframe records viewer acknowledgments and frames without a product frontend. The integrated three-input
-pilot and exact offline actor replay completed. Full edit-heavy trials exposed blank-output and routing failures; repeated
-five-talk qualification and improvement/refactoring rounds remain unfinished. A new frozen pair is in progress.
+pilot and exact offline actor replay completed. The four diagnostic stages are consolidated in [Pass 1](docs/rounds/pass-01/README.md). Its final frozen pair
+completed but retains fidelity failures. The broader [Pass 2](docs/rounds/pass-02/README.md) closed with six completed runs, one timeout and one user-skipped run; repeated five-talk qualification
+and separately verified refactoring remain unfinished.
 Passing integration tests or structural readiness does not establish faithful visible generation.
 
 Read `AGENTS.md`, `IMPLEMENTATION_PLAN.md`, `docs/DECISIONS.md`, `docs/LUCIDE_ICONS.md` and
-`docs/IMPROVEMENT_LOOP.md` when continuing. Historical pause checkpoints are under `docs/continuation/`; their browser
-permission blockers were removed by the subsequent permission restart.
+`docs/IMPROVEMENT_LOOP.md` when continuing. The current checkpoint is `docs/continuation/README.md`; superseded permission checkpoints are under `docs/history/`.
 
 ## Development and scope
 
@@ -157,6 +157,12 @@ actual JPEG dimensions, composited contrast, font/image failures, timeouts/crash
 reparenting and build changes. The exact output is `.artifacts/environment/final-implementation-suite.tap`; use current results rather
 than treating this count as permanent. Artifacts live under ignored `.artifacts/`.
 
+Publication checks can reuse browser evidence for exactly matching rendered artifacts within a bounded,
+in-memory cache owned by the browser pipeline. Every lookup resolves the current render dependencies;
+HTML, CSS, source, fonts, asset/dependency digests, pending IDs, artifact key and check-policy versions
+participate in the key. Failed inspections are evicted. Normal authoring and practice validation stay
+fresh; only publication opts into reuse. This avoids remeasuring the entire unchanged deck on navigation.
+
 `GenerationSession` remains a publication/ack adapter. The actual `SlideRuntime` is under `src/orchestration/` and accepts
 `GenerationBackend`; `JsxBackend` binds its immutable inference contexts and role-scoped tools to the canonical engine.
 `createEvaluationHost` connects that scheduler, recorded providers, durable input routing and `HeadlessRecordingSession`.
@@ -179,7 +185,7 @@ Evidence: `docs/rounds/headless-integration-2026-10-31/README.md` and
 Round 01 full edit-heavy baseline/candidate trials produced blank slides despite ready=true. Baseline made no edits;
 the context candidate made one correctly refused private-notes anchor edit, then failed to recover. A later unknown
 renamed target remained durably received but absent from canonical source and ended the candidate with host-error. Cases
-are in `docs/rounds/headless-round-01/cases/`. Neither readiness nor absence of a requested deletion target on a blank slide
+are in `docs/rounds/pass-01/stages/01/cases/`. Neither readiness nor absence of a requested deletion target on a blank slide
 establishes useful output. Those original scores are preserved. The current evaluator refuses removal credit without
 prior visible content; evaluator changes must apply equally to both comparison versions.
 
@@ -198,8 +204,10 @@ manual-review misses. Reports include coverage/censoring and link the original P
 fixtures by default. `--plan-only` makes no model calls; `--fixtures`, `--repetitions`, `--max-runs` and per-run token/call
 limits bound execution. Generator SHA is distinct from common evaluator/observer hashes. Frozen execution artifacts live
 at the directory in the container's `run-location.json`, normally `execution/slide-generation/.artifacts/run/`.
-The current pair under `.artifacts/runs/headless-round-02/` compares baseline `5f970fb` with candidate `16a1671`; its quality
-results are not yet reviewed here. See README for exact commands.
+Pass 1 retains the completed diagnostic pairs and exact comparison limitations. The closed breadth batch used frozen
+`734d84a` and `7aee9be`; see current continuation for outcomes and README for exact commands. Complete-deck PNGs are
+composed from every actual final slide capture; original per-slide images and video remain unchanged. Initial manifest
+dependencies contain resolved digests, with an additional source-referenced initial/state inventory after each run.
 
 `headless:replay` replays canonical transactions; `headless:actor-replay` also exercises the actual scheduler with exact
 recorded provider requests, completion ordering and semantic clocks. Neither has a live fallback. `headless:run --recover`

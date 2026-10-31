@@ -140,10 +140,15 @@ export interface ReviewContext {
     provenance?: "final_baseline_render";
   }[];
 }
+export interface PreviewSide {
+  html: string; css: string; notes: string; jpeg: string;
+  capture?: import("../browser/review-capture.js").ReviewCapture;
+}
 export interface Preview {
   slideId: string;
-  before: { html: string; css: string; notes: string; jpeg: string } | null;
-  after: { html: string; css: string; notes: string; jpeg: string } | null;
+  before: PreviewSide | null;
+  after: PreviewSide | null;
+  visualDiff?: import("./visual-diff.js").VisualDiff;
 }
 export interface PreparedProposal extends ProposedChange {
   status:
@@ -184,6 +189,7 @@ export interface PracticeRecord {
   proposals: PreparedProposal[];
   error?: string;
   attempts: number;
+  changeRequest?: { slideId: string; prompt: string };
   revisionRequest?: {
     practiceId: string;
     proposal: PreparedProposal;
@@ -193,6 +199,7 @@ export interface PracticeRecord {
 export interface ReviewRequest {
   context: ReviewContext;
   revision?: { proposal: PreparedProposal; prompt: string };
+  change?: { slideId: string; prompt: string };
   signal: AbortSignal;
 }
 export interface Reviewer {

@@ -1,3 +1,4 @@
+import { createVisualDiff } from "./visual-diff.js";
 import { SlideEngine } from "../engine.js";
 import {
   SourceError,
@@ -58,6 +59,7 @@ async function view(local: Local, source: string, id: string) {
   if (!slides(source).some((s) => s.id === id)) return null;
   const rendered = await local.renderer.render(source, id);
   return {
+    artifact: rendered,
     html: rendered.html,
     css: rendered.css,
     notes: notes(source, id),
@@ -112,20 +114,22 @@ export async function prepareProposal(
       const before = await view(local, source, slideId),
         after = await view(local, candidate, slideId);
       if (
-        JSON.stringify(before) === JSON.stringify(after) &&
+        JSON.stringify(before && {html:before.html,css:before.css,notes:before.notes,dependencies:before.artifact.dependencies}) === JSON.stringify(after && {html:after.html,css:after.css,notes:after.notes,dependencies:after.artifact.dependencies}) &&
         beforeIds.indexOf(slideId) === afterIds.indexOf(slideId)
       )
         continue;
-      // Captures cover shared-definition effects, added/removed slides and notes-only changes.
-      if (before)
-        before.jpeg = Buffer.from(
-          (await local.browser.screenshot(source, [slideId]))[0].jpeg,
-        ).toString("base64");
-      if (after)
-        after.jpeg = Buffer.from(
-          (await local.browser.screenshot(candidate, [slideId]))[0].jpeg,
-        ).toString("base64");
-      prepared.previews.push({ slideId, before, after });
+      // Capture the image and text ranges from exactly the artifact compared above.
+      const capture = async (side: NonNullable<typeof before>) => {
+        const { artifact, ...visible } = side;
+        const captured = await local.browser.captureReview(artifact);
+        return { ...visible, jpeg: captured.jpeg, capture: captured };
+      };
+      const oldSide = before ? await capture(before) : null;
+      const newSide = after ? await capture(after) : null;
+      prepared.previews.push({ slideId, before: oldSide, after: newSide,
+        visualDiff: createVisualDiff({slideId, version, before:oldSide?.capture??null, after:newSide?.capture??null,
+          beforeNotes:oldSide?.notes??"", afterNotes:newSide?.notes??"",
+          beforeIndex:beforeIds.indexOf(slideId), afterIndex:afterIds.indexOf(slideId)}) });
     }
     signal?.throwIfAborted();
     const beforeNodes = new Map(
@@ -161,8 +165,13 @@ export async function prepareProposal(
         })),
         previews: prepared.previews.map((p) => ({
           slideId: p.slideId,
-          before: p.before && { ...p.before, jpeg: undefined },
-          after: p.after && { ...p.after, jpeg: undefined },
+          before: p.before && { html:p.before.html, css:p.before.css, notes:p.before.notes,
+            renderDigest:p.before.capture?.renderDigest, imageDigest:p.before.capture?.imageDigest,
+            geometry:p.before.capture?.geometry, dependencies:p.before.capture?.dependencies },
+          after: p.after && { html:p.after.html, css:p.after.css, notes:p.after.notes,
+            renderDigest:p.after.capture?.renderDigest, imageDigest:p.after.capture?.imageDigest,
+            geometry:p.after.capture?.geometry, dependencies:p.after.capture?.dependencies },
+          diff: p.visualDiff && {algorithmVersion:p.visualDiff.algorithmVersion, changes:p.visualDiff.changes},
         })),
       }),
     );

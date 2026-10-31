@@ -55,5 +55,5 @@ status. The image is for final deck review; retain the live PNG/video timeline f
 audience-build behavior.
 
 The [round 03 complete two-slide sheet](../../.artifacts/review/round03-deck-contact-sheet/deck-contact-sheet.png) was
-generated from immutable final JPEGs in a separate directory. Its [review](../../docs/rounds/headless-round-03/README.md)
+generated from immutable final JPEGs in a separate directory. Its [review](../../docs/rounds/pass-01/stages/03/README.md)
 records actual live statistics and important fidelity failures; the contact sheet does not upgrade that failed trial.

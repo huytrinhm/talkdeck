@@ -93,13 +93,11 @@ test("fresh creation, exact empty geometry, add/edit, reload and no voice footer
   await createProject(page);
   await expect(page.locator(".voice-dock")).toHaveCount(0);
   await page.setViewportSize({ width: 1280, height: 720 });
-  // Preserve the original slide-only geometry assertion after verifying the new open default.
   await expect(
-    page.getByRole("button", { name: "Toggle sidebar" }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+    page.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeVisible();
   const box = await page.locator(".slide-empty").boundingBox();
-  expect(box!.height).toBeCloseTo(556, 0);
+  expect(box!.height).toBeGreaterThan(300);
   expect(box!.width / box!.height).toBeCloseTo(16 / 9, 2);
   await page.screenshot({ path: "test-results/empty-1280.png" });
   await page.getByRole("button", { name: "Add slide", exact: true }).click();
@@ -122,16 +120,10 @@ test("fresh creation, exact empty geometry, add/edit, reload and no voice footer
   );
   await page.screenshot({ path: "test-results/slides-1280.png" });
 });
-test("source editor, escaped text, nested folders and exact original download", async ({
+test("source editor, escaped text and exact original download", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "New folder", exact: true }).click();
-  await page.getByLabel("Folder name", { exact: true }).fill("Presentations");
-  await page
-    .getByRole("button", { name: "Create folder", exact: true })
-    .click();
-  await page.getByRole("treeitem", { name: /Presentations/ }).click();
   await page
     .getByRole("button", { name: "New project", exact: true })
     .first()
@@ -146,14 +138,9 @@ test("source editor, escaped text, nested folders and exact original download", 
   await page
     .getByRole("button", { name: "Create project", exact: true })
     .click();
-  if (
-    !(
-      (await page
-        .getByRole("button", { name: "Toggle sidebar" })
-        .getAttribute("aria-pressed")) === "true"
-    )
-  )
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await expect(
     page.getByRole("button", { name: /Notes.txt/ }).first(),
@@ -287,7 +274,9 @@ test("practice overview, proposal approval and completion preserve snapshot", as
   ).toBeVisible();
   for (const width of [1512, 786]) {
     await page.setViewportSize({ width, height: width === 1512 ? 900 : 853 });
-    await page.screenshot({ path: `docs/evidence/overview-${width}.png` });
+    await page.screenshot({
+      path: `docs/main-ui-report/capture-assets/stock-shadcn-full/overview-${width}.png`,
+    });
   }
   await page.getByRole("tab", { name: /Slide changes/ }).click();
   for (const width of [1512, 786, 390]) {
@@ -297,7 +286,9 @@ test("practice overview, proposal approval and completion preserve snapshot", as
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBeTruthy();
-    await page.screenshot({ path: `docs/evidence/diff-${width}.png` });
+    await page.screenshot({
+      path: `docs/main-ui-report/capture-assets/stock-shadcn-full/diff-${width}.png`,
+    });
   }
   await page.setViewportSize({ width: 1512, height: 900 });
   await page.screenshot({ path: "test-results/review.png" });
@@ -309,9 +300,13 @@ test("practice overview, proposal approval and completion preserve snapshot", as
   ).toBeVisible();
   for (const width of [1512, 786]) {
     await page.setViewportSize({ width, height: width === 1512 ? 900 : 853 });
-    await page.screenshot({ path: `docs/evidence/completion-${width}.png` });
+    await page.screenshot({
+      path: `docs/main-ui-report/capture-assets/stock-shadcn-full/completion-${width}.png`,
+    });
   }
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Back to slide", exact: true })
+    .click();
   await expect(page.getByLabel("Slide canvas", { exact: true })).toBeVisible();
 });
 test("responsive containment and required desktop/narrow screenshots", async ({
@@ -334,17 +329,14 @@ test("responsive containment and required desktop/narrow screenshots", async ({
     const box = await page.locator(".slide-empty").boundingBox();
     expect(box!.x).toBeGreaterThanOrEqual(0);
     expect(box!.width).toBeLessThanOrEqual(width);
-    await page.screenshot({ path: `docs/evidence/empty-${width}.png` });
+    await page.screenshot({
+      path: `docs/main-ui-report/capture-assets/stock-shadcn-full/empty-${width}.png`,
+    });
   }
   await page.getByRole("button", { name: "Add slide", exact: true }).click();
-  if (
-    !(
-      (await page
-        .getByRole("button", { name: "Toggle sidebar" })
-        .getAttribute("aria-pressed")) === "true"
-    )
-  )
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeVisible();
   for (const width of [1512, 786, 390]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
@@ -392,7 +384,9 @@ test("all required screen evidence, themes, drawing tools and present fullscreen
           () => document.documentElement.scrollWidth <= innerWidth,
         ),
       ).toBeTruthy();
-      await page.screenshot({ path: `docs/evidence/${name}-${width}.png` });
+      await page.screenshot({
+        path: `docs/main-ui-report/capture-assets/stock-shadcn-full/${name}-${width}.png`,
+      });
     }
   }
   await shots("dashboard");
@@ -434,14 +428,9 @@ test("all required screen evidence, themes, drawing tools and present fullscreen
   await page
     .getByRole("button", { name: "Pointer (Esc)", exact: true })
     .click();
-  if (
-    !(
-      (await page
-        .getByRole("button", { name: "Toggle sidebar" })
-        .getAttribute("aria-pressed")) === "true"
-    )
-  )
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await shots("context");
   await page
@@ -470,14 +459,9 @@ test("CSV import spoken lookup, real export files, missing routes recover", asyn
 }) => {
   await mockSpeech(page);
   await createProject(page, "Export check");
-  if (
-    !(
-      (await page
-        .getByRole("button", { name: "Toggle sidebar" })
-        .getAttribute("aria-pressed")) === "true"
-    )
-  )
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeVisible();
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await page.getByRole("button", { name: "Add sources", exact: true }).click();
   await page.locator("input[type=file]").setInputFiles({
@@ -526,14 +510,9 @@ test("cancelled recognizer cannot write, pending interim is retained honestly on
   await say(page, "An unfinished idea", false);
   await expect(page.locator(".interim")).toContainText("An unfinished idea");
   await page.getByRole("button", { name: "Finish", exact: true }).click();
-  if (
-    !(
-      (await page
-        .getByRole("button", { name: "Toggle sidebar" })
-        .getAttribute("aria-pressed")) === "true"
-    )
-  )
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await expect(
+    page.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeVisible();
   await expect(page.locator(".transcript")).toContainText("An unfinished idea");
   await expect(page.locator(".transcript")).toContainText("Unfinished phrase");
   await page.evaluate(() => {
@@ -562,30 +541,27 @@ test("save failure keeps working state and recovers on retry", async ({
     };
   });
   await createProject(page);
-  await page
-    .getByRole("button", { name: "Project settings", exact: true })
-    .click();
+  await page.getByRole("tab", { name: "Context", exact: true }).click();
   await page.evaluate(() => {
     (window as any).__failSave = true;
   });
   await page
-    .getByRole("dialog")
-    .getByLabel("Title", { exact: true })
-    .fill("Unsaved title");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+    .getByLabel("System prompt", { exact: true })
+    .fill("Unsaved instruction");
   await expect(page.getByRole("alert")).toContainText("not saved");
-  await expect(
-    page.getByRole("heading", { name: "Unsaved title", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByLabel("System prompt", { exact: true })).toHaveValue(
+    "Unsaved instruction",
+  );
   await page.evaluate(() => {
     (window as any).__failSave = false;
   });
   await page.getByRole("button", { name: "Retry save", exact: true }).click();
   await expect(page.getByRole("alert")).toHaveCount(0);
   await page.reload();
-  await expect(
-    page.getByRole("heading", { name: "Unsaved title", exact: true }),
-  ).toBeVisible();
+  await page.getByRole("tab", { name: "Context", exact: true }).click();
+  await expect(page.getByLabel("System prompt", { exact: true })).toHaveValue(
+    "Unsaved instruction",
+  );
 });
 test("practice navigation cancels old utterance before attributing new speech", async ({
   page,

@@ -7,6 +7,7 @@ import { preparePage, measurePage } from './measure.js';
 import { evaluateMeasurement, CHECK_POLICY_VERSION } from './policy.js';
 import { BrowserPool, type BrowserPoolOptions } from './pool.js';
 import type { BrowserCheckResult, CheckEvidence } from './types.js';
+import { measureReview, type ReviewCapture } from './review-capture.js';
 import { APCA_VERSION } from '../render/contrast.js';
 
 export interface ArtifactRenderer { render(source: string, slideId: string): Promise<RenderArtifact> }
@@ -15,10 +16,24 @@ export interface CapturedSlide { slideId: string; jpeg: Uint8Array; sourceDigest
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 export function artifactDigest(artifact: RenderArtifact) {
   return digest(JSON.stringify({ html: artifact.html, css: artifact.css, source: artifact.source, slideId: artifact.slideId,
-    fonts: artifact.fonts, dependencies: artifact.dependencies, policy: CHECK_POLICY_VERSION, contrast: APCA_VERSION }));
+    fonts: artifact.fonts, dependencies: artifact.dependencies, pendingNodeIds: artifact.pendingNodeIds, artifactKey: artifact.artifactKey, policy: CHECK_POLICY_VERSION, contrast: APCA_VERSION }));
 }
 export class BrowserValidationPipeline implements ValidationPipeline {
   private readonly pool: BrowserPool;
+  // Publication-only reuse, bounded to this browser/configuration lifetime. Render
+  // afresh before lookup so font, asset and renderer dependency changes invalidate it.
+  private readonly publicationChecks = new Map<string, Promise<BrowserCheckResult>>();
+  private publicationCheck(artifact: RenderArtifact) {
+    const key = artifactDigest(artifact);
+    let pending = this.publicationChecks.get(key);
+    if (!pending) {
+      pending = this.inspect(artifact);
+      this.publicationChecks.set(key, pending);
+      void pending.catch(() => { if (this.publicationChecks.get(key) === pending) this.publicationChecks.delete(key); });
+      while (this.publicationChecks.size > 128) this.publicationChecks.delete(this.publicationChecks.keys().next().value!);
+    }
+    return pending;
+  }
   constructor(private readonly renderer: ArtifactRenderer, options: BrowserPoolOptions = {}) { this.pool = new BrowserPool(options); }
   private async render(source: string, slideId: string): Promise<RenderArtifact> {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -41,22 +56,22 @@ export class BrowserValidationPipeline implements ValidationPipeline {
         textRuns: measurement.texts.length, measuredNodes: measurement.nodes.length } };
     });
   }
-  async check(source: string): Promise<BrowserValidationReport> {
+  async check(source: string, options: { reusePublicationChecks?: boolean } = {}): Promise<BrowserValidationReport> {
     try {
       const slideIds = childNodes(parseSource(source)).filter(n => n.tag === 'Slide').map(n => n.id!);
       if (!slideIds.length || slideIds.some(id => !id)) throw new SourceError('validation_unavailable', 'Deck has no identified slides');
-      return await this.checkSlides(source, slideIds);
+      return await this.checkSlides(source, slideIds, options);
     } catch (error) { return this.unavailable(error); }
   }
-  async checkSlides(source: string, slideIds: string[]): Promise<BrowserValidationReport> {
+  async checkSlides(source: string, slideIds: string[], options: { reusePublicationChecks?: boolean } = {}): Promise<BrowserValidationReport> {
     if (!slideIds.length || new Set(slideIds).size !== slideIds.length) throw new SourceError('request', 'Check requires unique slide IDs');
     const report: BrowserValidationReport = { complete: true, findings: [], pendingNodeIds: [], evidence: [] };
     try {
-      // Render one immutable artifact per slide. No baseline cache is used until a complete
-      // key and dependency-invalidation corpus is established.
+      // Authoring/review checks remain fresh by default. Publication may reuse exact
+      // immutable artifacts, including complete byte dependencies and check policy.
       for (const slideId of slideIds) {
         const artifact = await this.render(source, slideId);
-        const checked = await this.inspect(artifact);
+        const checked = await (options.reusePublicationChecks ? this.publicationCheck(artifact) : this.inspect(artifact));
         report.findings.push(...checked.findings); report.pendingNodeIds.push(...artifact.pendingNodeIds, ...checked.measurement.pendingNodeIds);
         report.evidence.push(checked.evidence);
       }
@@ -86,5 +101,18 @@ export class BrowserValidationPipeline implements ValidationPipeline {
     }
     return captures;
   }
-  close() { return this.pool.close(); }
+  /** Images and overlay geometry are produced from one immutable artifact in one prepared page. */
+  async captureReview(artifact: RenderArtifact): Promise<ReviewCapture> {
+    return this.pool.withPage(async (page, _version, externalRequests) => {
+      await preparePage(page, artifact);
+      const geometry = await measureReview(page);
+      for (const node of geometry.nodes) if (node.visual.image) node.visual.image = digest(node.visual.image);
+      const jpeg = await page.screenshot({ type: 'jpeg', quality: 90, animations: 'disabled', fullPage: false });
+      if (externalRequests.length) throw new SourceError('validation_unavailable', 'Review renderer attempted an external network request');
+      return { jpeg: jpeg.toString('base64'), imageDigest: createHash('sha256').update(jpeg).digest('hex'),
+        renderDigest: digest(JSON.stringify({html:artifact.html, css:artifact.css, dependencies:artifact.dependencies, fonts:artifact.fonts})),
+        sourceDigest: digest(artifact.source), dependencies: structuredClone(artifact.dependencies), geometry };
+    });
+  }
+  close() { this.publicationChecks.clear(); return this.pool.close(); }
 }

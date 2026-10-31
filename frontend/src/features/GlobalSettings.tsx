@@ -1,10 +1,5 @@
-import { useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button, Modal } from "../components/ui";
-import {
-  practicePreferences,
-  usePracticePreferences,
-} from "../services/practicePreferences";
 import "./global-settings.css";
 /** Old target names remain source-compatible for unmounted future integrations. */
 export type SettingsTab = "connections" | "coach" | "preferences";
@@ -18,12 +13,6 @@ export function GlobalSettings({
   initialTab?: SettingsTab;
   returnLabel?: string;
 }) {
-  const preferences = usePracticePreferences();
-  useEffect(() => {
-    document.documentElement.dataset.reduceMotion = String(
-      preferences.reduceMotion,
-    );
-  }, [preferences.reduceMotion]);
   return (
     <Modal
       open={open}
@@ -40,17 +29,6 @@ export function GlobalSettings({
         {returnLabel}
       </Button>
       <section className="settings-body">
-        <h2>Preferences</h2>
-        <label className="settings-preference">
-          <input
-            type="checkbox"
-            checked={preferences.reduceMotion}
-            onChange={(e) =>
-              practicePreferences.set({ reduceMotion: e.target.checked })
-            }
-          />
-          <span>Reduce motion</span>
-        </label>
         <details className="voice-privacy">
           <summary>Voice and privacy</summary>
           <p className="muted">

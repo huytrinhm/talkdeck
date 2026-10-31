@@ -21,6 +21,9 @@ export const REVISION_INSTRUCTIONS = `Revise the previous proposal according to 
 revision.previousProposal is an unapplied proposal, not the current deck. Its changes and sourceChanges describe historical intent, not executable edits or current anchors. Preserve its intent except where the counter-prompt changes it. Reconstruct the entire replacement transaction against the newly supplied context.baseline, not a delta against the old candidate. Previous-proposal images and sourceChanges may contain generated IDs absent from the current baseline; do not copy those IDs onto new nodes. Use alternativeTo: [] because there is only one replacement. The host manages replacement lineage and proposal versioning.
 ${EVIDENCE_AND_EDIT_RULES}`;
 
+export const CHANGE_INSTRUCTIONS = `Prepare one private change proposal for change.slideId, following change.prompt. Return exactly one complete executable proposal and only its necessary feedback against the current context.baseline. This is an explicit user request, not a new general rehearsal review or an instruction to publish. Keep the scope to the identified slide and dependencies necessary for that request; do not introduce unrelated changes. Use alternativeTo: [].
+${EVIDENCE_AND_EDIT_RULES}`;
+
 const revisionReviewSchema = reviewSchema.extend({
   proposals: reviewSchema.shape.proposals.length(1),
 });
@@ -62,9 +65,10 @@ export class OpenAIPracticeReviewer implements Reviewer {
       maxRequestBytes?: number;
     } = {},
   ) {}
-  async review({ context, revision, signal }: ReviewRequest) {
+  async review({ context, revision, change, signal }: ReviewRequest) {
+    if (revision && change) throw new Error("Choose either a proposal revision or an explicit change request");
     const { images, ...textContext } = context;
-    const schema = revision ? revisionReviewSchema : reviewSchema;
+    const schema = revision || change ? revisionReviewSchema : reviewSchema;
     const imageInputs = [
       ...images.map((image) => ({
         label: {
@@ -100,7 +104,7 @@ export class OpenAIPracticeReviewer implements Reviewer {
       service_tier: "fast",
       reasoning: { effort: "medium" },
       store: false,
-      instructions: `${revision ? REVISION_INSTRUCTIONS : REVIEW_INSTRUCTIONS}\n${this.options.instructions ?? ""}`,
+      instructions: `${revision ? REVISION_INSTRUCTIONS : change ? CHANGE_INSTRUCTIONS : REVIEW_INSTRUCTIONS}\n${this.options.instructions ?? ""}`,
       input: [
         {
           role: "user",
@@ -110,6 +114,7 @@ export class OpenAIPracticeReviewer implements Reviewer {
               text: JSON.stringify({
                 context: textContext,
                 ...(revision ? { revision: revisionContext(revision) } : {}),
+                ...(change ? { change } : {}),
               }),
             },
             ...imageInputs.flatMap((image) => [

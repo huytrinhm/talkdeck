@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { GlobalSettings } from "./GlobalSettings";
 import { Workspace } from "./Workspace";
-import { blankSlide, newProject } from "../domain/types";
+import { newProject } from "../domain/types";
 import { frontendAdapters } from "../services/adapters";
 beforeEach(() => {
   vi.stubGlobal(
@@ -47,51 +47,50 @@ it("does not start capture when a route mounts under already-open app settings",
   expect(dispose).not.toHaveBeenCalled();
   expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
 });
-it("keeps project settings metadata-only and pauses speech before opening global settings", () => {
-  const pause = vi.fn(),
-    resume = vi.fn(),
-    open = vi.fn();
-  vi.spyOn(frontendAdapters, "createSpeech").mockImplementation((o) => ({
-    start: () => o.onState?.({ status: "listening", muted: false }),
-    stop: vi.fn(),
-    pause,
-    resume,
-    retry: vi.fn(),
-    setMuted: vi.fn(),
-    dispose: vi.fn(),
-  }));
-  const project = newProject([]);
-  project.slides = [blankSlide("paper")];
-  const view = render(
+it("keeps the sidebar visible and omits settings and sidebar controls", () => {
+  render(
     <Workspace
-      project={project}
+      project={newProject([])}
       mode="edit"
       onChange={() => {}}
       onMode={() => {}}
       onBack={() => {}}
-      onAppSettings={open}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "Project settings" }));
-  expect(screen.getByLabelText("Slide instructions")).toBeTruthy();
-  expect(screen.queryByText("Voice input")).toBeNull();
-  expect(screen.queryByLabelText("OpenAI API key")).toBeNull();
-  view.unmount();
+  expect(
+    screen.getByRole("complementary", { name: "Project sidebar" }),
+  ).toBeTruthy();
+  for (const name of ["App settings", "Project settings", "Toggle sidebar"]) {
+    expect(screen.queryByRole("button", { name })).toBeNull();
+  }
+});
+it("first freeze exposes useful preferences but no connections, keys, phone or companion controls", () => {
+  render(<GlobalSettings open onOpenChange={() => {}} />);
+  expect(screen.queryByText("Connections")).toBeNull();
+  expect(screen.queryByText("Practice coach")).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Voice devices" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Your API key" })).toBeNull();
+  expect(screen.queryByLabelText("Show practice companion")).toBeNull();
+  expect(screen.queryByLabelText("Reduce motion")).toBeNull();
+});
+
+it("keeps the existing system prompt editable in Context", () => {
+  const project = newProject([]);
+  project.systemPrompt = "Keep the existing instruction";
+  const change = vi.fn();
   render(
     <Workspace
       project={project}
-      mode="create"
-      onChange={() => {}}
+      mode="context"
+      onChange={change}
       onMode={() => {}}
       onBack={() => {}}
-      onAppSettings={open}
     />,
   );
-  fireEvent.click(screen.getByRole("button", { name: "App settings" }));
-  expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
-  expect(open).toHaveBeenCalledTimes(1);
-  expect(resume).not.toHaveBeenCalled();
-});
-it('first freeze exposes useful preferences but no connections, keys, phone or companion controls',()=>{
- render(<GlobalSettings open onOpenChange={()=>{}}/>);expect(screen.queryByText('Connections')).toBeNull();expect(screen.queryByText('Practice coach')).toBeNull();expect(screen.queryByRole('heading',{name:'Voice devices'})).toBeNull();expect(screen.queryByRole('heading',{name:'Your API key'})).toBeNull();expect(screen.queryByLabelText('Show practice companion')).toBeNull();expect(screen.getByLabelText('Reduce motion')).toBeTruthy();
+  const field = screen.getByLabelText("System prompt") as HTMLTextAreaElement;
+  expect(field.value).toBe(project.systemPrompt);
+  fireEvent.change(field, { target: { value: "Use concise slide titles" } });
+  expect(change.mock.calls.at(-1)?.[0].systemPrompt).toBe(
+    "Use concise slide titles",
+  );
 });

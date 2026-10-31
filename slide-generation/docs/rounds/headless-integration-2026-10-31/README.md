@@ -86,4 +86,4 @@ Changed prompts/context must fail old request compatibility rather than silently
 
 Five timed talks × three fresh repetitions per version, complete frozen A/B comparison, semantic/audience review and
 separately verified refactoring remain unfinished. The first full edit-heavy trial exposed blank output despite readiness;
-see [the measured failure](../headless-round-01/cases/edit-heavy-baseline-01-no-visible-generation.md).
+see [the measured failure](../pass-01/stages/01/cases/edit-heavy-baseline-01-no-visible-generation.md).

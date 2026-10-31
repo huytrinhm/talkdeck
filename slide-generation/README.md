@@ -5,6 +5,7 @@ Hono/Tailwind rendering, mandatory Chromium validation, durable source evidence 
 approved consolidation on 2026-10-31. There is one package manifest and lockfile; the previous orchestration package
 now lives under `src/orchestration/`, with tests in `test/orchestration/` and historical fixtures in `fixtures/legacy/`.
 
+- [Documentation map](docs/README.md) and [current continuation](docs/continuation/README.md).
 - [Specification](SPEC.md) and [implementation plan](IMPLEMENTATION_PLAN.md): behavior, milestones and acceptance gates.
 - [Technical documentation](TECHNICAL.md) and [host integration](docs/HOST_PORT.md): current architecture and boundaries.
 - [Decision ledger](docs/DECISIONS.md): settled choices; do not reopen them.
@@ -51,17 +52,12 @@ records its limited successes and the qualifier scoring limitation. Offline acto
 requests, 12 tools and six commits with the exact final source and real browser checks. Replay establishes reproducibility,
 not live latency.
 
-The first full edit-heavy baseline and context candidate both ended with blank slides. The candidate additionally had
-an unresolved named-target input; durable receipt and canonical integration are distinct. See the
-[baseline case](docs/rounds/headless-round-01/cases/edit-heavy-baseline-01-no-visible-generation.md) and
-[candidate case](docs/rounds/headless-round-01/cases/edit-heavy-candidate-context-01-anchor-conflict.md).
-The implementation through `16a1671` was pushed after typecheck and 302 passing tests
-(`.artifacts/environment/pre-push-headless-suite.tap`). The frozen round 02 pair finished with blank output; its
-[case](docs/rounds/headless-round-02/cases/edit-heavy-pair-01-bullet-validation.md) identified missing bullet-marker
-typography metadata. After that fix, [round 03](docs/rounds/headless-round-03/README.md) produced actual visible edits
-but remained unfaithful: Publish was lost, requested edits were missed and one named-target input remained unresolved.
-The next combined candidate is pending measurement. Repeated five-talk qualification and verified refactoring remain
-unfinished; accepted edits and structural readiness do not establish faithfulness.
+The four diagnostic stages are consolidated in [Pass 1](docs/rounds/pass-01/README.md), with original failure cases,
+statistics and whole-deck images. The final frozen pair (`734d84a` / `7aee9be`) completed with 8/30 automatic successes
+each, but different successful effects and unresolved ordering/deletion/build requests. It establishes no overall quality
+or speed improvement. Final TypeScript checking and all 318 tests passed; the closed-pass checkpoint is in
+[continuation](docs/continuation/README.md). [Pass 2](docs/rounds/pass-02/README.md) closed with six completed runs, one timeout and one user-skipped run across the other four talks. [Separate quality fixtures](fixtures/quality/README.md)
+extend layouts, themes, decoration and motion; their live verification is pending. Repeated qualification and later refactoring remain unfinished.
 
 Responses requests use `service_tier: "fast"`; provider records distinguish requested and actually returned tiers.
 The Decisions endpoint exposes no `service_tier` field, so its policy is recorded as `endpoint-default`, without an
@@ -105,7 +101,7 @@ npm run headless:contact-sheet -- --run EXISTING_EVIDENCE_DIR --out .artifacts/r
 
 The standalone command makes no model calls and requires a new output directory outside the original run. See the
 [round 03 entire-deck image](.artifacts/review/round03-deck-contact-sheet/deck-contact-sheet.png) and its
-[recorded limitations](docs/rounds/headless-round-03/README.md).
+[recorded limitations](docs/rounds/pass-01/stages/03/README.md).
 
 Transaction replay checks canonical operations; actor replay additionally checks the actual scheduler/gates and recorded
 provider requests without live fallback. Compatibility failures remain failures. For a failed run whose cleanup finished

@@ -28,24 +28,18 @@ test("sidebar starts open on desktop/mobile and first-freeze preferences hide ex
     await expect(
       page.getByRole("complementary", { name: "Project sidebar" }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
     await expect(
-      page.getByRole("complementary", { name: "Project sidebar" }),
+      page.getByRole("button", { name: "Toggle sidebar" }),
     ).toHaveCount(0);
-    await page.getByRole("button", { name: "Toggle sidebar" }).click();
-    await expect(
-      page.getByRole("complementary", { name: "Project sidebar" }),
-    ).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBeTruthy();
   }
-  await page.getByRole("button", { name: "App settings", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Preferences" }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "App settings", exact: true }),
+  ).toHaveCount(0);
   await expect(page.getByText("Connections", { exact: true })).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Phone", exact: true }),

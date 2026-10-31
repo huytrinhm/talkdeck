@@ -280,6 +280,24 @@ test("practice cancels old inference, never feeds narration to canonical generat
   }
 });
 
+test("returning to Talk explicitly supersedes the rehearsal-only instruction in persistent actor history", async () => {
+  let inputs: unknown[] = [];
+  const f = await setup({ async review() { return { summary: '', feedback: [], proposals: [] }; } }, {
+    async infer(input) { inputs = input.input; return done; },
+  });
+  try {
+    await f.actors.setPracticeMode(true);
+    await f.actors.setPracticeMode(false);
+    f.actors.pushToEdit('Generate from newly supplied Talk content.');
+    await f.actors.settle(2000);
+    const text = JSON.stringify(inputs);
+    assert.match(text, /Entered practice mode/);
+    assert.match(text, /Returned to Talk generation mode/);
+    assert.ok(text.indexOf('Returned to Talk generation mode') > text.indexOf('Entered practice mode'));
+    assert.match(text, /Past rehearsal narration remains evidence/);
+  } finally { await f.cleanup(); }
+});
+
 test("review records visits, earlier revisions, pauses and corrections without rewriting source evidence", async () => {
   const f = await setup({
     async review({ context }) {
@@ -809,4 +827,51 @@ test("a canonical change during acceptance validation cannot publish an unprevie
     release.resolve();
     await f.cleanup();
   }
+});
+
+test("explicit requested change without an initial proposal prepares privately and remains versioned", async () => {
+  let requests = 0;
+  const f = await setup({async review({context,change}) {
+    requests++;
+    if (change) {
+      assert.equal(change.slideId, "n10");
+      assert.equal(change.prompt, "Use After as the title");
+      return output(context);
+    }
+    return output(context, []);
+  }});
+  try {
+    const original = f.local.engine.readDocument().source;
+    const first = await record(f);
+    assert.equal(first.proposals.length, 0);
+    const job = await f.practice.requestChange(first.id, "n10", "Use After as the title");
+    const ready = await f.practice.wait(job.id);
+    assert.equal(ready.status, "ready", ready.error ?? "");
+    assert.equal(ready.proposals[0].status, "ready", ready.proposals[0].error ?? "");
+    assert.equal(f.local.engine.readDocument().source, original);
+    assert(ready.proposals[0].previews[0].visualDiff?.changes.some(c=>c.kind==='text'));
+    assert.equal(requests, 2);
+    assert.equal((await f.practice.accept(ready.id, ready.proposals[0].id, ready.proposals[0].version)).status, "accepted");
+  } finally {await f.cleanup();}
+});
+
+test("unchanged canonical source still refreshes changed render dependencies before acceptance", async () => {
+  const f = await setup({async review({context}) {return output(context);}});
+  try {
+    const r = await record(f), proposal = r.proposals[0];
+    const original = f.local.engine.readDocument().source;
+    const render = f.local.renderer.render.bind(f.local.renderer);
+    f.local.renderer.render = async (...args) => {
+      const artifact = await render(...args);
+      // A new deployment dependency, with real browser capture. It is not a source edit.
+      artifact.dependencies = artifact.dependencies.map(d=>d.kind==='renderer'?{...d,sha256:'new-renderer-deployment'}:d);
+      return artifact;
+    };
+    const refreshed = await f.practice.accept(r.id, proposal.id, proposal.version);
+    assert.equal(refreshed.status, "ready");
+    assert.equal(refreshed.version, proposal.version + 1);
+    assert.equal(f.local.engine.readDocument().source, original);
+    assert.notEqual(refreshed.previewSignature, proposal.previewSignature);
+    assert.equal((await f.practice.accept(r.id, proposal.id, refreshed.version)).status, "accepted");
+  } finally {await f.cleanup();}
 });

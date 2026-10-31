@@ -103,6 +103,10 @@ export function createPracticeApp(
   app.post("/practice/:id/cancel", async (c) =>
     c.json(await service.cancel(c.req.param("id"))),
   );
+  app.post("/practice/:id/request-change", async (c) => {
+    const {slideId, prompt} = z.object({slideId:z.string().min(1), prompt:z.string().trim().min(1).max(100_000)}).strict().parse(await c.req.json());
+    return c.json(await service.requestChange(c.req.param("id"), slideId, prompt), 202);
+  });
   app.post("/practice/:id/proposals/:proposal/accept", async (c) => {
     const { version } = z
       .object({ version: z.number().int().positive() })

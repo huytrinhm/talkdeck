@@ -28,31 +28,15 @@
 }
 .review-tabs {
   justify-content: space-between;
-  border-bottom: 1px solid var(--border, #303742);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 12px;
 }
-.review-tabs [role="tablist"] {
-  display: flex;
-  gap: 24px;
-}
-.review-tabs [role="tab"] {
-  background: none;
-  border: 0;
-  color: var(--muted, #a6afbc);
-  padding: 12px 0;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-}
-.review-tabs [data-state="active"] {
-  color: var(--text, #eef2f7);
-  box-shadow: 0 2px #a8c7f3;
-}
+
 .review-badge {
   margin-left: 6px;
   padding: 2px 6px;
   border-radius: 5px;
-  background: #303e51;
+  background: var(--accent);
   font-size: 11px;
 }
 .review-overview {
@@ -68,12 +52,12 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: 24px 0;
-  border-block: 1px solid var(--border, #303742);
+  border-block: 1px solid var(--border);
   margin: 28px 0;
 }
 .review-statistics dt {
   font-size: 12px;
-  color: #a5afbc;
+  color: var(--muted-foreground);
   margin-bottom: 9px;
 }
 .review-statistics dd {
@@ -82,7 +66,7 @@
 }
 .review-statistics small {
   font-size: 16px;
-  color: #a5afbc;
+  color: var(--muted-foreground);
 }
 .review-speed h3,
 .review-feedback h3,
@@ -103,25 +87,25 @@
   flex-direction: column;
   justify-content: space-between;
   font-size: 10px;
-  color: #9aa6b7;
+  color: var(--muted-foreground);
 }
 .review-bars {
   display: flex;
   flex: 1;
   gap: 4px;
   align-items: flex-end;
-  border-bottom: 1px solid #46546a;
+  border-bottom: 1px solid var(--border);
 }
 .review-bars > div {
   flex: 1;
-  background: #9dbce7;
+  background: var(--foreground);
   min-width: 2px;
   border-radius: 2px 2px 0 0;
 }
 .review-bars > div:hover,
 .review-bars > div:focus-visible {
-  background: #d5e5ff;
-  outline: 2px solid #d5e5ff;
+  background: var(--foreground);
+  outline: 2px solid var(--foreground);
   outline-offset: 2px;
 }
 .review-chart-times {
@@ -129,7 +113,7 @@
   justify-content: space-between;
   margin: 7px 0 0 40px;
   font-size: 10px;
-  color: #9aa6b7;
+  color: var(--muted-foreground);
 }
 .review-small {
   font-size: 11px;
@@ -159,13 +143,13 @@
   color: #f0d79f;
 }
 .review-feedback.neutral {
-  background: #283445;
-  border-color: #8eacd4;
-  color: #ceddf2;
+  background: var(--accent);
+  border-color: var(--ring);
+  color: var(--foreground);
 }
 .review-no-data {
   padding: 32px 0;
-  color: #a6afbc;
+  color: var(--muted-foreground);
 }
 .review-changes {
   padding-top: 22px;
@@ -191,7 +175,7 @@
 .review-suggestion p {
   font-size: 13px;
   line-height: 1.6;
-  color: #a6afbc;
+  color: var(--muted-foreground);
   margin: 0;
   max-width: 760px;
 }
@@ -199,7 +183,7 @@
   display: flex;
   gap: 5px;
   align-items: center;
-  border: 1px solid #53647c;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 14px;
   font-size: 13px;
@@ -229,7 +213,7 @@
 }
 .review-comparison small {
   font-size: 11px;
-  color: #a6afbc;
+  color: var(--muted-foreground);
   font-weight: 400;
 }
 .review-before,
@@ -262,16 +246,7 @@
   height: 38px;
   min-height: 38px;
 }
-.review-decisions .approve {
-  background: #c4ebd6;
-  color: #183c2b;
-  border-color: #c4ebd6;
-}
-.review-decisions .reject {
-  background: #f5d1d4;
-  color: #632c35;
-  border-color: #f5d1d4;
-}
+
 .review-error {
   color: #f0b1b1;
   text-align: center;
@@ -279,7 +254,7 @@
 }
 .review-transcript {
   margin-top: 30px;
-  border-top: 1px solid var(--border, #303742);
+  border-top: 1px solid var(--border);
   padding-top: 22px;
   line-height: 1.7;
   font-size: 13px;
@@ -292,14 +267,14 @@
 }
 .review-time {
   font-size: 11px;
-  color: #a6afbc;
+  color: var(--muted-foreground);
   margin-right: 9px;
   font-variant-numeric: tabular-nums;
 }
 .review-comment {
-  border-left: 2px solid #8eacd4;
+  border-left: 2px solid var(--ring);
   padding-left: 12px;
-  color: #a9b9ce;
+  color: var(--muted-foreground);
   font-size: 12px;
 }
 .review-complete {
@@ -329,7 +304,7 @@
 }
 .review-complete p {
   margin: 0;
-  color: #a6afbc;
+  color: var(--muted-foreground);
 }
 .review-counts {
   width: min(380px, 100%);
@@ -390,9 +365,6 @@
   .review-overview h2 {
     font-size: 24px;
   }
-  .review-tabs [role="tablist"] {
-    gap: 16px;
-  }
 }
 
 .review-remaining {
@@ -400,11 +372,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-top: 1px solid var(--border, #303742);
+  border-top: 1px solid var(--border);
   padding-top: 20px;
   margin-top: 24px;
   font-size: 12px;
-  color: #a6afbc;
+  color: var(--muted-foreground);
 }
 .review-comparison {
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -85,12 +85,16 @@ test("first freeze hides all companion/Phone/BYOK settings and sender routes wit
     if (r.url().includes("/api/connections")) calls.push(r.url());
   });
   await page.goto("/#phone?pair=discarded-test-code");
-  await expect(page).toHaveURL(/#folder\/all$/);
+  await expect(page).toHaveURL(/#projects$/);
   await expect(
     page.getByRole("heading", { name: "Use this phone as your microphone" }),
   ).toHaveCount(0);
-  await page.getByRole("button", { name: "App settings", exact: true }).click();
-  await expect(page.getByLabel("Reduce motion")).toBeVisible();
+  await create(page);
+  await expect(
+    page.getByRole("button", { name: "App settings", exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Reduce motion")).toHaveCount(0);
+
   await expect(
     page.getByText(
       /Connections|Practice coach|Your API key|Voice devices|Show practice companion/,
@@ -122,7 +126,9 @@ test("Practice completion returns to current project and selected slide; Overvie
   await expect(
     page.getByRole("heading", { name: "Review complete" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  const back = page.getByRole("button", { name: "Back to slide", exact: true });
+  await expect(back.locator("svg.lucide-arrow-left")).toBeVisible();
+  await back.click();
   await expect(page).toHaveURL(edit);
   await expect(page.getByLabel("Slide canvas", { exact: true })).toBeVisible();
   await expect(
@@ -237,7 +243,7 @@ test("shared last-row rendering holds in Practice, Present and saved Review at n
     false,
     1,
   );
-  await check(".presenter-transcript .transcript");
+  await check(".presenter-transcript > .transcript");
   await speak(
     page,
     "Last practice narration wraps through the transcript region without a trailing line.",
@@ -245,7 +251,7 @@ test("shared last-row rendering holds in Practice, Present and saved Review at n
     1,
   );
   await expect(page.locator(".interim")).toHaveCount(0);
-  await check(".presenter-transcript .transcript");
+  await check(".presenter-transcript > .transcript");
   await page
     .getByRole("button", { name: "Finish practice", exact: true })
     .click();
@@ -259,7 +265,7 @@ test("shared last-row rendering holds in Practice, Present and saved Review at n
     false,
     1,
   );
-  await check(".presenter-transcript .transcript");
+  await check(".presenter-transcript > .transcript");
   await expect(page.locator(".present-stage")).not.toContainText(
     "A current presentation phrase only in transcript.",
   );
@@ -270,7 +276,7 @@ test("shared last-row rendering holds in Practice, Present and saved Review at n
     1,
   );
   await expect(page.locator(".interim")).toHaveCount(0);
-  await check(".presenter-transcript .transcript");
+  await check(".presenter-transcript > .transcript");
   await page.screenshot({
     path: "docs/main-ui-report/capture-assets/first-freeze-last-row-present-390.png",
   });

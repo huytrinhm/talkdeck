@@ -1,0 +1,883 @@
+{
+  "schemaVersion": 1,
+  "id": "mixed-layout-v1",
+  "title": "Mixed-layout quality rehearsal v1",
+  "purpose": "Twelve fictional slides exercising varied native compositions, exact facts and corrections, shared design, dedicated Lucide discovery, restrained decoration, theme migration, and manual motion/build review. This is authored test input, not measured success.",
+  "initialContext": "This is a fictional rehearsal. Follow the spoken slide creation and editing commands. Every fact, person, time, value, and quote is fictional test material. Preserve exact substantive content and all raw input. Prefer native Text, Stat, Quote, Panels, Rows, Grid, Split and reusable definitions. Use the dedicated Icon primitive and full-catalog search/read tools; inherit text colors or use explicit theme colors, with no stroke customization. Native table styling means an aligned text grid, not a nonexistent Table primitive. Do not call external asset providers or invent illustrations. Keep design expressive but readable and respect the approved bounded Stat counting behavior.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 3,
+    "postTalkObservationMs": 20000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "mixed-layout-v1-001",
+      "startMs": 1000,
+      "endMs": 19000,
+      "kind": "utterance",
+      "text": "New slide titled Relay rehearsal. Show the subtitle \"Fictional systems, explicit handoffs.\" Keep this opening sparse. Set the whole deck to a warm light background, dark ink, and teal accents. Use the frame labels Relay and FICTIONAL with page numbers. Use only quiet ring and dots motifs as decoration; keep them away from words.",
+      "targetAlias": "opening",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "mixed-layout-v1-002",
+      "startMs": 23000,
+      "endMs": 41667,
+      "kind": "utterance",
+      "text": "New slide titled Manual and assisted. Make a two-column comparison with headings Manual intake and Assisted intake. Manual intake: handling time 6 min; checks passed 4/4; owner Ada. Assisted intake: handling time 2 min; checks passed 4/4; owner Lin. Keep each value with its own label and owner. Use a reusable comparison layout, not a paragraph.",
+      "targetAlias": "intake-comparison",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "mixed-layout-v1-003",
+      "startMs": 45667,
+      "endMs": 61001,
+      "kind": "utterance",
+      "text": "New slide titled Release timetable. Draw a left-to-right timeline with these four label pairs: 09:00 and Draft; 09:20 and Review; 09:40 and Publish; 10:00 and Monitor. Keep the time labels and stage labels separate and aligned. Use a line and direction cues, not four unrelated cards.",
+      "targetAlias": "timetable",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "mixed-layout-v1-004",
+      "startMs": 64001,
+      "endMs": 69668,
+      "kind": "utterance",
+      "text": "On Release timetable, change the Publish time from 09:40 to 09:45. Leave Draft, Review, and Monitor unchanged.",
+      "targetAlias": "timetable",
+      "silenceAfterMs": 8000
+    },
+    {
+      "id": "mixed-layout-v1-005",
+      "startMs": 77668,
+      "endMs": 97335,
+      "kind": "utterance",
+      "text": "New slide titled Three-step release. Show Capture, Validate, and Publish as three connected steps from left to right. Under Capture write \"Retain exact input.\" Under Validate write \"Check the whole candidate.\" Under Publish write \"Show the committed revision.\" Add one dedicated Lucide icon beside each step label. Discover the icons from the available catalog. The icons supplement the words.",
+      "targetAlias": "process",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "mixed-layout-v1-006",
+      "startMs": 101335,
+      "endMs": 119669,
+      "kind": "utterance",
+      "text": "New slide titled Release decision. Build a branch diagram. At the top show \"Check passed?\" The left branch is labeled Yes and ends at Publish. The right branch is labeled No and ends at \"Keep previous revision.\" Show the two distinct labeled paths with direction cues. Do not turn the branches into a linear sequence.",
+      "targetAlias": "decision",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "mixed-layout-v1-007",
+      "startMs": 123669,
+      "endMs": 139336,
+      "kind": "utterance",
+      "text": "New slide titled Service signals. Use one row of three metrics: 120 ms labeled \"median validation time\"; 99.95% labeled \"availability, provisional\"; and 0 labeled \"unreviewed releases.\" Add the exact caption \"Fictional 30-minute test window.\" Keep the qualifier provisional attached to availability. Do not derive any additional metric.",
+      "targetAlias": "signals",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "mixed-layout-v1-008",
+      "startMs": 142336,
+      "endMs": 149003,
+      "kind": "utterance",
+      "text": "On Service signals, change median validation time from 120 ms to 118 ms. Keep the other metrics and caption unchanged.",
+      "targetAlias": "signals",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "mixed-layout-v1-009",
+      "startMs": 149003,
+      "endMs": 155670,
+      "kind": "utterance",
+      "text": "On Service signals, change median validation time from 118 ms to 125 ms. Keep the other metrics and caption unchanged.",
+      "targetAlias": "signals",
+      "silenceAfterMs": 15000
+    },
+    {
+      "id": "mixed-layout-v1-010",
+      "startMs": 170670,
+      "endMs": 188004,
+      "kind": "utterance",
+      "text": "New slide titled Owner budget. Make an aligned comparison grid with column labels Workstream, Owner, and Budget. Row one is Storage, Ada, $120. Row two is Compute, Lin, $450. Row three is Support, Jo, $80. Use native text cells with consistent row and column alignment. Do not calculate or add a total.",
+      "targetAlias": "budget",
+      "silenceAfterMs": 4000
+    },
+    {
+      "id": "mixed-layout-v1-011",
+      "startMs": 192004,
+      "endMs": 199338,
+      "kind": "utterance",
+      "text": "On Owner budget, change only the Compute budget from $450 to $480. Keep its owner Lin and the other two rows unchanged.",
+      "targetAlias": "budget",
+      "silenceAfterMs": 7000
+    },
+    {
+      "id": "mixed-layout-v1-012",
+      "startMs": 206338,
+      "endMs": 231672,
+      "kind": "utterance",
+      "text": "New slide titled Operating rules. Use two text columns. The left heading is \"Input and review\" with these exact three sentences: \"Every request keeps its original wording.\" \"Only a reviewer can approve a release.\" \"Missing fields remain visibly unresolved.\" The right heading is \"Corrections and publication\" with these exact three sentences: \"Corrections update the named request.\" \"Rejected changes preserve the previous revision.\" \"Nothing is published before validation finishes.\" Keep all six sentences; do not summarize them.",
+      "targetAlias": "dense",
+      "silenceAfterMs": 5000
+    },
+    {
+      "id": "mixed-layout-v1-013",
+      "startMs": 236672,
+      "endMs": 253339,
+      "kind": "utterance",
+      "text": "New slide titled A promise at handoff. Show this exact quote: \"Clarity is a promise we keep at every handoff.\" Attribute it to Mara. Keep the quote in the quote role, not the title role. Use generous empty space and no empty panels. Add no illustration, metric, or extra sentence.",
+      "targetAlias": "quote",
+      "silenceAfterMs": 15000
+    },
+    {
+      "id": "mixed-layout-v1-014",
+      "startMs": 268339,
+      "endMs": 290006,
+      "kind": "utterance",
+      "text": "New slide titled System map. Make a two-by-two architecture grid. Top left: Intake, with \"Retains source words.\" Top right: Queue, with \"Orders pending work.\" Bottom left: Checker, with \"Validates candidate slides.\" Bottom right: Viewer, with \"Shows committed revisions.\" Show one-way handoffs from Intake to Queue to Checker to Viewer using direction cues. Add one discovered Lucide icon to each named box. Keep text labels visible.",
+      "targetAlias": "architecture",
+      "silenceAfterMs": 5000
+    },
+    {
+      "id": "mixed-layout-v1-015",
+      "startMs": 295006,
+      "endMs": 314340,
+      "kind": "utterance",
+      "text": "New slide titled Pilot comparison. Reuse the same comparison layout family as Manual and assisted. The left heading is Pilot A: accounts 12; checks passed 3/3; owner Ada. The right heading is Pilot B: accounts 18; checks passed 3/3; owner Lin. Preserve the earlier comparison slide and its facts. Do not create a duplicate layout with equivalent slots.",
+      "targetAlias": "pilot-comparison",
+      "silenceAfterMs": 5000
+    },
+    {
+      "id": "mixed-layout-v1-016",
+      "startMs": 319340,
+      "endMs": 334674,
+      "kind": "utterance",
+      "text": "New slide titled Next rehearsal. Show three actions: \"Confirm owners.\" \"Rehearse handoffs.\" \"Review exceptions.\" Put each action in its own successive build group, in that order. Keep the title visible in the base group. Use native text with generous spacing. Do not add a launch date.",
+      "targetAlias": "closing",
+      "silenceAfterMs": 8000
+    },
+    {
+      "id": "mixed-layout-v1-017",
+      "startMs": 342674,
+      "endMs": 360341,
+      "kind": "utterance",
+      "text": "Change the whole deck accent from teal to amber. Retain the warm light background and dark ink. Keep all facts, positions, layout families, frame labels, and page numbering. Let ordinary icons inherit their surrounding text color; use the amber theme override only for the process-step icons. Keep the original Lucide strokes without customization.",
+      "targetAlias": "deck",
+      "silenceAfterMs": 10000
+    },
+    {
+      "id": "mixed-layout-v1-018",
+      "startMs": 370341,
+      "endMs": 380341,
+      "kind": "utterance",
+      "text": "Return to Service signals. Keep the values 125 ms, 99.95%, and 0 with their existing labels and the Fictional 30-minute test window caption. Do not revise their wording or styling.",
+      "targetAlias": "signals",
+      "silenceAfterMs": 8000
+    },
+    {
+      "id": "mixed-layout-v1-019",
+      "startMs": 388341,
+      "endMs": 395341,
+      "kind": "utterance",
+      "text": "On Service signals, change median validation time from 125 ms to 123 ms. Keep the other metrics, qualifier, and caption unchanged.",
+      "targetAlias": "signals",
+      "silenceAfterMs": 12000
+    },
+    {
+      "id": "mixed-layout-v1-020",
+      "startMs": 407341,
+      "endMs": 414675,
+      "kind": "utterance",
+      "text": "Return to Next rehearsal. Keep the three actions and their existing build order unchanged. Make the complete deck presentation-ready without adding content.",
+      "targetAlias": "closing",
+      "silenceAfterMs": 15000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "mixed-layout-v1-a001",
+      "triggerEventId": "mixed-layout-v1-001",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "Relay rehearsal"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a002",
+      "triggerEventId": "mixed-layout-v1-002",
+      "targetAlias": "intake-comparison",
+      "kind": "visible_exact",
+      "texts": [
+        "Manual and assisted"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a003",
+      "triggerEventId": "mixed-layout-v1-003",
+      "targetAlias": "timetable",
+      "kind": "visible_exact",
+      "texts": [
+        "Release timetable"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a004",
+      "triggerEventId": "mixed-layout-v1-005",
+      "targetAlias": "process",
+      "kind": "visible_exact",
+      "texts": [
+        "Three-step release"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a005",
+      "triggerEventId": "mixed-layout-v1-006",
+      "targetAlias": "decision",
+      "kind": "visible_exact",
+      "texts": [
+        "Release decision"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a006",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "visible_exact",
+      "texts": [
+        "Service signals"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a007",
+      "triggerEventId": "mixed-layout-v1-010",
+      "targetAlias": "budget",
+      "kind": "visible_exact",
+      "texts": [
+        "Owner budget"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a008",
+      "triggerEventId": "mixed-layout-v1-012",
+      "targetAlias": "dense",
+      "kind": "visible_exact",
+      "texts": [
+        "Operating rules"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a009",
+      "triggerEventId": "mixed-layout-v1-013",
+      "targetAlias": "quote",
+      "kind": "visible_exact",
+      "texts": [
+        "A promise at handoff"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a010",
+      "triggerEventId": "mixed-layout-v1-014",
+      "targetAlias": "architecture",
+      "kind": "visible_exact",
+      "texts": [
+        "System map"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a011",
+      "triggerEventId": "mixed-layout-v1-015",
+      "targetAlias": "pilot-comparison",
+      "kind": "visible_exact",
+      "texts": [
+        "Pilot comparison"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a012",
+      "triggerEventId": "mixed-layout-v1-016",
+      "targetAlias": "closing",
+      "kind": "visible_exact",
+      "texts": [
+        "Next rehearsal"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a013",
+      "triggerEventId": "mixed-layout-v1-001",
+      "targetAlias": "opening",
+      "kind": "visible_exact",
+      "texts": [
+        "Fictional systems, explicit handoffs."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a014",
+      "triggerEventId": "mixed-layout-v1-001",
+      "targetAlias": "opening",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "mixed-layout-v1-a015",
+      "triggerEventId": "mixed-layout-v1-001",
+      "targetAlias": "deck",
+      "kind": "theme",
+      "description": "Warm light background, dark ink, teal accent; only quiet ring and dots decoration that does not obstruct native text.",
+      "scope": "whole deck"
+    },
+    {
+      "id": "mixed-layout-v1-a016",
+      "triggerEventId": "mixed-layout-v1-001",
+      "targetAlias": "deck",
+      "kind": "frame",
+      "left": "Relay",
+      "right": "FICTIONAL",
+      "page": true
+    },
+    {
+      "id": "mixed-layout-v1-a017",
+      "triggerEventId": "mixed-layout-v1-002",
+      "targetAlias": "intake-comparison",
+      "kind": "visible_exact",
+      "texts": [
+        "Manual intake",
+        "Assisted intake",
+        "6 min",
+        "2 min",
+        "4/4",
+        "Ada",
+        "Lin"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a018",
+      "triggerEventId": "mixed-layout-v1-002",
+      "targetAlias": "intake-comparison",
+      "kind": "relative_position",
+      "text": "Manual intake",
+      "relation": "left of",
+      "other": "Assisted intake"
+    },
+    {
+      "id": "mixed-layout-v1-a019",
+      "triggerEventId": "mixed-layout-v1-002",
+      "targetAlias": "intake-comparison",
+      "kind": "layout_family",
+      "family": "two-column comparison"
+    },
+    {
+      "id": "mixed-layout-v1-a020",
+      "triggerEventId": "mixed-layout-v1-003",
+      "targetAlias": "timetable",
+      "kind": "visible_exact",
+      "texts": [
+        "09:00",
+        "Draft",
+        "09:20",
+        "Review",
+        "09:40",
+        "Publish",
+        "10:00",
+        "Monitor"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a021",
+      "triggerEventId": "mixed-layout-v1-003",
+      "targetAlias": "timetable",
+      "kind": "relative_position",
+      "text": "Draft",
+      "relation": "left of Review, which is left of Publish, which is left of",
+      "other": "Monitor"
+    },
+    {
+      "id": "mixed-layout-v1-a022",
+      "triggerEventId": "mixed-layout-v1-004",
+      "targetAlias": "timetable",
+      "kind": "correction",
+      "old": "09:40",
+      "new": "09:45",
+      "label": "Publish time"
+    },
+    {
+      "id": "mixed-layout-v1-a023",
+      "triggerEventId": "mixed-layout-v1-004",
+      "targetAlias": "timetable",
+      "kind": "unchanged_except",
+      "allowed": [
+        "Publish time: 09:40 to 09:45",
+        "necessary typography normalization only"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a024",
+      "triggerEventId": "mixed-layout-v1-005",
+      "targetAlias": "process",
+      "kind": "visible_exact",
+      "texts": [
+        "Capture",
+        "Validate",
+        "Publish",
+        "Retain exact input.",
+        "Check the whole candidate.",
+        "Show the committed revision."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a025",
+      "triggerEventId": "mixed-layout-v1-005",
+      "targetAlias": "process",
+      "kind": "relative_position",
+      "text": "Capture",
+      "relation": "connected left-to-right through Validate to",
+      "other": "Publish"
+    },
+    {
+      "id": "mixed-layout-v1-a026",
+      "triggerEventId": "mixed-layout-v1-005",
+      "targetAlias": "process",
+      "kind": "style_target",
+      "text": "Capture, Validate, Publish",
+      "change": "A discovered dedicated Lucide icon accompanies each step label, preserving words and catalog geometry."
+    },
+    {
+      "id": "mixed-layout-v1-a027",
+      "triggerEventId": "mixed-layout-v1-006",
+      "targetAlias": "decision",
+      "kind": "visible_exact",
+      "texts": [
+        "Check passed?",
+        "Yes",
+        "Publish",
+        "No",
+        "Keep previous revision."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a028",
+      "triggerEventId": "mixed-layout-v1-006",
+      "targetAlias": "decision",
+      "kind": "relative_position",
+      "text": "Check passed?",
+      "relation": "branches left through Yes to Publish, and right through No to",
+      "other": "Keep previous revision."
+    },
+    {
+      "id": "mixed-layout-v1-a029",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "number_exact",
+      "value": "120 ms",
+      "label": "median validation time"
+    },
+    {
+      "id": "mixed-layout-v1-a030",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "number_exact",
+      "value": "99.95%",
+      "label": "availability, provisional"
+    },
+    {
+      "id": "mixed-layout-v1-a031",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "number_exact",
+      "value": "0",
+      "label": "unreviewed releases"
+    },
+    {
+      "id": "mixed-layout-v1-a032",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "visible_exact",
+      "texts": [
+        "Fictional 30-minute test window."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a033",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "must_preserve_qualifier",
+      "label": "availability",
+      "qualifier": "provisional"
+    },
+    {
+      "id": "mixed-layout-v1-a034",
+      "triggerEventId": "mixed-layout-v1-007",
+      "targetAlias": "signals",
+      "kind": "no_derived_numbers",
+      "scope": "Canonical claims and settled content only; bounded transient Stat counting follows D56."
+    },
+    {
+      "id": "mixed-layout-v1-a035",
+      "triggerEventId": "mixed-layout-v1-008",
+      "targetAlias": "signals",
+      "kind": "correction",
+      "old": "120 ms",
+      "new": "118 ms",
+      "label": "median validation time"
+    },
+    {
+      "id": "mixed-layout-v1-a036",
+      "triggerEventId": "mixed-layout-v1-009",
+      "targetAlias": "signals",
+      "kind": "correction",
+      "old": "118 ms",
+      "new": "125 ms",
+      "label": "median validation time"
+    },
+    {
+      "id": "mixed-layout-v1-a037",
+      "triggerEventId": "mixed-layout-v1-009",
+      "targetAlias": "signals",
+      "kind": "unchanged_except",
+      "allowed": [
+        "median validation time corrections",
+        "bounded Stat counting during motion; exact settled target remains 125 ms"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a038",
+      "triggerEventId": "mixed-layout-v1-009",
+      "targetAlias": "signals",
+      "kind": "no_churn",
+      "scope": "Settled Service signals during the 15-second pause, excluding completion of already-requested corrections."
+    },
+    {
+      "id": "mixed-layout-v1-a039",
+      "triggerEventId": "mixed-layout-v1-010",
+      "targetAlias": "budget",
+      "kind": "visible_exact",
+      "texts": [
+        "Workstream",
+        "Owner",
+        "Budget",
+        "Storage",
+        "Ada",
+        "$120",
+        "Compute",
+        "Lin",
+        "$450",
+        "Support",
+        "Jo",
+        "$80"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a040",
+      "triggerEventId": "mixed-layout-v1-010",
+      "targetAlias": "budget",
+      "kind": "relative_position",
+      "text": "Compute",
+      "relation": "same native grid row as Lin and",
+      "other": "$450"
+    },
+    {
+      "id": "mixed-layout-v1-a041",
+      "triggerEventId": "mixed-layout-v1-010",
+      "targetAlias": "budget",
+      "kind": "no_derived_numbers",
+      "scope": "No budget total, forecast, or derived amount; page numbers are frame decoration."
+    },
+    {
+      "id": "mixed-layout-v1-a042",
+      "triggerEventId": "mixed-layout-v1-011",
+      "targetAlias": "budget",
+      "kind": "correction",
+      "old": "$450",
+      "new": "$480",
+      "label": "Compute budget"
+    },
+    {
+      "id": "mixed-layout-v1-a043",
+      "triggerEventId": "mixed-layout-v1-011",
+      "targetAlias": "budget",
+      "kind": "relative_position",
+      "text": "Compute",
+      "relation": "same native grid row as Lin and",
+      "other": "$480"
+    },
+    {
+      "id": "mixed-layout-v1-a044",
+      "triggerEventId": "mixed-layout-v1-011",
+      "targetAlias": "budget",
+      "kind": "unchanged_except",
+      "allowed": [
+        "Compute budget: $450 to $480"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a045",
+      "triggerEventId": "mixed-layout-v1-012",
+      "targetAlias": "dense",
+      "kind": "visible_exact",
+      "texts": [
+        "Input and review",
+        "Corrections and publication",
+        "Every request keeps its original wording.",
+        "Only a reviewer can approve a release.",
+        "Missing fields remain visibly unresolved.",
+        "Corrections update the named request.",
+        "Rejected changes preserve the previous revision.",
+        "Nothing is published before validation finishes."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a046",
+      "triggerEventId": "mixed-layout-v1-012",
+      "targetAlias": "dense",
+      "kind": "relative_position",
+      "text": "Input and review",
+      "relation": "left column; its first three requested sentences remain separate from the right column headed",
+      "other": "Corrections and publication"
+    },
+    {
+      "id": "mixed-layout-v1-a047",
+      "triggerEventId": "mixed-layout-v1-013",
+      "targetAlias": "quote",
+      "kind": "quote_exact",
+      "text": "Clarity is a promise we keep at every handoff.",
+      "by": "Mara"
+    },
+    {
+      "id": "mixed-layout-v1-a048",
+      "triggerEventId": "mixed-layout-v1-013",
+      "targetAlias": "quote",
+      "kind": "quote_role",
+      "text": "Clarity is a promise we keep at every handoff.",
+      "notRole": "title"
+    },
+    {
+      "id": "mixed-layout-v1-a049",
+      "triggerEventId": "mixed-layout-v1-013",
+      "targetAlias": "quote",
+      "kind": "sparse_design",
+      "noEmptyPanels": true,
+      "intentionalHierarchy": true
+    },
+    {
+      "id": "mixed-layout-v1-a050",
+      "triggerEventId": "mixed-layout-v1-013",
+      "targetAlias": "quote",
+      "kind": "no_churn",
+      "scope": "Settled quote slide during the 15-second pause; no extra claims, metrics, or decoration after requested work settles."
+    },
+    {
+      "id": "mixed-layout-v1-a051",
+      "triggerEventId": "mixed-layout-v1-014",
+      "targetAlias": "architecture",
+      "kind": "visible_exact",
+      "texts": [
+        "Intake",
+        "Retains source words.",
+        "Queue",
+        "Orders pending work.",
+        "Checker",
+        "Validates candidate slides.",
+        "Viewer",
+        "Shows committed revisions."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a052",
+      "triggerEventId": "mixed-layout-v1-014",
+      "targetAlias": "architecture",
+      "kind": "relative_position",
+      "text": "Intake",
+      "relation": "top-left of a 2x2 grid with Queue top-right, Checker bottom-left, and",
+      "other": "Viewer"
+    },
+    {
+      "id": "mixed-layout-v1-a053",
+      "triggerEventId": "mixed-layout-v1-014",
+      "targetAlias": "architecture",
+      "kind": "style_target",
+      "text": "Intake, Queue, Checker, Viewer",
+      "change": "Four dedicated discovered Lucide icons supplement exact labels; visible one-way handoffs follow Intake to Queue to Checker to Viewer."
+    },
+    {
+      "id": "mixed-layout-v1-a054",
+      "triggerEventId": "mixed-layout-v1-015",
+      "targetAlias": "pilot-comparison",
+      "kind": "visible_exact",
+      "texts": [
+        "Pilot A",
+        "Pilot B",
+        "12",
+        "18",
+        "3/3",
+        "Ada",
+        "Lin"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a055",
+      "triggerEventId": "mixed-layout-v1-015",
+      "targetAlias": "pilot-comparison",
+      "kind": "consistent_pair",
+      "aliases": [
+        "intake-comparison",
+        "pilot-comparison"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a056",
+      "triggerEventId": "mixed-layout-v1-015",
+      "targetAlias": "pilot-comparison",
+      "kind": "no_duplicate_layouts"
+    },
+    {
+      "id": "mixed-layout-v1-a057",
+      "triggerEventId": "mixed-layout-v1-016",
+      "targetAlias": "closing",
+      "kind": "build_groups",
+      "groups": [
+        [
+          "Next rehearsal"
+        ],
+        [
+          "Confirm owners."
+        ],
+        [
+          "Rehearse handoffs."
+        ],
+        [
+          "Review exceptions."
+        ]
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a058",
+      "triggerEventId": "mixed-layout-v1-016",
+      "targetAlias": "closing",
+      "kind": "build_order",
+      "texts": [
+        "Confirm owners.",
+        "Rehearse handoffs.",
+        "Review exceptions."
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a059",
+      "triggerEventId": "mixed-layout-v1-017",
+      "targetAlias": "deck",
+      "kind": "theme",
+      "description": "Amber accent, warm light background, dark ink, unchanged Relay/FICTIONAL frame; ordinary Lucide icons inherit text color and process icons use amber. No stroke customization.",
+      "scope": "all live slides"
+    },
+    {
+      "id": "mixed-layout-v1-a060",
+      "triggerEventId": "mixed-layout-v1-017",
+      "targetAlias": "deck",
+      "kind": "no_stale_theme",
+      "description": "No earlier slide reverts to teal after the amber theme is committed."
+    },
+    {
+      "id": "mixed-layout-v1-a061",
+      "triggerEventId": "mixed-layout-v1-017",
+      "targetAlias": "deck",
+      "kind": "unchanged_except",
+      "allowed": [
+        "Whole-deck accent teal to amber",
+        "Process-step Icon theme-color override to amber",
+        "necessary readable theme foreground derivations"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a062",
+      "triggerEventId": "mixed-layout-v1-018",
+      "targetAlias": "signals",
+      "kind": "number_exact",
+      "value": "125 ms",
+      "label": "median validation time"
+    },
+    {
+      "id": "mixed-layout-v1-a063",
+      "triggerEventId": "mixed-layout-v1-018",
+      "targetAlias": "signals",
+      "kind": "number_exact",
+      "value": "99.95%",
+      "label": "availability, provisional"
+    },
+    {
+      "id": "mixed-layout-v1-a064",
+      "triggerEventId": "mixed-layout-v1-018",
+      "targetAlias": "signals",
+      "kind": "number_exact",
+      "value": "0",
+      "label": "unreviewed releases"
+    },
+    {
+      "id": "mixed-layout-v1-a065",
+      "triggerEventId": "mixed-layout-v1-019",
+      "targetAlias": "signals",
+      "kind": "correction",
+      "old": "125 ms",
+      "new": "123 ms",
+      "label": "median validation time"
+    },
+    {
+      "id": "mixed-layout-v1-a066",
+      "triggerEventId": "mixed-layout-v1-019",
+      "targetAlias": "signals",
+      "kind": "must_preserve_qualifier",
+      "label": "availability",
+      "qualifier": "provisional"
+    },
+    {
+      "id": "mixed-layout-v1-a067",
+      "triggerEventId": "mixed-layout-v1-020",
+      "targetAlias": "closing",
+      "kind": "visible_exact",
+      "texts": [
+        "Next rehearsal"
+      ]
+    },
+    {
+      "id": "mixed-layout-v1-a068",
+      "triggerEventId": "mixed-layout-v1-020",
+      "targetAlias": "deck",
+      "kind": "presentation_ready"
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 12,
+    "allUserSourceRetained": true,
+    "presentationReady": true,
+    "slideOrder": [
+      "opening",
+      "intake-comparison",
+      "timetable",
+      "process",
+      "decision",
+      "signals",
+      "budget",
+      "dense",
+      "quote",
+      "architecture",
+      "pilot-comparison",
+      "closing"
+    ],
+    "onlyRequestedChanges": true,
+    "requiredLayoutFamilies": [
+      "two-column comparison"
+    ],
+    "sameFamilyConsistent": true,
+    "noDuplicateSlotShapes": true,
+    "quotesVerbatim": true,
+    "noInventedMetrics": true,
+    "noUnrequestedChangesDuringPauses": true,
+    "noInventedOrDuplicatedClaims": true,
+    "correctedValuesOnlyVisible": true,
+    "latestThemeEverywhere": true,
+    "frame": {
+      "left": "Relay",
+      "right": "FICTIONAL",
+      "page": true
+    }
+  }
+}

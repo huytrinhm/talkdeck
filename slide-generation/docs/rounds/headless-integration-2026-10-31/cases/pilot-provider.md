@@ -4,7 +4,7 @@ The completed pilot settled, retained all three inputs, and ended with two ready
 
 This is one integration pilot, not five-talk qualification, a baseline comparison, or evidence about Slow/specialist generation quality. No additional provider calls or code changes were made for this diagnosis.
 
-Run: [pilot-01](../../../../.artifacts/runs/headless-integration-2026-10-31/pilot-01/). The manifest records commit `3d5642d6b92d2a9a3f5430a494404998ca97711c`, `dirty: true`, and the actual prompt/settings/lock/fixture hashes. Completion is established by `driver-result.json`, `metrics.json`, `provider-statistics.json`, final artifacts and the finalized viewer gallery/video. The driver ran for 35,204.927 ms, ended `settled`, and recorded no driver errors.
+Run: [pilot-01](../../../../.artifacts/runs/headless-integration-2026-10-31/pilot-01). The manifest records commit `3d5642d6b92d2a9a3f5430a494404998ca97711c`, `dirty: true`, and the actual prompt/settings/lock/fixture hashes. Completion is established by `driver-result.json`, `metrics.json`, `provider-statistics.json`, final artifacts and the finalized viewer gallery/video. The driver ran for 35,204.927 ms, ended `settled`, and recorded no driver errors.
 
 ## Actual requests and usage
 

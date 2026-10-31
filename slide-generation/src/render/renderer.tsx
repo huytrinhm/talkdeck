@@ -117,7 +117,7 @@ export class HonoSlideRenderer {
       if (props.justify) styles['justify-content'] = justifyMap[String(props.justify)];
       if (props.grow) { styles.flex = '1 1 0'; styles['flex-shrink'] = 1; }
       const common: Record<string, unknown> = { 'data-node': node.id, 'data-primitive': node.tag, 'data-authored-node': node.origin.authoredId,
-        'data-component': node.origin.instanceId, 'data-build': Number(props.build ?? 0), class: `td-node td-${node.tag.toLowerCase()}${props.class ? ` ${props.class}` : ''}` };
+        'data-component': node.origin.instanceId, 'data-definition-node': node.origin.definitionId, 'data-item-node': node.origin.itemId, 'data-build': Number(props.build ?? 0), class: `td-node td-${node.tag.toLowerCase()}${props.class ? ` ${props.class}` : ''}` };
       const finish = (tag: string, contents: Child[] = [], extra: Record<string,unknown> = {}) => jsx(tag, { ...common, ...extra, style: styleString(styles) }, ...contents);
       const role = textRole(node, parent.inCard, parent.listRole);
       if (role && node.tag !== 'Bullets') {
@@ -139,7 +139,7 @@ export class HonoSlideRenderer {
           if (framed) {
             const labels = theme.frame!.props.labels as Record<string,string> | undefined ?? {};
             const base = `@frame:${node.id}:${theme.frame!.id}`;
-            const label = (side: string, value: string) => { glyphText.push(value); return jsx('span', { 'data-node': `${base}:${side}`, 'data-authored-node': theme.frame!.id, 'data-content': 'true', ...roleProps('label', ctx) }, value); };
+            const label = (side: string, value: string) => { glyphText.push(value); return jsx('span', { 'data-node': `${base}:${side}`, 'data-authored-node': theme.frame!.id, 'data-content': 'true', 'data-content-part': side, ...roleProps('label', ctx) }, value); };
             content.push(jsx('div', { class: 'td-frame', style: `top:40px;color:${ctx.foreground};${theme.frame!.props.rule ? `padding-bottom:16px;border-bottom:2px solid ${color(theme,'accent')}` : ''}` }, label('left', labels.left ?? ''), label('right', labels.right ?? '')));
             content.push(jsx('div', { class: 'td-frame', style: `bottom:36px;color:${ctx.foreground}` }, label('footer', labels.footer ?? ''), theme.frame!.props.page ? label('page', String(ctx.page)) : null));
           }
@@ -158,12 +158,12 @@ export class HonoSlideRenderer {
           return finish('section', renderChildren({ ...ctx, inCard: true }), { 'data-surface': filled ? ctx.fill : 'transparent' });
         case 'Text':
           styles['text-align'] = String(props.align ?? 'left');
-          return finish('p', native(text(node)), { 'data-content': 'true', 'data-role': role, 'data-font-floor': roleProps(role!,ctx)['data-font-floor'] });
+          return finish('p', native(text(node)), { 'data-content': 'true', 'data-content-part': 'body', 'data-role': role, 'data-font-floor': roleProps(role!,ctx)['data-font-floor'] });
         case 'Stat': {
           styles['text-align'] = String(props.align ?? 'left'); styles.gap = `${theme.space.xs}px`;
           glyphText.push(String(props.value));
-          const value = jsx('span', { class: 'td-stat-value', 'data-content': 'true', 'data-stat-value': String(props.value), ...roleProps(role!,ctx) }, String(props.value));
-          const label = props.label === undefined ? null : jsx('span', { class: 'td-secondary', 'data-content': 'true', 'data-role': 'caption', 'data-font-floor': TEXT_FLOORS.caption,
+          const value = jsx('span', { class: 'td-stat-value', 'data-content': 'true', 'data-stat-value': String(props.value), 'data-content-part': 'value', ...roleProps(role!,ctx) }, String(props.value));
+          const label = props.label === undefined ? null : jsx('span', { class: 'td-secondary', 'data-content': 'true', 'data-content-part': 'label', 'data-role': 'caption', 'data-font-floor': TEXT_FLOORS.caption,
             style: `font-size:${theme.text.caption}px;font-weight:${weightFor('caption')};color:${secondaryColor(ctx.foreground)}` }, ...native(String(props.label)));
           return finish('div', [value, label]);
         }
@@ -172,14 +172,14 @@ export class HonoSlideRenderer {
           return finish('ul', children(node).map((child,i) => {
             const marker = props.marker === 'number' ? `${i+1}.` : props.marker === 'dash' ? '—' : props.marker === 'none' ? '' : '•';
             glyphText.push(marker);
-            return jsx('li', { class: 'td-bullet' }, marker ? jsx('span', { class:'td-bullet-marker', 'aria-hidden':'true', ...roleProps(role!, ctx) }, marker) : null, render(child,{ ...ctx,listRole:role }));
+            return jsx('li', { class: 'td-bullet' }, marker ? jsx('span', { class:'td-bullet-marker', 'data-content-part': `marker:${child.id}`, 'aria-hidden':'true', ...roleProps(role!, ctx) }, marker) : null, render(child,{ ...ctx,listRole:role }));
           }));
         }
         case 'Quote':
           styles.gap = `${theme.space.sm}px`;
-          return finish('blockquote', [jsx('p',{ class:'td-quote-body','data-content':'true',...roleProps('quote',ctx) },...native(text(node))), props.by === undefined ? null : jsx('cite',{ 'data-content':'true','data-role':'caption','data-font-floor':TEXT_FLOORS.caption,
+          return finish('blockquote', [jsx('p',{ class:'td-quote-body','data-content':'true','data-content-part':'body',...roleProps('quote',ctx) },...native(text(node))), props.by === undefined ? null : jsx('cite',{ 'data-content':'true','data-content-part':'attribution','data-role':'caption','data-font-floor':TEXT_FLOORS.caption,
             style:`font-size:${theme.text.caption}px;font-weight:${weightFor('caption')};font-style:normal;color:${secondaryColor(ctx.foreground)}` },...native(String(props.by)))]);
-        case 'Badge': styles.padding = '0.35em 0.7em'; styles['border-radius'] = '999px'; return finish('span', native(text(node)), { 'data-content':'true','data-role':'label','data-font-floor':TEXT_FLOORS.label,'data-surface':ctx.fill });
+        case 'Badge': styles.padding = '0.35em 0.7em'; styles['border-radius'] = '999px'; return finish('span', native(text(node)), { 'data-content':'true','data-content-part':'body','data-role':'label','data-font-floor':TEXT_FLOORS.label,'data-surface':ctx.fill });
         case 'Image': return finish('div',[jsx('img',{src:imageUrls.get(node.id),alt:String(props.alt),draggable:false})]);
         case 'Icon': {
           const icon = readIcon(String(props.name),String(props.catalogVersion));
@@ -212,11 +212,11 @@ export class HonoSlideRenderer {
           if(kind==='sparkle') styles['clip-path']='polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)';
           return finish('div',[],{'aria-hidden':'true','data-shape':kind,'data-shape-opacity':props.opacity ?? 'soft','data-bleed':props.bleed ? 'true':undefined});
         }
-        case 'Pending': styles.color=ctx.foreground; return finish('div',native(`Pending: ${String(props.kind)}`),{'data-pending':'true','data-content':'true','data-role':'body','data-font-floor':TEXT_FLOORS.body});
+        case 'Pending': styles.color=ctx.foreground; return finish('div',native(`Pending: ${String(props.kind)}`),{'data-pending':'true','data-content':'true','data-content-part':'body','data-role':'body','data-font-floor':TEXT_FLOORS.body});
         case 'Index':
           styles.padding = props.look && props.look !== 'plain' ? '.2em .45em' : '0'; styles['border-radius']=props.look==='circle'?'50%':props.look==='pill'?'999px':undefined;
           if(props.look && props.look!=='plain')styles.border='2px solid currentColor';
-          return finish('span',native(String(props.value ?? '')),{'data-content':'true','data-role':role,'data-font-floor':roleProps(role!,ctx)['data-font-floor']});
+          return finish('span',native(String(props.value ?? '')),{'data-content':'true','data-content-part':'body','data-role':role,'data-font-floor':roleProps(role!,ctx)['data-font-floor']});
         default: throw new SourceError('render_primitive',`Unexpanded/unsupported visual primitive ${node.tag}`,node.origin.authoredId);
       }
     };

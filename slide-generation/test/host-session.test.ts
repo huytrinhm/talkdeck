@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createLocalRuntime } from '../src/runtime.js';
 import { GenerationSession, type HostEvent } from '../src/host/session.js';
-import type { PublicationMessage } from '../src/viewer/protocol.js';
+import type { BuildMessage, PublicationMessage } from '../src/viewer/protocol.js';
 import { JsxBackend } from '../src/host/jsx-backend.js';
 
 test('host adapter publishes private-evidence-free artifacts and correlates explicit viewer acknowledgments', async () => {
@@ -38,6 +38,38 @@ test('host adapter publishes private-evidence-free artifacts and correlates expl
   } finally { await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
+test('build commands use increasing sequences and acknowledgments bind the issued build and publication', async () => {
+  await mkdir('.artifacts/tests', { recursive: true });
+  const directory = await mkdtemp('.artifacts/tests/host-build-');
+  const runtime = await createLocalRuntime({ directory: resolve(directory) });
+  const publications: PublicationMessage[] = [], builds: BuildMessage[] = [], events: HostEvent[] = [];
+  const session = new GenerationSession(runtime.engine, runtime.tools, runtime.renderer, runtime.browser, {
+    channel: 'test_build_channel_12345', slideId: 'n10',
+    send: m => { publications.push(m); }, sendBuild: m => { builds.push(m); }, record: e => { events.push(e); },
+  });
+  try {
+    await assert.rejects(session.setBuild(1), /valid publication/);
+    await session.selectSlide('n10', 'presentation');
+    const publication = publications.at(-1)!;
+    const first = await session.setBuild(2), second = await session.setBuild(0);
+    assert.deepEqual(builds.map(m => m.sequence), [publication.sequence + 1, publication.sequence + 2]);
+    const ack = { version: 1, channel: publication.channel, type: 'painted', publicationId: publication.publicationId,
+      revision: publication.revision, slideId: publication.slideId, sequence: first.sequence, build: 2,
+      monotonicMs: 10, timeOriginMs: 100, visibleNodeIds: [] };
+    const clock = { offsetMs: 0, uncertaintyMs: 1 };
+    await session.acknowledge(ack, clock);
+    await session.acknowledge({ ...ack, sequence: second.sequence, build: 0 }, clock);
+    await assert.rejects(session.acknowledge({ ...ack, sequence: second.sequence }, clock), /issued publication/);
+    await assert.rejects(session.acknowledge({ ...ack, sequence: 900 }, clock), /issued publication/);
+    await assert.rejects(session.acknowledge({ ...ack, publicationId: 'unissued' }, clock), /issued publication/);
+    await assert.rejects(session.setBuild(-1));
+    await session.selectSlide('n10', 'presentation', 2);
+    assert.equal(publications.at(-1)!.build, 2, 'reconnect publication retains explicitly supplied build');
+    assert.ok(publications.at(-1)!.sequence > second.sequence);
+    assert.equal(events.filter(e => e.type === 'build').length, 2);
+  } finally { await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
 test('deleting the selected slide publishes the surviving neighbor at the committed revision', async () => {
   await mkdir('.artifacts/tests', { recursive: true });
   const directory = await mkdtemp('.artifacts/tests/host-deletion-');
@@ -66,4 +98,49 @@ test('deleting the selected slide publishes the surviving neighbor at the commit
     assert.match(runtime.engine.readDocument().source, /Keep this original source/);
     assert.doesNotMatch(sent.at(-1)!.html, /Keep this original source/);
   } finally { await backend.close(); await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('navigation reuses exact browser evidence but refreshes changed dependencies and never caches failures', async () => {
+  await mkdir('.artifacts/tests', { recursive: true });
+  const directory = await mkdtemp('.artifacts/tests/navigation-cache-');
+  const runtime = await createLocalRuntime({ directory: resolve(directory) });
+  const inspect = runtime.browser.inspect.bind(runtime.browser);
+  const render = runtime.renderer.render.bind(runtime.renderer);
+  let inspections = 0, dependencyVersion = 'one', fail = false;
+  runtime.browser.inspect = async artifact => {
+    inspections++;
+    if (fail) throw new Error('Fixture browser unavailable');
+    return inspect(artifact);
+  };
+  runtime.renderer.render = async (source, slideId) => {
+    const artifact = await render(source, slideId);
+    artifact.dependencies.push({ kind: 'renderer', id: 'fixture', version: dependencyVersion, sha256: dependencyVersion });
+    return artifact;
+  };
+  const sent: PublicationMessage[] = [];
+  const session = new GenerationSession(runtime.engine, runtime.tools, runtime.renderer, runtime.browser,
+    { channel: 'navigation_cache_channel', slideId: 'n10', send: m => { sent.push(m); }, record() {} });
+  try {
+    await session.selectSlide('n10');
+    const baseline = inspections;
+    await session.selectSlide('n10');
+    await session.selectSlide('n10', 'presentation');
+    assert.equal(inspections, baseline, 'unchanged navigation and mode reuse measured artifacts');
+    assert.equal(sent.length, 3);
+    dependencyVersion = 'two';
+    await session.selectSlide('n10');
+    assert.ok(inspections > baseline, 'dependency-only changes remeasure unchanged source');
+    const refreshed = inspections;
+    await runtime.browser.check(runtime.engine.readDocument().source);
+    assert.ok(inspections > refreshed, 'normal authoring checks remain fresh');
+    dependencyVersion = 'failure'; fail = true;
+    const published = sent.length;
+    await session.selectSlide('n10');
+    assert.equal(sent.length, published, 'failed validation cannot publish');
+    const failedInspections = inspections;
+    fail = false;
+    await session.selectSlide('n10');
+    assert.ok(inspections > failedInspections, 'failure is retried, never cached as success');
+    assert.equal(sent.length, published + 1);
+  } finally { await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
 });

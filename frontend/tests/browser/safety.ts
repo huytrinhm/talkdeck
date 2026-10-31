@@ -39,8 +39,12 @@ export async function installSpeechSafety(page: Page, rawMedia = false) {
           throw new DOMException("Fixture denied", "NotAllowedError");
         const audio = new AudioContext(),
           source = audio.createOscillator(),
-          destination = audio.createMediaStreamDestination();
-        source.connect(destination);
+          destination = audio.createMediaStreamDestination(),
+          gain = audio.createGain();
+        gain.gain.value = 1;
+        source.connect(gain);
+        gain.connect(destination);
+        w.__syntheticGain = gain;
         source.start();
         await audio.resume();
         const track = destination.stream.getAudioTracks()[0],

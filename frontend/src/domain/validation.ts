@@ -1,5 +1,5 @@
 /** Runtime guards for persisted browser data; invalid data is retained for recovery, never overwritten. */
-import type { Slide } from "./types";
+import type { Project, Slide, Workspace } from "./types";
 type RecordValue = Record<string, unknown>;
 const object = (x: unknown): x is RecordValue =>
   typeof x === "object" && x !== null && !Array.isArray(x);
@@ -88,7 +88,6 @@ const project = (x: unknown): boolean =>
   ["id", "title", "description", "systemPrompt"].every(
     (key) => typeof x[key] === "string",
   ) &&
-  (x.folderId === null || typeof x.folderId === "string") &&
   list(x.slides, slide) &&
   unique(x.slides) &&
   list(x.materials, material) &&
@@ -98,22 +97,57 @@ const project = (x: unknown): boolean =>
   finite(x.updatedAt) &&
   ["draft", "ready"].includes(String(x.status)) &&
   ["paper", "midnight", "lavender"].includes(String(x.theme));
-export function validWorkspace(x: unknown): boolean {
+export function validWorkspace(x: unknown): x is Workspace {
   return (
     object(x) &&
-    x.version === 2 &&
+    x.version === 3 &&
     list(x.projects, project) &&
-    unique(x.projects) &&
-    list(
-      x.folders,
-      (f) =>
-        object(f) &&
-        typeof f.id === "string" &&
-        typeof f.name === "string" &&
-        (f.parentId === null || typeof f.parentId === "string"),
-    ) &&
-    unique(x.folders)
+    unique(x.projects)
   );
+}
+/** Upgrade old saved records by selecting only the current flat model's fields.
+ * Unknown legacy organization metadata never enters the active workspace. */
+export function readWorkspace(value: unknown): Workspace {
+  if (
+    !object(value) ||
+    (value.version !== 2 && value.version !== 3) ||
+    !list(value.projects, project) ||
+    !unique(value.projects)
+  ) {
+    throw new Error("Saved workspace is incompatible or damaged.");
+  }
+  return {
+    version: 3,
+    projects: (value.projects as Project[]).map(
+      ({
+        id,
+        title,
+        description,
+        systemPrompt,
+        materials,
+        slides,
+        transcript,
+        createdAt,
+        updatedAt,
+        status,
+        theme,
+        rehearsals,
+      }) => ({
+        id,
+        title,
+        description,
+        systemPrompt,
+        materials,
+        slides,
+        transcript,
+        createdAt,
+        updatedAt,
+        status,
+        theme,
+        rehearsals,
+      }),
+    ),
+  };
 }
 /** Renderable current frontend model; adapters must map their own service schema explicitly. */
 export const validSlide = (value: unknown): value is Slide => slide(value);
