@@ -1,6 +1,9 @@
 # Lucide icons: agent access and implementation handoff
 
-Status: agreed documentation requirement; not implemented in the scaffold. The user chose a dedicated icon primitive,
+Status: implemented in the canonical parser, tools and renderer; the historical scaffold lacked this path. The pinned
+catalog contains 1,877 canonical icons and 264 aliases, with full pagination covered by `test/render.test.ts`.
+Live-model icon quality and the broader timed-talk qualification are separate from that implementation evidence.
+The user chose a dedicated icon primitive,
 searchable access to the full catalog, and inherited text color with optional theme-color overrides and no stroke
 customization. These choices are settled; do not ask them again.
 
@@ -69,7 +72,7 @@ provider decisions separate.
 ## Implementation checklist
 
 1. Add Icon to parser vocabulary and strict primitive schemas, plus tests for unknown names/versions, forbidden props,
-   children, duplicate IDs, and prohibited stroke utilities. Current parser intentionally rejects the unimplemented tag.
+   children, duplicate IDs, and prohibited stroke utilities. The canonical parser now accepts the implemented primitive.
 2. Add a pinned catalog adapter and full-catalog search/index/inspection tools with bounded responses and stable pagination.
 3. Register the read-only tools with the real generation/editing agents, and version their schemas/prompts for replay.
 4. Implement trusted inline rendering, inherited foreground, token override, existing transforms/builds, and accessible labels.
