@@ -317,9 +317,8 @@ test('initial and newly created slides retain a visual insertion boundary across
   try {
     f.runtime.pause();
     for (const slideId of ['n10', (await f.backend.createSlide('Second')).id]) {
-      const read = f.local.engine.readSource(slideId), last = read.lines.at(-1)!;
-      assert.match(last.text, /<\/Slide>/);
-      assert.equal(read.lines.at(-2)!.text, '');
+      const read = f.local.engine.readSource(slideId), last = read.lines.find(line => line.text.includes('</Stack>'))!;
+      assert.ok(last, 'starter provides a stable visual insertion anchor');
       for (let i = 0; i < 3; i++) await f.backend.deliverUtterance({ id: `${slideId}-${i}`, slideId,
         text: `Exact sentence ${i}, including its qualifier.`, deliveredAtMs: i + 1 });
       const result = await f.local.engine.edit({ edits: [{ snapshotId: read.snapshotId, nodeId: slideId, op: 'insert_before',

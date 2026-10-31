@@ -653,3 +653,48 @@ test("work without fresh input still obeys the configured step bound", async () 
     await rt.close();
   }
 });
+
+test("new slides initialize in the existing Fast session, without losing queued narration or mixing targets", async () => {
+  const first = deferred<ModelResult>();
+  const calls: ModelInput[] = [];
+  const rt = await SlideRuntime.create({ renderer, autoTick: false,
+    decider: { async evaluate() { return "dispatch"; } },
+    slowDecider: { async evaluate() { return "hold"; } },
+    model: { async infer(input) { calls.push(input); return calls.length === 1 ? first.promise : done; } },
+  });
+  const boundary = (input: ModelInput) => input.input.flatMap(item => {
+    if ("role" in item && item.role === "user" && "content" in item && typeof item.content === "string") {
+      try { const b = JSON.parse(item.content); return b.workingSlideId ? [b] : []; } catch {}
+    }
+    return [];
+  }).at(-1)!;
+  try {
+    const original = rt.publisher.selectedId;
+    rt.receiveTranscript("We teach solar energy", 1, original);
+    await rt.gate.tick();
+    await until(() => calls.length === 1);
+    const second = await rt.nextSlide();
+    rt.initializeSlide(second.id);
+    const third = await rt.nextSlide();
+    rt.initializeSlide(third.id);
+    rt.receiveTranscript("We teach solar energy and storage", 2, original);
+    // tick the original gate (the public getter follows selected slide).
+    await rt.selectSlide(original);
+    await rt.gate.tick();
+    first.resolve(done);
+    await rt.settle();
+    assert.equal(calls.length, 4);
+    assert.deepEqual(calls.slice(1).map(c => boundary(c).workingSlideId), [second.id, third.id, original]);
+    for (const c of calls.slice(1, 3)) {
+      assert.equal(boundary(c).speech, null, "old narration must not become new-slide evidence");
+      assert.equal(boundary(c).tasks.length, 1);
+      assert.equal(boundary(c).tasks[0].kind, "initialize_slide");
+      assert(JSON.stringify(c.input).includes("We teach solar energy"), "prior session remains in history");
+    }
+    assert.equal(boundary(calls[3]).speech.text, "We teach solar energy and storage");
+    const count = calls.length;
+    await rt.selectSlide(second.id);
+    await rt.settle();
+    assert.equal(calls.length, count, "navigation alone does not initialize again");
+  } finally { first.resolve(done); await rt.close(); }
+});

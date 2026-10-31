@@ -111,7 +111,7 @@ export interface Message {
   artifacts?: string[];
 }
 export interface Task {
-  kind?: "edit_comment";
+  kind?: "edit_comment" | "initialize_slide";
   id?: string;
   slideId?: string;
   task: string;
