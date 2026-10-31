@@ -203,7 +203,7 @@ export function applyUtterance(
     if (matches.length !== 1)
       return hint(
         matches.length
-          ? "That table name is ambiguous. Rename the source table."
+          ? "More than one source uses that table name. Add a source with a unique table name and try again."
           : "No imported table matches that name.",
       );
     const { m, t } = matches[0];
@@ -324,7 +324,7 @@ export function applyUtterance(
     )
   )
     return hint(
-      "That instruction is not supported by the local command rules.",
+      "That instruction isn’t supported. Try changing the title, adding a point, or choosing a layout.",
     );
   if (mode !== "create") return base;
   const sentences = raw.split(/(?<=[.!?])\s+/).filter(Boolean);

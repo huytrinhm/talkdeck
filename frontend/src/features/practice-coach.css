@@ -1,0 +1,153 @@
+.practice-coach {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.coach-identity {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.otter-avatar {
+  width: 56px;
+  height: 56px;
+  flex: none;
+}
+.coach-identity strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.coach-identity span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.coach-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.coach-actions .button {
+  white-space: normal;
+  min-height: 34px;
+  height: auto;
+  padding: 8px 10px;
+  line-height: 1.4;
+}
+.practice-coach .hide-companion {
+  font-size: 11px;
+  padding: 6px 0;
+  height: auto;
+  min-height: 30px;
+  display: block;
+  color: var(--muted);
+}
+.coach-turn {
+  padding-top: 8px;
+}
+.practice-coach .field textarea {
+  min-height: 76px;
+}
+.coach-consent {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  line-height: 1.6;
+  font-size: 11px !important;
+  cursor: pointer;
+}
+.coach-consent input {
+  flex: none;
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+.coach-reply,
+.coach-feedback {
+  padding: 12px;
+  background: #24272d;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin: 12px 0;
+}
+.practice-coach h4,
+.coach-review-notes h4 {
+  font-size: 12px;
+  margin: 0 0 6px;
+}
+.coach-reply p,
+.coach-feedback p,
+.coach-review-notes p {
+  white-space: pre-wrap;
+  line-height: 1.65;
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.coach-local-notes {
+  margin: 14px 0;
+}
+.coach-task {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.coach-review-notes {
+  margin-top: 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+}
+.coach-review-notes > .muted {
+  font-size: 12px;
+}
+.workspace.practice .present-notes {
+  min-width: 285px;
+}
+@media (max-width: 600px) {
+  .workspace.practice .present-notes {
+    display: block;
+    height: 245px;
+    min-width: 0;
+    max-height: 46vh;
+  }
+  .workspace.practice .present-notes .next-slide {
+    max-width: 125px;
+    margin-bottom: 12px;
+  }
+  .workspace.practice .present-stage {
+    min-height: 150px;
+  }
+  .practice-coach {
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .otter-avatar {
+    width: 48px;
+    height: 48px;
+  }
+  .coach-review-notes {
+    padding: 14px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .practice-coach * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .coach-actions .button,
+  .practice-coach > .button {
+    min-height: 44px;
+  }
+  .coach-consent {
+    min-height: 44px;
+    align-items: center;
+  }
+}

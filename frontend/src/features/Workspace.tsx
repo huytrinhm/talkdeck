@@ -4,7 +4,6 @@ import {
   Mic,
   Timer,
   Presentation,
-  Palette,
   Monitor,
   SlidersHorizontal,
   Download,
@@ -17,8 +16,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize,
-  Square,
+  MonitorOff,
+  MonitorCheck,
   Undo2,
+  Settings,
 } from "lucide-react";
 import {
   Button,
@@ -33,10 +34,16 @@ import {
   TabsContent,
 } from "../components/ui";
 import { SlideView } from "../components/SlideView";
-import { SlideEditor } from "../components/SlideEditor";
-import { Filmstrip, dispatchSlideShortcut } from "../components/Filmstrip";
+import { VoiceCapsule } from "./workspace/VoiceCapsule";
+import { Transcript } from "./workspace/Transcript";
+import { usePhoneVoice } from "./PhoneVoice";
+import type { SettingsTab } from "./GlobalSettings";
+import { phoneVoice } from "../services/phoneVoice";
+import { Filmstrip } from "../components/Filmstrip";
 import { Audience } from "../components/Audience";
 import { Materials } from "./Materials";
+import { PracticeCoach } from "./PracticeCoach";
+import { PracticeCoachController } from "../services/practiceCoach";
 import { Review } from "./Review";
 import { Annotations } from "./Annotations";
 import { type SpeechState } from "../services/speech";
@@ -50,9 +57,9 @@ import {
 import { exportProject } from "../services/export";
 import {
   uid,
+  blankSlide,
   type Project,
   type Slide,
-  type Theme,
   type Layout,
   type TranscriptSegment,
 } from "../domain/types";
@@ -97,53 +104,32 @@ function IconButton({
     </Button>
   );
 }
-function Transcript({
-  segments,
-  interim,
-}: {
-  segments: TranscriptSegment[];
-  interim: string;
-}) {
-  return (
-    <div className="transcript">
-      {!segments.length && !interim && (
-        <p className="idle">Your words appear here.</p>
-      )}
-      {segments.map((s) => (
-        <p key={s.id}>
-          <time>
-            {formatTime(s.start)} – {formatTime(s.end)}
-          </time>
-          {s.text}
-          {s.provisional && (
-            <small className="muted"> · Unfinished phrase</small>
-          )}
-        </p>
-      ))}
-      {interim && <p className="interim">{interim}</p>}
-    </div>
-  );
-}
 export function Workspace({
   project,
   mode,
   onChange,
   onMode,
   onBack,
+  onAppSettings,
+  speechSuspended = false,
+  claimInputStart,
 }: {
   project: Project;
   mode: Mode;
   onChange: (p: Project) => void;
   onMode: (m: Mode) => void;
   onBack: () => void;
+  onAppSettings?: (tab?: SettingsTab) => void;
+  speechSuspended?: boolean;
+  claimInputStart?: () => boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(
     project.slides[0]?.id ?? null,
   );
-  const [sidebar, setSidebar] = useState(mode === "create"),
+  const [sidebar, setSidebar] = useState(true),
     [tab, setTab] = useState("transcript");
-  const [settings, setSettings] = useState(false),
-    [editing, setEditing] = useState<Slide | null>(null);
+  const [settings, setSettings] = useState(false);
+  const { source: voiceSource } = usePhoneVoice();
   const [audience, setAudience] = useState(false),
     [fullscreen, setFullscreen] = useState(false),
     [black, setBlack] = useState(false);
@@ -153,6 +139,11 @@ export function Workspace({
     status: "idle",
     muted: false,
   });
+  const sessionTranscriptIds = useRef(new Set<string>());
+  const captureSession = useRef<{
+    id: string;
+    source: "device" | "phone";
+  } | null>(null);
   const interimRef = useRef("");
   const [interim, setInterim] = useState(""),
     [level, setLevel] = useState(0),
@@ -177,12 +168,50 @@ export function Workspace({
     utteranceTarget = useRef<"agent" | "audience" | null>(null),
     utteranceSlide = useRef<string | null>(null);
   const practice = useRef({
+    id: uid(),
     snapshot: structuredClone(project.slides),
     transcript: [] as TranscriptSegment[],
   });
+  const [coach] = useState(
+    () =>
+      new PracticeCoachController(() => ({
+        projectId: projectRef.current.id,
+        rehearsalId: practice.current.id,
+        slideId: selectionRef.current ?? "",
+        slideTitle:
+          projectRef.current.slides.find((s) => s.id === selectionRef.current)
+            ?.title ?? "",
+        transcript: practice.current.transcript.map(
+          ({ text, slideId, start, end }) => ({ text, slideId, start, end }),
+        ),
+      })),
+  );
+  useEffect(() => {
+    const pauseCoach = () => {
+      if (mode === "practice") {
+        preserveRef.current();
+        speech.current?.pause();
+        coach.pause();
+      }
+    };
+    const hide = () => {
+      if (document.hidden) pauseCoach();
+    };
+    const leave = () => coach.dispose();
+    window.addEventListener("pagehide", leave);
+    window.addEventListener("blur", pauseCoach);
+    document.addEventListener("visibilitychange", hide);
+    return () => {
+      coach.dispose();
+      window.removeEventListener("pagehide", leave);
+      window.removeEventListener("blur", pauseCoach);
+      document.removeEventListener("visibilitychange", hide);
+    };
+  }, [coach, mode]);
   const preserveRef = useRef<() => void>(() => {});
   const stage = useRef<HTMLDivElement>(null),
     frame = useRef<HTMLDivElement>(null);
+  const speechSourceInitialized = useRef(false);
   const enabled = ["create", "present", "practice"].includes(mode);
   const selected =
     project.slides.find((s) => s.id === selectedId) ?? project.slides[0];
@@ -245,72 +274,184 @@ export function Workspace({
   }
   useEffect(() => {
     if (!enabled) return;
-    const adapter = frontendAdapters.createSpeech({
-      onState: (state) => {
-        settleTime();
-        active.current = state.status === "listening" && !state.muted;
-        setSpeechState(state);
-      },
-      onInterim: (text) => {
-        if (!text && interimRef.current.trim()) preserveRef.current();
-        interimRef.current = text;
-        if (!text) {
+    const createSpeech =
+      voiceSource === "phone"
+        ? phoneVoice.createSpeech.bind(phoneVoice)
+        : frontendAdapters.createSpeech;
+    let live = true,
+      generation = 0,
+      requested = false,
+      muted = false,
+      resumeAfterMute = false;
+    let source: SpeechSessionPort | null = null;
+    const valid = (epoch: number) => live && requested && generation === epoch;
+    const create = () => {
+      const epoch = ++generation;
+      return createSpeech({
+        onState: (state) => {
+          if (!valid(epoch)) return;
+          if (state.status !== "listening" || state.muted)
+            preserveRef.current();
+          settleTime();
+          active.current = state.status === "listening" && !state.muted;
+          muted = state.muted;
+          if (["idle", "error"].includes(state.status)) {
+            requested = false;
+            generation++;
+          }
+          setSpeechState(state);
+        },
+        onInterim: (text) => {
+          if (!valid(epoch) || !active.current) return;
+          if (!text && interimRef.current.trim()) preserveRef.current();
+          interimRef.current = text;
+          if (!text) {
+            utteranceTarget.current = null;
+            utteranceSlide.current = null;
+            utteranceStart.current = elapsedRef.current;
+          }
+          if (text && !utteranceTarget.current) {
+            utteranceTarget.current = targetRef.current;
+            utteranceSlide.current = selectionRef.current;
+            utteranceStart.current = elapsedRef.current;
+          }
+          setInterim(text);
+        },
+        onLevel: (value) => {
+          if (valid(epoch) && active.current) setLevel(value);
+        },
+        onFinal: (text) => {
+          if (!valid(epoch) || !active.current || !text.trim()) return;
+          const p = projectRef.current;
+          const selected = utteranceSlide.current ?? selectionRef.current;
+          const start = utteranceStart.current;
+          const result = frontendAdapters.interpret(
+            p,
+            selected,
+            text,
+            utteranceTarget.current ?? targetRef.current,
+            mode === "practice"
+              ? "practice"
+              : mode === "present"
+                ? "present"
+                : "create",
+          );
+          const segment = {
+            id: uid(),
+            slideId: result.selectedId ?? selected ?? "",
+            text,
+            start,
+            end: Math.max(start, elapsedRef.current),
+            inputSource: captureSession.current?.source,
+            captureSessionId: captureSession.current?.id,
+            capturedAt: Date.now(),
+          };
+          sessionTranscriptIds.current.add(segment.id);
+          if (mode === "practice") {
+            practice.current.transcript.push(segment);
+            const next = { ...p, transcript: [...p.transcript, segment] };
+            projectRef.current = next;
+            onChange(next);
+          } else
+            mutateRef.current({
+              ...result.project,
+              transcript: [...result.project.transcript, segment],
+            });
+          setSelectedId(result.selectedId);
+          selectionRef.current = result.selectedId;
+          interimRef.current = "";
+          setInterim("");
           utteranceTarget.current = null;
           utteranceSlide.current = null;
           utteranceStart.current = elapsedRef.current;
-        }
-        if (text && !utteranceTarget.current) {
-          utteranceTarget.current = targetRef.current;
-          utteranceSlide.current = selectionRef.current;
-          utteranceStart.current = elapsedRef.current;
-        }
-        setInterim(text);
+          if (result.message) show(result.message);
+        },
+      });
+    };
+    // Rebuild each capture session so callbacks from a cancelled session remain invalid
+    // even after the user explicitly resumes. Invalidate BEFORE disposal callbacks.
+    const suspend = (status: "paused" | "idle", message?: string) => {
+      preserveRef.current();
+      requested = false;
+      generation++;
+      settleTime();
+      active.current = false;
+      const previous = source;
+      source = null;
+      previous?.dispose();
+      setLevel(0);
+      setSpeechState({ status, muted, message });
+    };
+    const start = () => {
+      if (!live || muted) return;
+      suspend("paused");
+      requested = true;
+      captureSession.current = {
+        id: uid(),
+        source: voiceSource === "phone" ? "phone" : "device",
+      };
+      source = create();
+      source.start();
+    };
+    const adapter: SpeechSessionPort = {
+      start,
+      resume: start,
+      retry: start,
+      pause: () => {
+        resumeAfterMute = false;
+        suspend("paused", "Microphone paused.");
       },
-      onLevel: setLevel,
-      onFinal: (text) => {
-        const p = projectRef.current;
-        const selected = utteranceSlide.current ?? selectionRef.current;
-        const start = utteranceStart.current;
-        const result = frontendAdapters.interpret(
-          p,
-          selected,
-          text,
-          utteranceTarget.current ?? targetRef.current,
-          mode === "practice"
-            ? "practice"
-            : mode === "present"
-              ? "present"
-              : "create",
-        );
-        const segment = {
-          id: uid(),
-          slideId: result.selectedId ?? selected ?? "",
-          text,
-          start,
-          end: Math.max(start, elapsedRef.current),
-        };
-        if (mode === "practice") {
-          practice.current.transcript.push(segment);
-          const next = { ...p, transcript: [...p.transcript, segment] };
-          projectRef.current = next;
-          onChange(next);
-        } else
-          mutateRef.current({
-            ...result.project,
-            transcript: [...result.project.transcript, segment],
-          });
-        setSelectedId(result.selectedId);
-        selectionRef.current = result.selectedId;
-        interimRef.current = "";
-        setInterim("");
-        utteranceTarget.current = null;
-        utteranceSlide.current = null;
-        utteranceStart.current = elapsedRef.current;
-        if (result.message) show(result.message);
+      stop: () => {
+        resumeAfterMute = false;
+        suspend("idle");
       },
-    });
+      setMuted: (value) => {
+        if (!live) return;
+        if (voiceSource === "phone") {
+          preserveRef.current();
+          if (source) source.setMuted(value);
+          else phoneVoice.setMuted(value);
+          muted = value;
+          setSpeechState((state) => ({ ...state, muted: value }));
+          return;
+        }
+        if (value === muted) return;
+        if (value) {
+          resumeAfterMute = requested;
+          muted = true;
+          suspend("paused", "Microphone muted.");
+        } else {
+          muted = false;
+          const resume = resumeAfterMute;
+          resumeAfterMute = false;
+          if (resume) start();
+          else
+            setSpeechState({
+              status: "paused",
+              muted: false,
+              message: "Microphone paused.",
+            });
+        }
+      },
+      dispose: () => {
+        if (!live) return;
+        preserveRef.current();
+        requested = false;
+        generation++;
+        live = false;
+        resumeAfterMute = false;
+        active.current = false;
+        source?.dispose();
+        source = null;
+      },
+    };
     speech.current = adapter;
-    adapter.start();
+    if (!speechSourceInitialized.current) {
+      speechSourceInitialized.current = true;
+      const intended = claimInputStart?.() ?? false;
+      if (!speechSuspended && intended) adapter.start();
+      else adapter.pause();
+    } else adapter.pause();
     const leave = () => {
       preserveRef.current();
       adapter.dispose();
@@ -325,7 +466,7 @@ export function Workspace({
     };
     // a Workspace instance is keyed by project+mode; callbacks read latest refs
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [voiceSource]);
   const payload: AudiencePayload = {
     projectId: project.id,
     slide: selected ? publicSlide(selected) : null,
@@ -358,7 +499,11 @@ export function Workspace({
       start: utteranceStart.current,
       end: elapsedRef.current,
       provisional: true,
+      inputSource: captureSession.current?.source,
+      captureSessionId: captureSession.current?.id,
+      capturedAt: Date.now(),
     };
+    sessionTranscriptIds.current.add(segment.id);
     if (mode === "practice") practice.current.transcript.push(segment);
     mutateRef.current(
       {
@@ -403,6 +548,8 @@ export function Workspace({
         elapsedRef.current,
         projectRef.current.materials,
       );
+      rehearsal.id = practice.current.id;
+      coach.finish(rehearsal.id);
       mutate(
         {
           ...projectRef.current,
@@ -413,6 +560,13 @@ export function Workspace({
       onMode("review");
     } else onMode("edit");
   }
+  function openAppSettings(tab: SettingsTab = "connections") {
+    preserveUnfinished();
+    speech.current?.pause();
+    coach.pause();
+    setHeld(false);
+    onAppSettings?.(tab);
+  }
   function togglePause() {
     if (
       speechState.status === "listening" ||
@@ -420,7 +574,10 @@ export function Workspace({
     ) {
       preserveUnfinished();
       speech.current?.pause();
-    } else speech.current?.resume();
+    } else {
+      if (mode === "practice") coach.resumePractice();
+      speech.current?.resume();
+    }
   }
   async function toggleFullscreen() {
     if (fullscreen) {
@@ -443,21 +600,6 @@ export function Workspace({
     const key = (e: KeyboardEvent) => {
       if (isEditable(e.target) || hasOverlay() || audience) return;
       if (e.ctrlKey || e.metaKey || e.altKey) {
-        if (
-          (e.ctrlKey || e.metaKey) &&
-          ["c", "x", "v"].includes(e.key.toLowerCase()) &&
-          ["edit", "create"].includes(mode)
-        ) {
-          e.preventDefault();
-          dispatchSlideShortcut(
-            e.key.toLowerCase() === "c"
-              ? "copy"
-              : e.key.toLowerCase() === "x"
-                ? "cut"
-                : "paste",
-          );
-          return;
-        }
         if (
           (e.ctrlKey || e.metaKey) &&
           e.key.toLowerCase() === "z" &&
@@ -515,6 +657,7 @@ export function Workspace({
     const blur = () => {
       setHeld(false);
       setTarget("audience");
+      if (enabled && voiceSource !== "phone") speech.current?.pause();
     };
     document.addEventListener("keydown", key);
     document.addEventListener("keyup", up);
@@ -525,72 +668,20 @@ export function Workspace({
       window.removeEventListener("blur", blur);
     };
   });
-  const busy = ["connecting", "listening"].includes(speechState.status);
   const voice = (
-    <div
-      className={`voice-capsule ${target === "agent" || held ? "agent" : ""} ${speechState.muted ? "muted" : ""}`}
-    >
-      <IconButton
-        label={
-          speechState.status === "connecting"
-            ? "Cancel microphone"
-            : busy
-              ? "Pause (P)"
-              : "Resume (P)"
-        }
-        onClick={togglePause}
-      >
-        {busy ? <Pause /> : <Play />}
-      </IconButton>
-      <div
-        className="waveform"
-        aria-label={busy ? "Microphone level" : "Microphone idle"}
-      >
-        {Array.from({ length: 18 }, (_, i) => (
-          <span
-            key={i}
-            style={{
-              height:
-                busy && !speechState.muted
-                  ? Math.max(
-                      3,
-                      Math.min(
-                        30,
-                        level * 100 * (0.5 + Math.sin(i * 1.7) ** 2),
-                      ),
-                    )
-                  : 3,
-              background: busy ? "#b4cff0" : undefined,
-            }}
-          />
-        ))}
-      </div>
-      {mode === "create" && (
-        <Button
-          className="voice-target"
-          aria-pressed={target === "agent" || held}
-          disabled={!selected}
-          onClick={() =>
-            setTarget((v) => (v === "agent" ? "audience" : "agent"))
-          }
-        >
-          To the {target === "agent" || held ? "agent" : "audience"}
-          <kbd>Space</kbd>
-        </Button>
-      )}
-      <IconButton
-        label={speechState.muted ? "Unmute (M)" : "Mute (M)"}
-        pressed={speechState.muted}
-        onClick={() =>
-          (() => {
-            preserveUnfinished();
-            speech.current?.setMuted(!speechState.muted);
-          })()
-        }
-      >
-        {speechState.muted ? <MicOff /> : <Mic />}
-      </IconButton>
-    </div>
+    <VoiceCapsule
+      state={speechState}
+      level={level}
+      agent={target === "agent" || held}
+      showTarget={mode === "create"}
+      canTarget={Boolean(selected)}
+      onPause={togglePause}
+      onTarget={() => setTarget((v) => (v === "agent" ? "audience" : "agent"))}
+      onMute={() => {
+        preserveUnfinished();
+        speech.current?.setMuted(!speechState.muted);
+      }}
+    />
   );
   if (mode === "review")
     return (
@@ -633,7 +724,7 @@ export function Workspace({
             />
           </label>
           <label className="field">
-            System prompt
+            Slide instructions
             <Textarea
               value={project.systemPrompt}
               onChange={(e) =>
@@ -653,7 +744,7 @@ export function Workspace({
   return (
     <>
       <div
-        className={`workspace ${mode === "create" ? "talk" : ""} ${mode === "present" || mode === "practice" ? "present" : ""} ${(target === "agent" || held) && mode === "create" ? "agent-mode" : ""}`}
+        className={`workspace ${mode === "create" ? "talk" : mode === "practice" ? "practice" : ""} ${mode === "present" || mode === "practice" ? "present" : ""} ${(target === "agent" || held) && mode === "create" ? "agent-mode" : ""}`}
         inert={audience || fullscreen ? true : undefined}
       >
         <header className="workspace-header">
@@ -672,6 +763,12 @@ export function Workspace({
           </h1>
           {mode === "present" || mode === "practice" ? (
             <div className="header-end">
+              <IconButton
+                label="App settings"
+                onClick={() => openAppSettings()}
+              >
+                <Settings />
+              </IconButton>
               <span className="timer">{formatTime(elapsed)}</span>
               <IconButton
                 label="Audience (A)"
@@ -691,9 +788,18 @@ export function Workspace({
                   Finish
                 </Button>
               ) : (
-                <Button variant="primary" onClick={() => onMode("create")}>
+                <Button
+                  variant="primary"
+                  aria-label="Talk to generate"
+                  onClick={() => onMode("create")}
+                >
                   <Mic />
-                  <span className="talk-label">Talk to generate</span>
+                  <span className="talk-label">
+                    <span className="talk-full">Talk to generate</span>
+                    <span className="talk-short" aria-hidden="true">
+                      Talk
+                    </span>
+                  </span>
                 </Button>
               )}
               <Button
@@ -715,34 +821,6 @@ export function Workspace({
                 <span className="action-label">Present</span>
               </Button>
               <span className="header-divider" />
-              <Menu
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Theme"
-                    title="Theme"
-                  >
-                    <Palette />
-                  </Button>
-                }
-              >
-                {(["paper", "midnight", "lavender"] as Theme[]).map((theme) => (
-                  <MenuItem
-                    key={theme}
-                    onSelect={() =>
-                      mutate({
-                        ...project,
-                        theme,
-                        slides: project.slides.map((s) => ({ ...s, theme })),
-                      })
-                    }
-                  >
-                    {project.theme === theme && <Check />}
-                    {theme[0].toUpperCase() + theme.slice(1)}
-                  </MenuItem>
-                ))}
-              </Menu>
               <IconButton
                 label="Audience (A)"
                 disabled={!selected}
@@ -750,8 +828,17 @@ export function Workspace({
               >
                 <Monitor />
               </IconButton>
-              <IconButton label="Settings" onClick={() => setSettings(true)}>
+              <IconButton
+                label="Project settings"
+                onClick={() => setSettings(true)}
+              >
                 <SlidersHorizontal />
+              </IconButton>
+              <IconButton
+                label="App settings"
+                onClick={() => openAppSettings()}
+              >
+                <Settings />
               </IconButton>
               <Menu
                 trigger={
@@ -801,6 +888,17 @@ export function Workspace({
                 )}
               </div>
               <aside className="present-notes">
+                {mode === "practice" && (
+                  <PracticeCoach
+                    controller={coach}
+                    onPausePractice={() => {
+                      preserveUnfinished();
+                      speech.current?.pause();
+                    }}
+                    onResumePractice={() => speech.current?.resume()}
+                    onSettings={() => openAppSettings("coach")}
+                  />
+                )}
                 <div>
                   <span className="muted next-label">Next slide</span>
                   {project.slides[index + 1] ? (
@@ -816,24 +914,19 @@ export function Workspace({
                   )}
                 </div>
                 <div>
-                  <label htmlFor="speaker-notes">Speaker notes</label>
-                  <Textarea
+                  <h3 className="speaker-notes-heading">Speaker notes</h3>
+                  <div
                     id="speaker-notes"
-                    value={selected?.notes ?? ""}
-                    onChange={(e) =>
-                      mutate({
-                        ...project,
-                        slides: project.slides.map((s) =>
-                          s.id === selected?.id
-                            ? { ...s, notes: e.target.value }
-                            : s,
-                        ),
-                      })
-                    }
-                  />
-                  <details>
+                    className="speaker-notes-readonly"
+                    aria-label="Speaker notes"
+                  >
+                    {selected?.notes || "—"}
+                  </div>
+                  <details className="presenter-transcript" open>
                     <summary>Transcript</summary>
                     <Transcript
+                      variant="presenter"
+                      sessionIds={sessionTranscriptIds.current}
                       segments={
                         mode === "practice"
                           ? practice.current.transcript
@@ -857,9 +950,6 @@ export function Workspace({
                     ref={frame}
                     tabIndex={0}
                     aria-label="Slide canvas"
-                    onDoubleClick={() =>
-                      selected && setEditing(structuredClone(selected))
-                    }
                   >
                     {selected ? (
                       <SlideView slide={selected} />
@@ -908,7 +998,8 @@ export function Workspace({
                   )}
                 {enabled && speechState.status === "connecting" && (
                   <div className="speech-status">
-                    Connecting microphone… Allow access when prompted
+                    {speechState.message ??
+                      "Connecting microphone… Allow access when prompted"}
                   </div>
                 )}
               </div>
@@ -929,13 +1020,14 @@ export function Workspace({
                     <TabsContent value="transcript">
                       <Transcript
                         segments={project.transcript}
+                        sessionIds={sessionTranscriptIds.current}
                         interim={interim}
                       />
                     </TabsContent>
                     <TabsContent value="context">
                       <div className="context-content">
                         <label className="field">
-                          System prompt
+                          Slide instructions
                           <Textarea
                             maxLength={6000}
                             value={project.systemPrompt}
@@ -988,13 +1080,25 @@ export function Workspace({
               <Maximize />
             </IconButton>
             {mode === "present" && (
-              <IconButton
-                label="Black screen (B)"
-                pressed={black}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="blackout-control"
+                aria-label={
+                  black
+                    ? "Restore audience screen (B)"
+                    : "Black out audience screen (B)"
+                }
+                title={
+                  black
+                    ? "Restore audience screen (B)"
+                    : "Black out audience screen (B)"
+                }
+                aria-pressed={black}
                 onClick={() => setBlack((v) => !v)}
               >
-                <Square />
-              </IconButton>
+                {black ? <MonitorCheck /> : <MonitorOff />}
+              </Button>
             )}
             <span role="status" className="muted">
               {speechState.status === "listening"
@@ -1008,7 +1112,17 @@ export function Workspace({
               project={project}
               selectedId={selected?.id ?? null}
               onSelect={setSelectedId}
-              onChange={mutate}
+              onAdd={() => {
+                const slide = blankSlide(projectRef.current.theme);
+                const slides = [...projectRef.current.slides];
+                const current = slides.findIndex(
+                  (s) => s.id === selectionRef.current,
+                );
+                slides.splice(current + 1, 0, slide);
+                mutate({ ...projectRef.current, slides });
+                selectionRef.current = slide.id;
+                setSelectedId(slide.id);
+              }}
               onUndo={undo}
               canUndo={history.length > 0}
               onNavigate={() => {
@@ -1064,12 +1178,6 @@ export function Workspace({
         onOpenChange={setSettings}
         title="Project settings"
       >
-        <p className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>
-          This local frontend uses browser speech recognition and deterministic
-          slide rules. It is not connected to an AI generation service. Your
-          browser may use an online speech service; transcripts are saved on
-          this device, and raw audio is not stored.
-        </p>
         <label className="field">
           Title
           <Input
@@ -1088,29 +1196,20 @@ export function Workspace({
             }
           />
         </label>
+        <label className="field">
+          Slide instructions
+          <Textarea
+            maxLength={6000}
+            value={project.systemPrompt}
+            onChange={(e) =>
+              mutate({ ...project, systemPrompt: e.target.value })
+            }
+          />
+        </label>
         <div className="form-actions">
           <Button onClick={() => setSettings(false)}>Done</Button>
         </div>
       </Modal>
-      <SlideEditor
-        slide={editing}
-        onClose={() => setEditing(null)}
-        onSave={(slide) =>
-          mutate({
-            ...projectRef.current,
-            slides: projectRef.current.slides.map((s) =>
-              s.id === slide.id ? slide : s,
-            ),
-          })
-        }
-        onRemove={() => {
-          const slides = projectRef.current.slides.filter(
-            (s) => s.id !== editing?.id,
-          );
-          mutate({ ...projectRef.current, slides });
-          setSelectedId(slides[Math.min(index, slides.length - 1)]?.id ?? null);
-        }}
-      />
       {notice && (
         <div role="status" className="notice">
           {notice}

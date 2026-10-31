@@ -34,6 +34,10 @@ export interface TranscriptSegment {
   start: number;
   end: number;
   provisional?: boolean;
+  /** Absent on legacy saved entries; never infer their capture source. */
+  inputSource?: "device" | "phone";
+  captureSessionId?: string;
+  capturedAt?: number;
 }
 export interface Proposal {
   id: string;

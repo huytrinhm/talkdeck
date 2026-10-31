@@ -1,3 +1,5 @@
+> Current stable status and pinned teammate contracts: [integration-readiness.md](integration-readiness.md). Earlier details/counts below describe the original baseline.
+
 # Frontend integration boundaries
 
 **All external service contracts remain UNCONFIRMED.** The local app works through reference adapters. Nothing here establishes backend endpoints or teammate guarantees.

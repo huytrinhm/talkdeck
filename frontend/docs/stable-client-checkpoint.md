@@ -1,0 +1,18 @@
+# Stable client correction
+
+This source supersedes the public b187 UI and P0 client candidate0773 without overwriting their immutable archives. It combines raw phone/BYOK client integration with essential stability corrections; it does not include unfinished pet/Deep Refine integration.
+
+## Current behavior
+- Talk/Practice/Present entered by an explicit UI action may start the selected input. Direct speech-route entry, reload, back navigation and source selection require a fresh Resume. No idle recognizer or raw consumer is constructed.
+- Recognition results are accepted only after actual listening acknowledgement for the current explicitly requested capture. Pause/Stop/cancel/settings/route cleanup invalidate callbacks before disposal. Each Resume creates a fresh capture generation. Terminal error/end cannot restart capture via late callbacks. Device blur pauses; external phone input keeps separate explicit capture lifecycle. No physical media or provider tests were performed.
+- Live current-line text clears at pause/end/route boundaries. User-captured unfinished text is preserved as an unfinished saved phrase, never interpreted as a command. Persisted history is clearly labelled Saved transcript, separate from current-session narration. New entries carry source, capture-session ID and timestamp; legacy entries remain intact without invented provenance.
+- Structural Add slide is restored: creates/selects/focuses a unique slide and supports actual Undo. Undo restores focus. Direct manual slide content/layout/theme editor and exposed cut/paste/delete/reorder commands are absent. Private drawing annotations and project/source settings remain.
+- Blackout/Restore audience display uses distinct icons only, with tooltip, accessible name and pressed state. No inert coach feedback/avatar panel in Present or unavailable/initial Practice; a genuine configured coach can expose a concise functional entry. Empty unavailable configuration remains in global Settings.
+- Deep Refine generation is not wired to an agreed deployed editable-variation contract. Its inert menu action is hidden. No fake results or guessed endpoint. Pet/agent implementation is excluded from this stable candidate.
+
+## Evidence and limits
+Pre-fix tests reproduced results before recognition onstart, route-mount automatic capture, and acceptance of callback paths without active-session guards. Public b187 reload automatically restarted capture under mocked speech APIs with physical microphone blocked. This proves a deployed lifecycle defect; the user's screenshot caption alone cannot establish the exact provenance of their words. Hosting independently found no fixture-seeding service or fixture markers in the public bundle.
+
+Fresh read-only review found three Important edge cases (phone unmute forwarding, terminal callbacks, and mute→explicit Pause→Unmute restart). All resolved; terminal/phone tests pass, last mute case reproduced RED then GREEN. Reviewer independently ran in-memory wrapper probes; full integration/build results remain main's evidence. Minor Undo-focus finding also fixed.
+
+P0 phone/BYOK wire is unchanged from0773. Actual PeerConnections with synthetic oscillator tracks and mocked HTTP demonstrate raw audio transport, not physical microphone reliability or speech processing. Raw phone speech processing remains unavailable, clearly stated. BYOK Save is storage acknowledgement; explicit Check performs credential/model-list access only, not inference readiness/credits. Hosting owns the actual backend/resource activation and publication under the parent's precisely scoped approval. This file does not claim runtime activation or real-key testing.

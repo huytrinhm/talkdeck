@@ -1,0 +1,166 @@
+.phone-settings {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.phone-settings h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+.phone-settings h3 svg {
+  width: 18px;
+  height: 18px;
+}
+.voice-source-options,
+.phone-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.phone-settings .muted {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.phone-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin: 12px 0;
+}
+.connection-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.connection-dot.connected {
+  background: #a2d8ba;
+}
+.connection-dot.connecting,
+.connection-dot.pairing {
+  background: #e0c58c;
+}
+.connection-dot.error {
+  background: #f3a5a5;
+}
+.phone-setup ol {
+  padding-left: 20px;
+  margin: 14px 0;
+}
+.phone-setup li {
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.phone-setup li p {
+  margin: 5px 0;
+}
+.phone-sender-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.phone-notice {
+  font-size: 13px;
+  line-height: 1.5;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+.pairing-code {
+  margin: 14px 0;
+}
+.pairing-code input {
+  margin-top: 6px;
+  font-family: monospace;
+  letter-spacing: 0.12em;
+}
+.pairing-code [role="status"] {
+  font-size: 12px;
+  margin-left: 8px;
+}
+.phone-sender {
+  min-height: 100dvh;
+  padding: 24px;
+  background: var(--background);
+  color: var(--foreground);
+}
+.phone-brand {
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: none;
+}
+.phone-sender-card {
+  max-width: 440px;
+  margin: 48px auto;
+}
+.phone-hero-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--accent);
+}
+.phone-sender h1 {
+  font-size: 24px;
+  line-height: 1.25;
+  margin: 16px 0;
+}
+.phone-sender .muted {
+  line-height: 1.6;
+  font-size: 14px;
+}
+.phone-sender form {
+  margin: 24px 0;
+  display: grid;
+  gap: 12px;
+}
+.phone-sender .button {
+  min-height: 44px;
+}
+.sender-mic-status {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  margin: 24px 0;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.sender-mic-status span {
+  grid-column: 2;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sender-privacy {
+  margin-top: 24px;
+}
+.voice-privacy {
+  margin-top: 18px;
+  font-size: 13px;
+}
+.voice-privacy summary {
+  cursor: pointer;
+}
+.voice-privacy p {
+  line-height: 1.5;
+}
+@media (max-width: 480px) {
+  .phone-sender {
+    padding: 20px;
+  }
+  .phone-sender-card {
+    margin-top: 36px;
+  }
+  .phone-sender .phone-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .phone-settings .button {
+    min-height: 40px;
+  }
+}
+.qr-pairing-layout{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center;margin:16px 0}.qr-pairing-layout h4{font-size:14px;line-height:1.4;margin:0 0 8px}.pairing-qr{width:160px;min-height:160px;display:grid;place-items:center;border:1px solid var(--border);border-radius:5px;overflow:hidden}.pairing-qr>svg{display:block;width:160px;height:160px;flex-shrink:0}.pairing-qr-placeholder{padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:160px;text-align:center;color:var(--muted)}.pairing-qr-placeholder>svg{width:28px;height:28px}.pairing-qr-placeholder strong{font-size:12px;line-height:1.5;font-weight:500}@media(max-width:480px){.qr-pairing-layout{grid-template-columns:1fr}.pairing-qr{margin:0 auto}}

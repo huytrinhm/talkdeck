@@ -1,4 +1,5 @@
 /** Runtime guards for persisted browser data; invalid data is retained for recovery, never overwritten. */
+import type { Slide } from "./types";
 type RecordValue = Record<string, unknown>;
 const object = (x: unknown): x is RecordValue =>
   typeof x === "object" && x !== null && !Array.isArray(x);
@@ -50,7 +51,12 @@ const transcript = (x: unknown): boolean =>
   typeof x.slideId === "string" &&
   typeof x.text === "string" &&
   finite(x.start) &&
-  finite(x.end);
+  finite(x.end) &&
+  (x.inputSource === undefined ||
+    ["device", "phone"].includes(String(x.inputSource))) &&
+  (x.captureSessionId === undefined ||
+    typeof x.captureSessionId === "string") &&
+  (x.capturedAt === undefined || finite(x.capturedAt));
 const material = (x: unknown): boolean =>
   object(x) &&
   ["id", "name", "type", "blobKey"].every(
@@ -109,3 +115,5 @@ export function validWorkspace(x: unknown): boolean {
     unique(x.folders)
   );
 }
+/** Renderable current frontend model; adapters must map their own service schema explicitly. */
+export const validSlide = (value: unknown): value is Slide => slide(value);

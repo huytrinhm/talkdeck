@@ -111,7 +111,7 @@ export class BrowserSpeechAdapter {
       void this.startMeter(epoch);
     };
     r.onresult = (e) => {
-      if (!valid()) return;
+      if (!valid() || this.status !== "listening" || this.muted) return;
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (!valid()) return;

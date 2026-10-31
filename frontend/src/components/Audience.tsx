@@ -13,13 +13,40 @@ export function Audience({
   onClose?: () => void;
 }) {
   const [remote, setRemote] = useState<AudiencePayload | null>(null);
+  const [fullscreen, setFullscreen] = useState(
+      Boolean(document.fullscreenElement),
+    ),
+    [fullscreenError, setFullscreenError] = useState("");
+  useEffect(() => {
+    const change = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", change);
+    return () => document.removeEventListener("fullscreenchange", change);
+  }, []);
+  const enterFullscreen = () => {
+    if (document.fullscreenElement) return;
+    setFullscreenError("");
+    if (!document.documentElement.requestFullscreen) {
+      setFullscreenError("Fullscreen is unavailable in this browser.");
+      return;
+    }
+    void document.documentElement
+      .requestFullscreen()
+      .catch(() =>
+        setFullscreenError(
+          "Fullscreen could not open. Use your browser’s fullscreen control.",
+        ),
+      );
+  };
   useEffect(() => subscribeAudience(projectId, setRemote), [projectId]);
   const p = payload ?? remote;
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && document.fullscreenElement) {
+        void document.exitFullscreen?.();
+        return;
+      }
       if (e.key === "Escape" || e.key.toLowerCase() === "a") onClose?.();
-      if (e.key.toLowerCase() === "f")
-        void document.documentElement.requestFullscreen?.();
+      if (e.key.toLowerCase() === "f") enterFullscreen();
     };
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);
@@ -28,7 +55,7 @@ export function Audience({
     <main
       className="audience-output"
       aria-label="Audience display"
-      onDoubleClick={() => void document.documentElement.requestFullscreen?.()}
+      onDoubleClick={enterFullscreen}
     >
       {p?.black ? null : p?.ended ? (
         <p className="muted">Presentation ended</p>
@@ -46,17 +73,17 @@ export function Audience({
             Return
           </Button>
         )}
-        <Button
-          aria-label="Fullscreen (F)"
-          onClick={() => void document.documentElement.requestFullscreen?.()}
-        >
-          <Maximize />
-        </Button>
+        {!fullscreen && (
+          <Button aria-label="Fullscreen (F)" onClick={enterFullscreen}>
+            <Maximize />
+          </Button>
+        )}
+        {fullscreenError && <span role="status">{fullscreenError}</span>}
         {onClose && (
           <Button
             onClick={() => {
               const w = window.open(
-                `/audience.html?project=${encodeURIComponent(projectId)}`,
+                `${import.meta.env.BASE_URL}audience.html?project=${encodeURIComponent(projectId)}`,
                 "talkdeck-audience",
               );
               if (!w)

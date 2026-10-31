@@ -13,6 +13,7 @@ import {
   Plus,
   Search,
   Speech,
+  Settings,
 } from "lucide-react";
 import {
   Button,
@@ -167,6 +168,7 @@ export function FolderPicker({
   );
 }
 interface DashboardProps {
+  onAppSettings?: () => void;
   workspace: Workspace;
   onChange: (workspace: Workspace) => void;
   onOpen: (id: string) => void;
@@ -181,6 +183,7 @@ export function Dashboard({
   onNew,
   folderId,
   onFolder,
+  onAppSettings,
 }: DashboardProps) {
   const [query, setQuery] = useState(""),
     [collapsed, setCollapsed] = useState<Set<string>>(() => {
@@ -200,6 +203,7 @@ export function Dashboard({
     } | null>(null),
     [name, setName] = useState(""),
     [error, setError] = useState(""),
+    [folderError, setFolderError] = useState(""),
     [move, setMove] = useState<Project | null>(null),
     [busy, setBusy] = useState(false);
   const search = useRef<HTMLInputElement>(null),
@@ -303,13 +307,13 @@ export function Dashboard({
   function editFolder(parentId: string | null, folder?: Folder) {
     setFolderEdit({ parentId, folder });
     setName(folder?.name || "");
-    setError("");
+    setFolderError("");
   }
   function saveFolder() {
     if (!folderEdit) return;
     const trimmed = name.trim();
     if (!trimmed) {
-      setError("Enter a folder name.");
+      setFolderError("Enter a folder name.");
       return;
     }
     if (
@@ -320,7 +324,7 @@ export function Dashboard({
           f.name.toLowerCase() === trimmed.toLowerCase(),
       )
     ) {
-      setError("A folder with this name already exists here.");
+      setFolderError("A folder with this name already exists here.");
       return;
     }
     const folders = folderEdit.folder
@@ -338,6 +342,7 @@ export function Dashboard({
         next.delete(folderEdit.parentId!);
         return next;
       });
+    setFolderError("");
     setFolderEdit(null);
   }
   async function duplicate(project: Project) {
@@ -520,6 +525,12 @@ export function Dashboard({
             </p>
           )}
         </div>
+        <div className="app-settings-footer">
+          <Button variant="ghost" onClick={onAppSettings}>
+            <Settings />
+            App settings
+          </Button>
+        </div>
       </aside>
       <main className="dashboard-main">
         <header className="project-search-header">
@@ -669,7 +680,10 @@ export function Dashboard({
       <Modal
         open={!!folderEdit}
         onOpenChange={(v) => {
-          if (!v) setFolderEdit(null);
+          if (!v) {
+            setFolderError("");
+            setFolderEdit(null);
+          }
         }}
         title={folderEdit?.folder ? "Rename folder" : "New folder"}
       >
@@ -685,17 +699,26 @@ export function Dashboard({
           <Input
             id="folder-name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              setFolderError("");
+            }}
             maxLength={80}
             autoFocus
           />
-          {error && (
+          {folderError && (
             <p className="form-error" role="alert">
-              {error}
+              {folderError}
             </p>
           )}
           <div className="project-dialog-actions">
-            <Button type="button" onClick={() => setFolderEdit(null)}>
+            <Button
+              type="button"
+              onClick={() => {
+                setFolderError("");
+                setFolderEdit(null);
+              }}
+            >
               Cancel
             </Button>
             <Button variant="primary" type="submit">
@@ -843,11 +866,11 @@ export function ProjectSetup({
             </div>
             <details className="setup-instructions">
               <summary>
-                Agent instructions
+                Slide instructions
                 <ChevronDown />
               </summary>
               <div className="setup-field">
-                <label htmlFor="system-prompt">System prompt</label>
+                <label htmlFor="system-prompt">Instructions</label>
                 <Textarea
                   id="system-prompt"
                   rows={7}

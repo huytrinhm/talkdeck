@@ -1,3 +1,5 @@
+> Current stable status and pinned teammate contracts: [integration-readiness.md](integration-readiness.md). Earlier details/counts below describe the original baseline.
+
 # Main UI reconstruction validation
 
 Date: 2026-10-31. This report describes this frontend, not the earlier reconstruction experiments.

@@ -4,15 +4,25 @@ import { Audience } from "./components/Audience";
 import { Dashboard, ProjectSetup } from "./features/Projects";
 import { Workspace as WorkspaceScreen, type Mode } from "./features/Workspace";
 import { repository } from "./services/repository";
+import { GlobalSettings, type SettingsTab } from "./features/GlobalSettings";
+import { initializeConnections } from "./services/connectionsBootstrap";
+import { PhoneSender } from "./features/PhoneVoice";
 import { type Project, type Workspace } from "./domain/types";
 const go = (hash: string) => {
   location.hash = hash;
 };
 export default function App() {
+  const [appSettings, setAppSettings] = useState<SettingsTab | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
     [loadError, setLoadError] = useState(""),
     [saveError, setSaveError] = useState(""),
     [hash, setHash] = useState(location.hash || "#folder/all");
+  const inputIntent = useRef<string | null>(null);
+  const phoneRoute = hash.split("?")[0] === "#phone";
+  useEffect(() => {
+    if (!location.pathname.endsWith("audience.html"))
+      void initializeConnections(phoneRoute ? "sender" : "receiver");
+  }, [phoneRoute]);
   const latest = useRef<Workspace | null>(null),
     lastSaved = useRef<Workspace | null>(null),
     pending = useRef<Promise<void>>(Promise.resolve()),
@@ -48,6 +58,8 @@ export default function App() {
   useEffect(() => {
     load();
     const navigate = () => {
+      if (inputIntent.current && inputIntent.current !== location.hash)
+        inputIntent.current = null;
       if (timer.current) {
         clearTimeout(timer.current);
         timer.current = null;
@@ -126,6 +138,7 @@ export default function App() {
         projectId={new URLSearchParams(location.search).get("project") ?? ""}
       />
     );
+  if (hash.split("?")[0] === "#phone") return <PhoneSender />;
   if (loadError)
     return (
       <main className="loading-page">
@@ -160,8 +173,21 @@ export default function App() {
           project={project}
           mode={mode}
           onChange={updateProject}
-          onMode={(m) => go(`#project/${project.id}/${m}`)}
+          onMode={(m) => {
+            const route = `#project/${project.id}/${m}`;
+            inputIntent.current = ["create", "practice", "present"].includes(m)
+              ? route
+              : null;
+            go(route);
+          }}
+          claimInputStart={() => {
+            const allowed = inputIntent.current === hash;
+            inputIntent.current = null;
+            return allowed;
+          }}
           onBack={() => go("#folder/all")}
+          speechSuspended={Boolean(appSettings)}
+          onAppSettings={(tab) => setAppSettings(tab ?? "connections")}
         />
       );
     else {
@@ -196,6 +222,7 @@ export default function App() {
         onChange={change}
         onOpen={(projectId) => go(`#project/${projectId}/edit`)}
         onNew={(folderId) => go(`#new/${folderId ?? "all"}`)}
+        onAppSettings={() => setAppSettings("connections")}
       />
     );
   return (
@@ -213,6 +240,18 @@ export default function App() {
         </div>
       )}
       {content}
+      {appSettings && (
+        <GlobalSettings
+          open
+          initialTab={appSettings}
+          onOpenChange={(open) => {
+            if (!open) setAppSettings(null);
+          }}
+          returnLabel={
+            kind === "project" ? "Back to presentation" : "Back to projects"
+          }
+        />
+      )}
     </>
   );
 }

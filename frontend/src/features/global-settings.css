@@ -1,0 +1,110 @@
+.dialog-content.global-settings {
+  width: min(900px, calc(100vw - 32px));
+  max-width: 900px;
+  padding: 24px;
+}
+.global-settings h2 {
+  font-size: 21px;
+  margin: 0 0 10px;
+}
+.settings-back {
+  margin: 4px 0 20px;
+}
+.settings-layout {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 28px;
+}
+.settings-navigation {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: none;
+  padding: 0;
+  border: 0;
+  gap: 7px;
+  height: auto;
+}
+.settings-navigation [role="tab"] {
+  padding: 12px;
+  text-align: left;
+  border-radius: 5px;
+  white-space: normal;
+}
+.settings-navigation [data-state="active"] {
+  background: var(--selected);
+  color: var(--foreground);
+}
+.settings-body {
+  min-width: 0;
+}
+.settings-body p {
+  line-height: 1.6;
+}
+.settings-body .phone-settings,
+.settings-body .api-key-settings {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+  border-top: 0;
+}
+.settings-body h3 {
+  font-size: 14px;
+}
+.settings-session-note {
+  font-size: 11px;
+  margin-top: 24px;
+}
+.settings-preference {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  cursor: pointer;
+  font-size: 13px;
+}
+.settings-preference input {
+  accent-color: var(--accent);
+  width: 17px;
+  height: 17px;
+}
+.app-settings-footer {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 600px) {
+  .dialog-content.global-settings {
+    padding: 20px 16px;
+  }
+  .settings-layout {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .settings-navigation {
+    flex-direction: row;
+    border-bottom: 1px solid var(--border);
+    overflow: auto;
+    gap: 3px;
+  }
+  .settings-navigation [role="tab"] {
+    flex: 1;
+    padding: 12px 8px;
+  }
+  .settings-back {
+    margin-bottom: 16px;
+  }
+}
+
+.dashboard .project-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+.dashboard .project-sidebar > .talkdeck-wordmark,
+.dashboard .project-sidebar > .all-projects {
+  flex-shrink: 0;
+}
+.dashboard .app-settings-footer {
+  margin-top: auto;
+  padding-bottom: 12px;
+}

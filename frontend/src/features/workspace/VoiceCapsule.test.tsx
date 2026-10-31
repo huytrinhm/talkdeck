@@ -1,0 +1,7 @@
+// @vitest-environment jsdom
+import {afterEach,it,expect,vi} from 'vitest';
+import {render,screen,fireEvent,cleanup} from '@testing-library/react';
+import {VoiceCapsule} from './VoiceCapsule';
+afterEach(cleanup);
+it('shows an actual cancel icon and action while connecting, then pause when listening',()=>{const onPause=vi.fn();const props={level:0,onPause,onTarget:vi.fn(),onMute:vi.fn()};const view=render(<VoiceCapsule {...props} state={{status:'connecting',muted:false}}/>);const cancel=screen.getByRole('button',{name:'Cancel microphone'});expect(cancel.querySelector('[data-slot="cancel-icon"]')).not.toBeNull();fireEvent.click(cancel);expect(onPause).toHaveBeenCalledTimes(1);view.rerender(<VoiceCapsule {...props} state={{status:'listening',muted:false}}/>);expect(screen.getByRole('button',{name:'Pause (P)'}).querySelector('[data-slot="cancel-icon"]')).toBeNull()});
+it('keeps an empty-deck agent target disabled and shows mute state without fake energy',()=>{render(<VoiceCapsule state={{status:'paused',muted:true}} level={1} showTarget canTarget={false} onPause={()=>{}} onTarget={()=>{}} onMute={()=>{}}/>);expect((screen.getByRole('button',{name:/To the audience/}) as HTMLButtonElement).disabled).toBe(true);expect(screen.getByRole('button',{name:'Unmute (M)'}).getAttribute('aria-pressed')).toBe('true');expect([...screen.getByLabelText('Microphone idle').children].every(el=>(el as HTMLElement).style.height==='3px')).toBe(true)});

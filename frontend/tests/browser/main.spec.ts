@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 const errors = new WeakMap<Page, string[]>();
 test.beforeEach(async ({ page }) => {
+  await mockSpeech(page);
   const list: string[] = [];
   errors.set(page, list);
   page.on("pageerror", (error) => list.push(error.message));
@@ -23,7 +24,9 @@ async function createProject(page: Page, title = "Interaction check") {
   ).toBeVisible();
 }
 async function mockSpeech(page: Page) {
-  await page.addInitScript(() => {
+  await page.context().addInitScript(() => {
+    if ((window as any).__talkdeckSpeechMock) return;
+    (window as any).__talkdeckSpeechMock = true;
     class MockRecognition {
       continuous = true;
       interimResults = true;
@@ -38,10 +41,32 @@ async function mockSpeech(page: Page) {
       }
       abort() {}
     }
-    (window as any).SpeechRecognition = MockRecognition;
+    Object.defineProperty(window, "SpeechRecognition", {
+      value: MockRecognition,
+      writable: false,
+      configurable: false,
+    });
+    Object.defineProperty(window, "webkitSpeechRecognition", {
+      value: MockRecognition,
+      writable: false,
+      configurable: false,
+    });
+    if (navigator.mediaDevices)
+      Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
+        value: () =>
+          Promise.reject(
+            new DOMException(
+              "Real microphone blocked for automated tests",
+              "NotAllowedError",
+            ),
+          ),
+        writable: false,
+        configurable: false,
+      });
   });
 }
 async function say(page: Page, text: string, final = true, index = 0) {
+  await expect(page.getByRole("button", { name: "Pause (P)" })).toBeVisible();
   await page.evaluate(
     ({ text, final, index }) => {
       const r = (window as any).__recognizer;
@@ -68,21 +93,25 @@ test("fresh creation, exact empty geometry, add/edit, reload and no voice footer
   await createProject(page);
   await expect(page.locator(".voice-dock")).toHaveCount(0);
   await page.setViewportSize({ width: 1280, height: 720 });
+  // Preserve the original slide-only geometry assertion after verifying the new open default.
+  await expect(
+    page.getByRole("button", { name: "Toggle sidebar" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Toggle sidebar" }).click();
   const box = await page.locator(".slide-empty").boundingBox();
   expect(box!.height).toBeCloseTo(556, 0);
   expect(box!.width / box!.height).toBeCloseTo(16 / 9, 2);
   await page.screenshot({ path: "test-results/empty-1280.png" });
   await page.getByRole("button", { name: "Add slide", exact: true }).click();
   await page.getByLabel("Slide canvas", { exact: true }).dblclick();
+  await expect(page.getByRole("dialog", { name: "Edit slide" })).toHaveCount(0);
   await page
-    .getByRole("dialog")
-    .getByLabel("Title", { exact: true })
-    .fill("A clear idea");
-  await page
-    .getByRole("dialog")
-    .getByLabel("Content", { exact: true })
-    .fill("One point per slide.");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+    .getByRole("button", { name: "Talk to generate", exact: true })
+    .first()
+    .click();
+  await page.waitForFunction(() => (window as any).__recognizer);
+  await say(page, "A clear idea");
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
   await expect(page.locator(".stage .slide-heading")).toHaveText(
     "A clear idea",
   );
@@ -117,7 +146,14 @@ test("source editor, escaped text, nested folders and exact original download", 
   await page
     .getByRole("button", { name: "Create project", exact: true })
     .click();
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  if (
+    !(
+      (await page
+        .getByRole("button", { name: "Toggle sidebar" })
+        .getAttribute("aria-pressed")) === "true"
+    )
+  )
+    await page.getByRole("button", { name: "Toggle sidebar" }).click();
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await expect(
     page.getByRole("button", { name: /Notes.txt/ }).first(),
@@ -136,37 +172,41 @@ test("source editor, escaped text, nested folders and exact original download", 
     .click();
   expect((await download).suggestedFilename()).toBe("Notes.txt");
 });
-test("rapid cut paste, unique identity, reorder, delete undo and menu guards", async ({
+test("structural Add selects and focuses while manual content and mutation commands stay absent", async ({
   page,
 }) => {
   await createProject(page);
-  await page.getByRole("button", { name: "Add slide", exact: true }).click();
-  await page.getByRole("button", { name: "Add slide", exact: true }).click();
-  await page.getByRole("button", { name: "Add slide", exact: true }).click();
+  for (let i = 0; i < 3; i++)
+    await page.getByRole("button", { name: "Add slide", exact: true }).click();
+  await expect(page.locator(".filmstrip-thumbnail")).toHaveCount(3);
+  await expect(page.locator(".filmstrip-thumbnail").last()).toBeFocused();
+  await expect(page.locator(".filmstrip-thumbnail").last()).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   const before = await page
     .locator(".filmstrip-thumbnail")
     .evaluateAll((els) => els.map((el) => el.getAttribute("data-id")));
-  await page.locator(".filmstrip-thumbnail").nth(1).focus();
-  await page.locator(".filmstrip-thumbnail").nth(1).click();
-  for (let i = 0; i < 5; i++) {
-    await page.keyboard.press("ControlOrMeta+x");
-    await page.keyboard.press("ControlOrMeta+v");
-  }
-  await expect(page.locator(".filmstrip-thumbnail")).toHaveCount(3);
-  const ids = await page
-    .locator(".filmstrip-thumbnail")
-    .evaluateAll((els) => els.map((el) => el.getAttribute("data-id")));
-  expect(new Set(ids).size).toBe(3);
-  expect(ids).not.toEqual(before);
-  await page.keyboard.press("Alt+ArrowLeft");
-  await page.keyboard.press("Delete");
+  for (const key of [
+    "ControlOrMeta+x",
+    "ControlOrMeta+v",
+    "Delete",
+    "Alt+ArrowLeft",
+  ])
+    await page.keyboard.press(key);
+  expect(
+    await page
+      .locator(".filmstrip-thumbnail")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("data-id"))),
+  ).toEqual(before);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.locator(".filmstrip-thumbnail")).toHaveCount(2);
-  await page.keyboard.press("ControlOrMeta+z");
-  await expect(page.locator(".filmstrip-thumbnail")).toHaveCount(3);
+  await page.getByLabel("Slide canvas", { exact: true }).dblclick();
+  await expect(page.getByRole("dialog", { name: "Edit slide" })).toHaveCount(0);
   await page.locator(".filmstrip-thumbnail").first().click({ button: "right" });
   await expect(
     page.getByRole("menuitem", { name: "Duplicate", exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await page.keyboard.press("Escape");
 });
 test("real speech lifecycle interface via test-only mock, final dedup, agent editing, audience privacy", async ({
@@ -220,18 +260,19 @@ test("practice overview, proposal approval and completion preserve snapshot", as
   await mockSpeech(page);
   await createProject(page);
   await page.getByRole("button", { name: "Add slide", exact: true }).click();
-  await page.getByLabel("Slide canvas", { exact: true }).dblclick();
   await page
-    .getByRole("dialog")
-    .getByLabel("Title", { exact: true })
-    .fill("Practice a story");
-  await page
-    .getByRole("dialog")
-    .getByLabel("Content", { exact: true })
-    .fill(
-      "A database keeps related records together so we can find the information we need without copying it into many separate files.",
-    );
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+    .getByRole("button", { name: "Talk to generate", exact: true })
+    .first()
+    .click();
+  await page.waitForFunction(() => (window as any).__recognizer);
+  await say(page, "Practice a story");
+  await say(
+    page,
+    "A database keeps related records together so we can find the information we need without copying it into many separate files.",
+    true,
+    1,
+  );
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
   await page.getByRole("button", { name: "Practice", exact: true }).click();
   await page.waitForFunction(() => (window as any).__recognizer);
   await say(
@@ -296,7 +337,14 @@ test("responsive containment and required desktop/narrow screenshots", async ({
     await page.screenshot({ path: `docs/evidence/empty-${width}.png` });
   }
   await page.getByRole("button", { name: "Add slide", exact: true }).click();
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  if (
+    !(
+      (await page
+        .getByRole("button", { name: "Toggle sidebar" })
+        .getAttribute("aria-pressed")) === "true"
+    )
+  )
+    await page.getByRole("button", { name: "Toggle sidebar" }).click();
   for (const width of [1512, 786, 390]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
@@ -356,12 +404,13 @@ test("all required screen evidence, themes, drawing tools and present fullscreen
   await page.getByRole("button", { name: "Projects", exact: true }).click();
   await page.locator(".project-card-open").first().click();
   await shots("slides");
-  await page.getByRole("button", { name: "Theme", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Midnight", exact: true }).click();
-  await expect(page.locator(".stage .slide-theme-midnight")).toHaveCount(1);
-  await page.getByRole("button", { name: "Theme", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Paper", exact: true }).click();
-  await page.getByRole("button", { name: "Draw", exact: true }).click();
+  await expect(page.getByRole("group", { name: "Slide theme" })).toHaveCount(0);
+  await expect(
+    page.getByRole("toolbar", { name: "Drawing tools" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Draw", exact: true }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: "Pen (hold D)", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Pen (hold D)", exact: true }),
@@ -380,12 +429,19 @@ test("all required screen evidence, themes, drawing tools and present fullscreen
   await page.mouse.down();
   await page.mouse.move(b!.x + 120, b!.y + 90);
   await page.mouse.up();
-  await expect(page.getByText("1 marks", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 mark", { exact: true })).toBeVisible();
   await shots("palette");
   await page
-    .getByRole("button", { name: "Close drawing tools", exact: true })
+    .getByRole("button", { name: "Pointer (Esc)", exact: true })
     .click();
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  if (
+    !(
+      (await page
+        .getByRole("button", { name: "Toggle sidebar" })
+        .getAttribute("aria-pressed")) === "true"
+    )
+  )
+    await page.getByRole("button", { name: "Toggle sidebar" }).click();
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await shots("context");
   await page
@@ -414,7 +470,14 @@ test("CSV import spoken lookup, real export files, missing routes recover", asyn
 }) => {
   await mockSpeech(page);
   await createProject(page, "Export check");
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  if (
+    !(
+      (await page
+        .getByRole("button", { name: "Toggle sidebar" })
+        .getAttribute("aria-pressed")) === "true"
+    )
+  )
+    await page.getByRole("button", { name: "Toggle sidebar" }).click();
   await page.getByRole("tab", { name: "Context", exact: true }).click();
   await page.getByRole("button", { name: "Add sources", exact: true }).click();
   await page.locator("input[type=file]").setInputFiles({
@@ -463,7 +526,14 @@ test("cancelled recognizer cannot write, pending interim is retained honestly on
   await say(page, "An unfinished idea", false);
   await expect(page.locator(".interim")).toContainText("An unfinished idea");
   await page.getByRole("button", { name: "Finish", exact: true }).click();
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  if (
+    !(
+      (await page
+        .getByRole("button", { name: "Toggle sidebar" })
+        .getAttribute("aria-pressed")) === "true"
+    )
+  )
+    await page.getByRole("button", { name: "Toggle sidebar" }).click();
   await expect(page.locator(".transcript")).toContainText("An unfinished idea");
   await expect(page.locator(".transcript")).toContainText("Unfinished phrase");
   await page.evaluate(() => {
@@ -481,7 +551,7 @@ test("cancelled recognizer cannot write, pending interim is retained honestly on
 test("save failure keeps working state and recovers on retry", async ({
   page,
 }) => {
-  await page.addInitScript(() => {
+  await page.context().addInitScript(() => {
     const nativePut = IDBObjectStore.prototype.put;
     IDBObjectStore.prototype.put = function (
       ...args: Parameters<IDBObjectStore["put"]>
@@ -492,7 +562,9 @@ test("save failure keeps working state and recovers on retry", async ({
     };
   });
   await createProject(page);
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Project settings", exact: true })
+    .click();
   await page.evaluate(() => {
     (window as any).__failSave = true;
   });

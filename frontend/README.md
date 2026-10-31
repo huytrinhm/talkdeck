@@ -1,50 +1,41 @@
 # Talkdeck frontend
 
-A working reconstruction of the approved **main Talkdeck UI** for the SEA x OpenAI Hackathon. The dark, slide-focused design and interactions come from `reference/talkdeck-main-rebuild-prompt.md`; Folio is not mixed into this UI.
-
-All repository work by this team stays within **`frontend/`**. Backend, AI agents, slide generation and serving infrastructure belong to teammates.
+The approved dark, slide-focused main UI, implemented with React, TypeScript, Radix-backed shadcn/ui primitives and Lucide icons. The original specification remains in `reference/talkdeck-main-rebuild-prompt.md`. All work stays inside `frontend/`.
 
 ## Run locally
 
-Requires Node 22.12+ and npm. From `frontend/`:
+Node22.12+:
 
 ```sh
 npm ci
-npm run dev
+npm run dev       # http://127.0.0.1:8873
+npm run check     # typecheck, unit tests, production build
+npm run test:e2e  # start dev server first
+npm run build
+npm start         # serves dist only; PORT may override8873
 ```
 
-Open **http://127.0.0.1:8873**. A fresh browser starts empty. The dev server binds to the local machine; no public deployment is configured. The development process must remain running.
+On this machine use `PATH=/opt/homebrew/opt/node@22/bin:$PATH` because the default Node installation has a broken shared-library dependency. No machine settings were changed. For browser tests install Chromium with `npx playwright install chromium` if necessary. Tests replace both recognizers and block physical microphones before app load; raw-media tests use synthetic oscillator tracks only. Built-server tests exclude Vite-only adapter fixtures:
 
 ```sh
-npm run build       # TypeScript and production bundle
-npm run typecheck
-npm test            # domain, speech, storage and privacy tests
-npm run test:e2e    # Chromium interaction checks; start dev server first
-npm run preview     # serve the production build
+TALKDECK_TEST_URL=http://127.0.0.1:8874 npx playwright test --grep-invert @adapter-fixture
 ```
 
-For browser tests, install Chromium once if needed: `npx playwright install chromium`. Node's usual binary on this machine currently has a broken Homebrew library dependency; use `PATH=/opt/homebrew/opt/node@22/bin:$PATH npm run dev` here. No machine settings were modified to work around it.
+## Stable behavior
 
-## Local reference behavior
+A fresh browser starts empty. Talk, Practice and Present retain the original slide-focused layout. Direct speech-route entry/reload/back navigation requires a fresh Resume; paused/cancelled/old callbacks cannot create transcript or mutate slides. Saved transcript history is labelled separately. Structural Add creates/selects/focuses a slide with Undo. Manual slide content/theme/layout editing is removed. Drawing annotations, project/source context, presentation, export and explicit review remain. Blackout/Restore is icon-only with accessible names/tooltips/state. Unavailable/empty coach feedback is hidden from the stage.
 
-Browser SpeechRecognition/Web Audio capture real input. Slide generation/edit interpretation and practice proposals currently use **deterministic local rules, not a connected AI service**. Browser speech recognition may send audio to the browser vendor's online speech service. This frontend stores recognized text and project/source data in IndexedDB on this browser origin; it does not store raw microphone audio. Actual microphone, recognition quality and OS permissions require device testing.
+App settings → Connections applies across projects without ChatGPT login. The raw phone microphone uses genuine same-origin signaling, QR, WebRTC and explicit Start/Mute/Stop; no phone recognition or local-microphone fallback. BYOK uses visitor-scoped Save→Not verified→explicit Check. Actual capability endpoints control availability. Default local static serving has no backend, so these services correctly stay unavailable. A received raw phone stream is not yet connected to a speech-processing service. Browser SpeechRecognition and deterministic local slide/review interpretation remain reference adapters, not integrated teammate AI.
 
-Teammate service contracts remain unconfirmed. `src/services/adapters.ts` defines internal frontend ports and a replaceable speech/interpretation adapter; these are not invented backend endpoints or wire contracts. The repository port separates browser persistence from the UI. Do not treat local storage, same-origin audience transport or local heuristics as production architecture.
+## Architecture and integration
 
-Audience output is same-origin only. It contains renderable slide content, current table page and output state; private notes, prompts, materials, transcripts and practice records are excluded. It does not provide cross-device collaboration.
+- `src/domain/`: current frontend Slide/Project model, commands, source parsing and review.
+- `src/services/`: typed replaceable adapters, persistence, speech lifecycle, phone/HTTP/key/coach boundaries, audience privacy and lazy exports.
+- `src/features/`, `src/components/`, `src/styles/`: main UI and accessible primitives.
+- `tests/`: isolated browser/service fixtures, never normal-runtime samples.
+- [Integration readiness](docs/integration-readiness.md): pinned teammate contracts, exact missing seams and wiring checklist.
+- [Stable corrections](docs/stable-client-checkpoint.md), [phone](docs/phone-input-integration.md), [BYOK](docs/byok-integration.md), [coach](docs/practice-coach-integration.md), [wire v1](docs/connections-wire-v1.md).
 
-## Structure
+The JSX generation subsystem is the intended canonical service; current frontend Slide objects and same-origin audience payloads require an explicit integration adapter. Teammates' orchestration now supports decks and history, but its own handoff says JSX tools/publication are unconnected. No duplicate backend or guessed generation endpoint is added. Unfinished pet/Deep Refine is excluded from the stable release.
 
-- `src/domain/` — types, immutable commands, table parsing/editing, practice decisions and guard tests.
-- `src/services/` — typed adapters, IndexedDB repository, microphone lifecycle, audience transport and lazy-loaded exports.
-- `src/features/` — projects/setup/materials, slide workspace, drawing and review.
-- `src/components/` — shared slide renderer, filmstrip, editor, audience and Radix-backed shadcn/ui primitives.
-- `src/styles/` — approved main UI tokens/layout and the prompt's unchanged normative slide CSS.
-- `tests/browser/` — isolated fixtures and mocked recognizer, never exposed in the production interface.
-- `docs/validation.md` — actual checks, visual evidence and remaining limits.
-- `docs/integration.md` — teammate decisions and extension boundaries.
-- `reference/` — byte-preserved main reconstruction prompt.
-
-Use a modern Chromium browser for the full speech path. The UI handles unavailable/denied recognition without fake transcripts or sample-speech fallback. Other browser/device combinations remain unverified. PPTX contains editable text/table objects and speaker notes; PDF is rasterized. Desktop PowerPoint fidelity is not certified.
-
-To check an already running production preview: `TALKDECK_TEST_URL=http://127.0.0.1:8874 npm run test:e2e` (start `npm run preview -- --port 8874` first).
+The frozen stable client has117 unit/server tests, typecheck/build and20 built-server browser scenarios passing.27 development scenarios passed before the final small Undo-focus correction, which was covered by the final unit/built run. No real microphone, phone hardware, provider key, paid call or provider inference was tested by main. The ~549kB main chunk retains a build warning. Hosting owns runtime activation and publication; see the readiness report for status rather than inferring live readiness from client tests.

@@ -133,3 +133,4 @@
   font-size: 10px;
   line-height: 12px;
 }
+@media(max-width:600px){.ink-palette.expanded{display:flex;flex-direction:row;width:auto;height:44px;max-width:calc(100% - 16px);gap:2px;padding:4px}.ink-palette.expanded .ink-grip{width:16px;height:30px}.ink-palette.expanded .ink-count{font-size:9px;min-width:26px}.ink-palette.expanded .ink-tool{width:34px;height:34px}}

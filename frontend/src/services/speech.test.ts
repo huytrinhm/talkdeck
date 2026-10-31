@@ -49,3 +49,30 @@ it("does not reconnect after end or resume an explicitly paused session on unmut
   a.setMuted(false);
   expect(factory).toHaveBeenCalledTimes(1);
 });
+it("rejects recognition results before capture starts and after cancellation", () => {
+  const r = new Fake(),
+    final = vi.fn(),
+    interim = vi.fn();
+  const a = new BrowserSpeechAdapter({
+    recognitionFactory: () => r,
+    onFinal: final,
+    onInterim: interim,
+  });
+  a.start();
+  const event = {
+    resultIndex: 0,
+    results: [
+      Object.assign([{ transcript: "unstarted result" }], { isFinal: true }),
+    ],
+  };
+  const callback = r.onresult!;
+  callback(event);
+  expect(final).not.toHaveBeenCalled();
+  r.onstart!();
+  callback(event);
+  expect(final).toHaveBeenCalledTimes(1);
+  a.stop();
+  callback(event);
+  expect(final).toHaveBeenCalledTimes(1);
+  a.dispose();
+});

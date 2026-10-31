@@ -24,6 +24,7 @@ import {
   wordCount,
 } from "../domain/review";
 import "./review.css";
+import { CoachReviewNotes } from "./PracticeCoach";
 const time = (n: number) =>
   `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, "0")}`;
 function MarkedTranscript({ segment }: { segment: TranscriptSegment }) {
@@ -191,7 +192,11 @@ export function Review({
         </div>
         {covered < rehearsal.snapshot.length && (
           <p className="muted">
-            {rehearsal.snapshot.length - covered} slides were not rehearsed.
+            {rehearsal.snapshot.length - covered}{" "}
+            {rehearsal.snapshot.length - covered === 1
+              ? "slide was"
+              : "slides were"}{" "}
+            not rehearsed.
           </p>
         )}
         <div className="review-actions">
@@ -256,9 +261,9 @@ export function Review({
         </div>
         <TabsContent value="overview" className="review-overview">
           <h2>Your practice, at a glance</h2>
+          <CoachReviewNotes rehearsalId={rehearsal.id} />
           <p className="muted">
-            Feedback from your captured transcript. Suggested changes use local
-            rules.
+            Review your delivery and choose which slide changes to keep.
           </p>
           <dl className="review-statistics">
             <div>
@@ -307,12 +312,16 @@ export function Review({
                 </div>
               </>
             ) : (
-              <p className="review-no-data">No captured speech to chart.</p>
+              <p className="review-no-data">
+                No speech captured yet. Practice again to see your speaking
+                pace.
+              </p>
             )}
-            <p className="muted review-small">
-              Estimated from phrase timing, including gaps. These are not exact
-              word timestamps.
-            </p>
+            {timeline.length > 0 && (
+              <p className="muted review-small">
+                Estimated speaking pace, including pauses.
+              </p>
+            )}
           </section>
           <div
             className={`review-feedback ${!words ? "neutral" : wpm >= 100 && wpm <= 180 ? "positive" : "attention"}`}
@@ -329,7 +338,7 @@ export function Review({
             </h3>
             <p>
               {!words
-                ? "Capture speech in another practice to see pace feedback."
+                ? "Practice again and speak to see your pace."
                 : wpm < 100
                   ? "Leave room for explanation while keeping your points moving."
                   : wpm > 180
@@ -342,21 +351,16 @@ export function Review({
             <p>
               {vague
                 ? `${vague} vague ${vague === 1 ? "phrase" : "phrases"} matched in your transcript. Name the specific idea or object when possible.`
-                : "Use specific terms and explain how each point connects. No matched vague phrases does not establish perfect clarity."}
+                : "Use specific terms and explain how each point connects."}
             </p>
           </div>
           <div className="review-feedback neutral">
             <h3>Tone & emphasis · Coaching tip</h3>
             <p>
-              Pause before a key idea and emphasize the words your audience
-              should remember. This is general coaching, not a measured
-              vocal-tone score.
+              Pause before a key idea and emphasize the words you want your
+              audience to remember.
             </p>
           </div>
-          <p className="muted review-small">
-            Pace and clarity use simple transcript heuristics, not validated
-            speaking assessments.
-          </p>
         </TabsContent>
         <TabsContent value="changes" className="review-changes">
           {slide ? (

@@ -1,0 +1,120 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { GlobalSettings } from "./GlobalSettings";
+import { Workspace } from "./Workspace";
+import { blankSlide, newProject } from "../domain/types";
+import { frontendAdapters } from "../services/adapters";
+beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+it("does not start capture when a route mounts under already-open app settings", () => {
+  const start = vi.fn(),
+    pause = vi.fn(),
+    dispose = vi.fn();
+  vi.spyOn(frontendAdapters, "createSpeech").mockReturnValue({
+    start,
+    pause,
+    stop: vi.fn(),
+    resume: vi.fn(),
+    retry: vi.fn(),
+    setMuted: vi.fn(),
+    dispose,
+  });
+  render(
+    <Workspace
+      project={newProject([])}
+      mode="create"
+      speechSuspended
+      onChange={() => {}}
+      onMode={() => {}}
+      onBack={() => {}}
+    />,
+  );
+  expect(start).not.toHaveBeenCalled();
+  expect(dispose).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
+});
+it("places visitor-scoped connections without account gating in global settings", () => {
+  render(<GlobalSettings open onOpenChange={() => {}} />);
+  expect(
+    screen.getByText("Your connections apply across your projects."),
+  ).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Voice devices" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Your API key" })).toBeTruthy();
+  expect(
+    screen.getByText("Phone connections are not available on this server yet."),
+  ).toBeTruthy();
+  expect(
+    screen.getByText("Personal API keys are not supported on this server yet."),
+  ).toBeTruthy();
+  expect(screen.queryByLabelText("OpenAI API key")).toBeNull();
+  expect(screen.queryByText("Connected")).toBeNull();
+  expect(screen.queryByRole("region", { name: "Account" })).toBeNull();
+  expect(
+    screen.getByText("Connections apply across your projects in this browser."),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /sign.in/i })).toBeNull();
+  fireEvent.mouseDown(screen.getByRole("tab", { name: "Coach" }), {
+    button: 0,
+    ctrlKey: false,
+  });
+  expect(screen.getByText("Live coach is not connected.")).toBeTruthy();
+});
+it("keeps project settings metadata-only and pauses speech before opening global settings", () => {
+  const pause = vi.fn(),
+    resume = vi.fn(),
+    open = vi.fn();
+  vi.spyOn(frontendAdapters, "createSpeech").mockImplementation((o) => ({
+    start: () => o.onState?.({ status: "listening", muted: false }),
+    stop: vi.fn(),
+    pause,
+    resume,
+    retry: vi.fn(),
+    setMuted: vi.fn(),
+    dispose: vi.fn(),
+  }));
+  const project = newProject([]);
+  project.slides = [blankSlide("paper")];
+  const view = render(
+    <Workspace
+      project={project}
+      mode="edit"
+      onChange={() => {}}
+      onMode={() => {}}
+      onBack={() => {}}
+      onAppSettings={open}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Project settings" }));
+  expect(screen.getByLabelText("Slide instructions")).toBeTruthy();
+  expect(screen.queryByText("Voice input")).toBeNull();
+  expect(screen.queryByLabelText("OpenAI API key")).toBeNull();
+  view.unmount();
+  render(
+    <Workspace
+      project={project}
+      mode="create"
+      onChange={() => {}}
+      onMode={() => {}}
+      onBack={() => {}}
+      onAppSettings={open}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "App settings" }));
+  expect(screen.getByRole("button", { name: "Resume (P)" })).toBeTruthy();
+  expect(open).toHaveBeenCalledTimes(1);
+  expect(resume).not.toHaveBeenCalled();
+});

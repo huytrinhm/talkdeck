@@ -12,11 +12,11 @@ import {
   GripVertical,
   Highlighter,
   PenLine,
-  X,
+  MousePointer2,
 } from "lucide-react";
 import { Button, Popover } from "../components/ui";
 import "./annotations.css";
-type Tool = "pen" | "highlighter" | "eraser" | null;
+import {canvasCursor,type CanvasTool as Tool} from './drawingCursor';
 type Point = { x: number; y: number };
 type Stroke = {
   points: Point[];
@@ -25,7 +25,7 @@ type Stroke = {
   width: number;
 };
 const memory = new Map<string, Stroke[]>();
-let expandedPreference = false;
+
 const colors = [
   "#ef555e",
   "#f6c849",
@@ -34,6 +34,14 @@ const colors = [
   "#b798ef",
   "#ffffff",
 ];
+const colorNames: Record<string, string> = {
+  "#ef555e": "Red",
+  "#f6c849": "Yellow",
+  "#64bd9a": "Green",
+  "#63a9ee": "Blue",
+  "#b798ef": "Purple",
+  "#ffffff": "White",
+};
 const guarded = (target: EventTarget | null) =>
   target instanceof Element &&
   !!target.closest(
@@ -69,7 +77,6 @@ export function Annotations({
     pointer = useRef<number | null>(null),
     owner = useRef(slideId);
   const [tool, setToolState] = useState<Tool>(null),
-    [expanded, setExpanded] = useState(expandedPreference),
     [color, setColor] = useState("#ef555e"),
     [width, setWidth] = useState(3),
     [revision, redraw] = useState(0),
@@ -111,6 +118,7 @@ export function Annotations({
   useEffect(() => {
     setMounted(true);
   }, []);
+  useEffect(()=>{const frame=frameRef.current;if(!frame)return;const previous=frame.style.cursor;frame.style.cursor=canvasCursor(tool);return()=>{frame.style.cursor=previous}},[tool,frameRef,mounted]);
   useEffect(() => {
     active.current = null;
     pointer.current = null;
@@ -148,7 +156,7 @@ export function Annotations({
     observer.observe(stage);
     if (frameRef.current) observer.observe(frameRef.current);
     return () => observer.disconnect();
-  }, [mounted, expanded, stageRef, frameRef]);
+  }, [mounted, stageRef, frameRef]);
   useEffect(() => {
     if (disabled) return;
     const release = () => {
@@ -366,7 +374,8 @@ export function Annotations({
           {colors.map((c) => (
             <button
               key={c}
-              aria-label={`${c} ink`}
+              aria-label={`${colorNames[c]} ink`}
+              title={`${colorNames[c]} ink`}
               aria-pressed={color === c}
               style={{ background: c }}
               onClick={() => {
@@ -402,9 +411,10 @@ export function Annotations({
           ref={canvas}
           className="ink-canvas"
           aria-label="Slide annotations"
+          data-canvas-tool={tool??'pointer'}
           style={{
             pointerEvents: tool ? "auto" : "none",
-            cursor: tool === "eraser" ? "cell" : "crosshair",
+            cursor: canvasCursor(tool),
           }}
         />,
         frameRef.current,
@@ -412,10 +422,12 @@ export function Annotations({
       {createPortal(
         <div
           ref={palette}
-          className={`ink-palette ${expanded ? "expanded" : ""}`}
+          className="ink-palette expanded"
+          role="toolbar"
+          aria-label="Drawing tools"
           style={{ left: position?.x ?? 18, top: position?.y ?? 16 }}
         >
-          {expanded && (
+          {
             <button
               className="ink-grip"
               aria-label="Move drawing tools"
@@ -441,8 +453,8 @@ export function Annotations({
             >
               <GripVertical size={13} />
             </button>
-          )}
-          {expanded ? (
+          }
+          {
             <>
               <div className="ink-tool">
                 <Button
@@ -480,35 +492,21 @@ export function Annotations({
                 </Button>
               </div>
               <span className="ink-count" aria-live="polite">
-                {(memory.get(slideId) ?? []).length} marks
+                {(memory.get(slideId) ?? []).length}{" "}
+                {(memory.get(slideId) ?? []).length === 1 ? "mark" : "marks"}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Close drawing tools"
-                onClick={() => {
-                  expandedPreference = false;
-                  setExpanded(false);
-                  changeTool(null);
-                }}
+                aria-label="Pointer (Esc)"
+                title="Pointer (Esc)"
+                aria-pressed={tool === null}
+                onClick={() => changeTool(null)}
               >
-                <X size={15} />
+                <MousePointer2 size={16} />
               </Button>
             </>
-          ) : (
-            <Button
-              className="ink-launcher"
-              variant="ghost"
-              aria-label="Draw"
-              onClick={() => {
-                expandedPreference = true;
-                setExpanded(true);
-              }}
-            >
-              <PenLine size={18} />
-              <span>Draw</span>
-            </Button>
-          )}
+          }
         </div>,
         stageRef.current,
       )}

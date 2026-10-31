@@ -1,0 +1,54 @@
+.api-key-settings {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 18px;
+}
+.api-key-settings h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.api-key-settings .muted {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.api-key-settings .field {
+  margin: 14px 0 7px;
+  font-size: 13px;
+}
+.api-key-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.api-key-input .input {
+  min-width: 0;
+  flex: 1;
+}
+.api-key-input .button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.api-key-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.api-key-help {
+  margin: 8px 0;
+}
+.api-key-notice {
+  font-size: 13px;
+  color: var(--muted);
+}
+.api-key-settings [role="alert"] {
+  font-size: 13px;
+  color: #f2b7b0;
+  line-height: 1.5;
+}
