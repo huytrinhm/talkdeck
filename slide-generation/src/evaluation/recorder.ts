@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { eventSchema } from '../telemetry/trace.js';
-import { acknowledgmentSchema } from '../viewer/protocol.js';
+import { acknowledgmentSchema, publicationSchema } from '../viewer/protocol.js';
 import { serializeManifest, runDirectories } from './manifest.js';
 
 const id = z.string().min(1), ms = z.number().finite().nonnegative();
@@ -13,6 +13,12 @@ const modelSchema = z.object({ id, inferenceId: id, role: id, provider: id, mode
   requestBody: z.string(), responseBody: z.string().optional(), providerRequestId: id.optional(),
   inputTokens: z.number().int().nonnegative().optional(), outputTokens: z.number().int().nonnegative().optional(),
   costUsd: z.number().nonnegative().optional(), error: z.string().optional(), retryOf: id.optional(),
+  agent: id.optional(), endpoint: z.enum(['/v1/responses', '/v1/decisions']).optional(),
+  status: z.number().int().min(100).max(599).optional(), requestedTier: z.enum(['fast', 'endpoint-default']).optional(),
+  returnedTier: id.optional(), responseModel: id.optional(),
+  reservedInputTokens: z.number().int().nonnegative().optional(), reservedOutputTokens: z.number().int().nonnegative().optional(),
+  dispatched: z.boolean().optional(), aborted: z.boolean().optional(), attempt: z.number().int().positive().optional(),
+  usageMissing: z.boolean().optional(), errorCode: id.optional(),
 }).strict();
 const toolSchema = z.object({ id, inferenceId: id.optional(), name: id, argumentsJson: z.string(), resultJson: z.string().optional(),
   ...span, error: z.object({ code: id, message: z.string() }).strict().optional() }).strict();
@@ -24,6 +30,11 @@ const inputSchema = z.object({ id, text: z.string(), scheduledEndMs: ms, schedul
 const driverEventSchema = z.object({ kind: z.enum(['input.delivered', 'input.retained', 'input.failed', 'run.finished']), atMs: ms, utteranceId: id.optional(), code: id.optional() }).strict();
 const viewerSchema = z.object({ acknowledgment: acknowledgmentSchema, receivedAtMs: ms, clockOffsetMs: z.number().finite(),
   clockUncertaintyMs: ms, surface: z.enum(['editor', 'audience']), framePath: z.string().optional() }).strict();
+const visibleFrameSchema = z.object({ revision: id, slideId: id, publicationId: id, atMs: ms,
+  painted: z.boolean(), pending: z.boolean(), coherent: z.boolean(), trigger: z.enum(['painted', 'settled']),
+  surface: z.enum(['editor', 'audience']), captureStartedAtMs: ms, captureFinishedAtMs: ms, evidence: id,
+  content: z.array(z.object({ nodeId: id, text: z.string(), kind: id, role: z.string().optional(), label: z.string().optional(), by: z.string().optional() }).strict()),
+}).strict();
 const secretKey = /^(?:authorization|proxy-authorization|api[-_]?key|access[-_]?token|refresh[-_]?token|client[-_]?secret|password|credentials?|cookies?|headers)$/i;
 function assertNoSecrets(value: unknown, secrets: readonly string[], depth = 0): void {
   if (depth > 64) throw new Error('Artifact nesting exceeds limit');
@@ -81,6 +92,8 @@ export class RunRecorder {
     return this.record('tools', data.id, data);
   }
   state(value: unknown) { const data = stateSchema.parse(value); return this.record('states', data.revision, data); }
+  publication(message: unknown, atMs: number) { const data = { message: publicationSchema.parse(message), atMs: ms.parse(atMs) }; return this.record('viewer', `publication:${data.message.publicationId}`, data); }
+  visibleFrame(value: unknown) { const data = visibleFrameSchema.parse(value); return this.record('viewer', `frame:${data.evidence}`, data); }
   viewer(value: unknown) { return this.line('viewer/events.jsonl', viewerSchema.parse(value)); }
   /** Evaluator frames stay outside model/tool observations unless the model explicitly requested a screenshot. */
   binary(category: 'viewer' | 'screenshots' | 'final', filename: string, bytes: Uint8Array) {
