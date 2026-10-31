@@ -268,3 +268,21 @@ attaching candidate images separately. Headless/practice hosts load the same com
 See [MODEL-BOUNDARIES.md](docs/MODEL-BOUNDARIES.md) for exact scope, evidence and limitations.
 
 Immediate viewer publications bypass animation geometry and per-node style snapshots while retaining the last visible surface during resource preparation. Confirmation of identical settled HTML/CSS/build content updates publication identity without replacing the DOM or replaying motion. Normal same-slide content changes retain the animated path.
+
+### Explicit new-slide activation and streaming responsiveness
+
+The integrated host calls `actors.initializeSlide(id)` after explicit UI/voice
+creation, without awaiting model inference. This queues an `initialize_slide`
+task on the existing Fast actor: conversation/tool history survives, no new
+session is created, and no speech decision is required for this explicit task.
+The initial pass may use known brief/next-topic facts; otherwise it designs a
+scaffold without invented audience content. Navigation and history restoration
+do not trigger initialization. Each boundary consumes tasks and dispatched
+speech for one target only; other targets remain queued. Prior-slide speech
+remains historical context, not the new slide's current speech. Removed targets
+are discarded before inference. Slow still uses its decision gate.
+
+Provisional ASR evidence is throttled to 200 ms with trailing delivery, so a
+last delta cannot be stranded until another delta or final ASR. This does not
+force transcription commits or bypass semantic readiness: the speech decision
+gate still controls dispatch, and final recognition supersedes draft evidence.

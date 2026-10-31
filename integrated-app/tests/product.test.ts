@@ -15,12 +15,12 @@ const reviewer: Reviewer = { async review({ context }) {
     proposals: [{ id: 'p1', title: 'Fixture change', rationale: 'Explicit test proposal', feedbackIds: ['f1'], evidenceIds: ['n10'], alternativeTo: [],
       edits: [{ snapshotId: read.snapshotId, nodeId: read.nodeId, op: 'replace', startLine: target.number, hashes: [target.hash], text: target.text.replace('Before', 'After') }] }] };
 } };
-async function setup() {
+async function setup(infer?: (input: any) => Promise<any>) {
   process.env.OPENAI_API_KEY ||= 'fixture-only-no-network';
   await mkdir('.artifacts/tests', { recursive: true });
   const directory = resolve(await mkdtemp('.artifacts/tests/product-'));
   const make = () => createProductApp({ directory, runtimeFactory: options => createPracticeRuntime({ ...options, reviewer,
-    actors: { autoTick: false, model: { async infer() { throw new Error('Unexpected paid-generation path in deterministic test'); } },
+    actors: { autoTick: false, model: { infer: infer ?? (async input => { if (JSON.stringify(input.input).includes('initialize_slide')) return { output: [] }; throw new Error('Unexpected paid-generation path in deterministic test'); }) },
       decider: { async evaluate() { return 'hold'; } }, slowDecider: { async evaluate() { return 'hold'; } } } }) });
   return { directory, make, host: await make() };
 }
@@ -291,6 +291,15 @@ test('streaming packets retain corrected draft evidence before final ASR, withou
     assert.equal(owner.snapshot().transcripts.length, 0);
     assert.equal(owner.snapshot().pendingTranscripts?.[0].text, 'Fourty people');
     assert.match(owner.runtime.local.engine.readDocument().source, /Fourty people/);
+    // A final topic word arriving inside the throttle window must reach the
+    // decision gate without another delta or an ASR commit.
+    live.turn.lastPreviewAt = Date.now();
+    live.pending.event({ type: 'conversation.item.input_audio_transcription.delta', item_id: 'item', delta: ' discuss solar energy' });
+    (owner as any).queueSpeechPreview(attachment);
+    for (let i = 0; i < 100 && !owner.runtime.actors.gate.latest?.text.includes('solar energy'); i++)
+      await new Promise(resolve => setTimeout(resolve, 10));
+    assert.match(owner.runtime.actors.gate.latest?.text ?? '', /solar energy/);
+    assert.equal(commits, 0, 'trailing delivery must not force ASR consolidation');
     const final = { ...packet, id: 'packet-2', sequence: 1, startMs: 250, endMs: 250, final: true };
     await owner.audio(attachment, final, Buffer.alloc(0)); await owner.settleAudio();
     assert.equal(commits, 1); assert.equal(appends, 1);
@@ -300,4 +309,28 @@ test('streaming packets retain corrected draft evidence before final ASR, withou
     assert.equal((await owner.audio(attachment, final, Buffer.alloc(0))).duplicate, true);
     assert.equal(commits, 1);
   } finally { await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
+});
+
+
+test('UI Add schedules Fast immediately without narration and duplicate commands do not schedule twice', async () => {
+  const calls: any[] = [];
+  let release!: () => void;
+  const pending = new Promise<any>(resolve => { release = () => resolve({ output: [] }); });
+  const f = await setup(async input => { calls.push(input); return pending; });
+  try {
+    const p = await project(f.host, 'Initial design');
+    const owner = await f.host.store.open(p.id);
+    const before = owner.snapshot();
+    const body = { id: 'initialize-once', epoch: before.epoch, type: 'add' };
+    const added = await request(f.host, `${p.base}/commands`, body, p.session);
+    assert.equal(added.status, 200);
+    for (let i = 0; i < 100 && !calls.length; i++) await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].role, 'fast');
+    assert.match(JSON.stringify(calls[0].input), /initialize_slide/);
+    assert.equal(owner.runtime.actors.gate.latest, null);
+    assert.equal((await request(f.host, `${p.base}/commands`, body, p.session)).status, 200);
+    assert.equal(calls.length, 1);
+    release(); await owner.runtime.actors.settle();
+  } finally { release?.(); await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
 });

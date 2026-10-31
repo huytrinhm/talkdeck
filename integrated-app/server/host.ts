@@ -84,7 +84,7 @@ interface Persisted {
   >;
 }
 type AudioPacket = Omit<Utterance, "text"> & { sequence: number; utteranceId?: string; final?: boolean };
-interface AudioTurn { input: AudioPacket; mode: Mode; reservation: ReturnType<ProductProviders["reserveTranscription"]>; correctionOf?: string; revision: number; lastPreviewAt: number; finalized?: boolean; settled?: boolean; }
+interface AudioTurn { input: AudioPacket; mode: Mode; reservation: ReturnType<ProductProviders["reserveTranscription"]>; correctionOf?: string; revision: number; lastPreviewAt: number; lastPreviewText?: string; previewTimer?: ReturnType<typeof setTimeout>; finalized?: boolean; settled?: boolean; }
 interface Attachment {
   dto: Session;
   publication: GenerationSession;
@@ -516,7 +516,8 @@ export class ProjectOwner {
               "mode",
               "Slides can be added in Talk",
             );
-          await this.runtime.backend.createSlide();
+          const slide = await this.runtime.backend.createSlide();
+          this.runtime.actors.initializeSlide(slide.id);
         } else if (command.type === "delete") {
           if (this.data.mode !== "talk")
             throw new ProductError("mode", "Slides can be deleted in Talk");
@@ -731,6 +732,7 @@ export class ProjectOwner {
           if (!empty) {
             const slide = await this.runtime.backend.createSlide(command.title);
             slideId = slide.id;
+            this.runtime.actors.initializeSlide(slide.id);
           } else
             this.runtime.backend.requestedTitles.set(slideId, command.title);
         } else if (command?.type === "select") {
@@ -863,24 +865,38 @@ export class ProjectOwner {
   }
   async settleAudio() { await this.audioTail; }
   private finishAudioTurn(turn: AudioTurn, error?: unknown) {
+    clearTimeout(turn.previewTimer);
     if (turn.settled) return;
     turn.settled = true;
     this.providers.finishTranscription(turn.reservation, error);
   }
   private queueSpeechPreview(a: Attachment) {
     const live = this.live.get(a.dto.id), turn = live?.turn;
-    if (!live?.pending || !turn || Date.now() - turn.lastPreviewAt < 500) return;
+    if (!live?.pending || !turn || turn.finalized || turn.settled || this.closed) return;
+    const remaining = 200 - (Date.now() - turn.lastPreviewAt);
+    if (remaining > 0) {
+      // Trailing delivery matters: the last word (often the actual topic) must
+      // not wait for another ASR delta or the end-of-utterance commit.
+      turn.previewTimer ??= setTimeout(() => {
+        turn.previewTimer = undefined;
+        if (live.turn === turn) this.queueSpeechPreview(a);
+      }, remaining);
+      return;
+    }
+    clearTimeout(turn.previewTimer);
+    turn.previewTimer = undefined;
     turn.lastPreviewAt = Date.now();
     void this.serialize(async () => {
       if (this.captureOwner !== a.dto.id || !this.sessions.has(a.dto.id) || turn.finalized || turn.mode !== "talk" || turn.input.epoch !== this.data.epoch ||
         this.data.mode !== "talk" || !this.runtime.backend.list().some(s => s.id === turn.input.slideId)) return;
       const text = live.pending?.snapshot().text;
-      if (!text) return;
+      if (!text || text === turn.lastPreviewText) return;
       // Durable, supersedable recognition evidence. UI remains grey until final ASR.
       const id = `asr_${turn.input.id}_${++turn.revision}`;
       await this.runtime.actors.deliverUtterance({ id, slideId: turn.input.slideId, text,
         deliveredAtMs: turn.input.endMs, correctionOf: turn.correctionOf });
       turn.correctionOf = id;
+      turn.lastPreviewText = text;
     }).catch(error => { this.error = safeError(error); this.broadcastSnapshot(); });
   }
   private async transcribeAudio(a: Attachment, input: AudioPacket,
