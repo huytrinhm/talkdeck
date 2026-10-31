@@ -5,7 +5,11 @@ import {
   OpenAIPracticeReviewer,
   OpenAIPracticeTranscriber,
 } from "../src/practice/openai.js";
-import type { ReviewContext } from "../src/practice/contracts.js";
+import type {
+  PreparedProposal,
+  ReviewContext,
+  ReviewOutput,
+} from "../src/practice/contracts.js";
 import {
   compileDesignContext,
   loadDesignSkills,
@@ -31,11 +35,23 @@ const context = {
     approximateWordsPerMinute: 0,
     caveat: "No prosody evidence",
   },
-  evidence: [{ id: "timing-summary", kind: "measurement" }],
+  evidence: [
+    { id: "timing-summary", kind: "measurement" },
+    { id: "n10", kind: "source", revision: "r" },
+    {
+      id: "render-n10-r",
+      kind: "render",
+      slideId: "n10",
+      revision: "r",
+      provenance: "final_baseline_render",
+    },
+  ],
   images: [
     {
       slideId: "n10",
       sourceRevision: "r",
+      evidenceId: "render-n10-r",
+      provenance: "final_baseline_render",
       jpeg: Buffer.from("image").toString("base64"),
     },
   ],
@@ -91,6 +107,290 @@ test("review adapter sends complete front-loaded context and actual images, no t
   assert.equal(packet.baseline.source, "exact JSX");
   assert.equal(packet.images, undefined);
   assert.deepEqual(packet.design, design);
+  assert.equal(
+    JSON.parse(body.input[0].content[1].text).evidenceId,
+    "render-n10-r",
+  );
+  assert.equal(
+    JSON.parse(body.input[0].content[1].text).provenance,
+    "final_baseline_render",
+  );
+  assert.equal(
+    body.text.format.schema.properties.proposals.minItems,
+    undefined,
+  );
+  assert.equal(
+    JSON.parse(body.input[0].content[1].text).state,
+    "current-baseline",
+  );
+});
+
+function revisionFixture(): PreparedProposal {
+  const before = {
+    html: "PREVIEW_HTML_NOT_EVIDENCE",
+    css: "data:font/ttf;base64," + "FONT_BLOB".repeat(200_000),
+    notes: "PREVIEW_NOTES_DUPLICATE",
+    jpeg: Buffer.from("old baseline image").toString("base64"),
+  };
+  return {
+    id: "p1",
+    title: "Group alternatives",
+    rationale: "Support comparison",
+    feedbackIds: ["old-feedback-not-in-this-response"],
+    evidenceIds: ["n10"],
+    edits: [
+      {
+        snapshotId: "STALE_SNAPSHOT",
+        nodeId: "n10",
+        op: "replace",
+        startLine: 7,
+        hashes: ["b".repeat(64)],
+        text: '<Stack gap="lg"><Text id="t1">Keep exact content.</Text></Stack>',
+      },
+    ],
+    alternativeTo: [],
+    status: "ready",
+    version: 2,
+    baseRevision: "old-base",
+    previewBase: "preview-base",
+    previews: [
+      {
+        slideId: "n10",
+        before,
+        after: {
+          ...before,
+          jpeg: Buffer.from("old proposal after image").toString("base64"),
+        },
+      },
+      { slideId: "removed-slide", before, after: null },
+    ],
+    findings: [],
+    candidateSource: "CANDIDATE_DOCUMENT_METADATA",
+    candidateDigest: "CANDIDATE_DIGEST_METADATA",
+    previewSignature: "PREVIEW_SIGNATURE_METADATA",
+    sourceChanges: [
+      {
+        nodeId: "n10",
+        before: '<Text id="t1">Keep exact content.</Text>',
+        after:
+          '<Stack id="generated-only"><Text id="t1">Keep exact content.</Text></Stack>',
+      },
+    ],
+    slideOrder: { before: ["n10", "removed-slide"], after: ["n10"] },
+  };
+}
+
+const replacement: ReviewOutput = {
+  summary: "Revised spacing",
+  feedback: [],
+  proposals: [
+    {
+      id: "replacement",
+      title: "Closer groups",
+      rationale: "Follow the requested spacing",
+      feedbackIds: [],
+      evidenceIds: ["n10"],
+      edits: [
+        {
+          snapshotId: "fresh-snapshot",
+          nodeId: "n10",
+          op: "replace",
+          startLine: 1,
+          hashes: ["a".repeat(64)],
+          text: '<Stack gap="md"><Text id="t1">Keep exact content.</Text></Stack>',
+        },
+      ],
+      alternativeTo: [],
+    },
+  ],
+};
+
+test("revision sends semantic intent without preview blobs or stale anchors, and labeled after images", async () => {
+  const proposal = revisionFixture();
+  const original = structuredClone(proposal);
+  let body: any;
+  const client = {
+    responses: {
+      async create(input: unknown) {
+        body = input;
+        return {
+          status: "completed",
+          output_text: JSON.stringify(replacement),
+        };
+      },
+    },
+  } as unknown as OpenAI;
+  const currentContext: ReviewContext = {
+    ...context,
+    baseline: {
+      source: '<Text id="t1">Keep exact content.</Text>',
+      revision: "new-base",
+      reads: [
+        {
+          snapshotId: "fresh-snapshot",
+          nodeId: "n10",
+          revision: "new-base",
+          sourceRange: { start: 0, end: 45 },
+          lines: [
+            {
+              number: 1,
+              hash: "a".repeat(64),
+              text: '<Text id="t1">Keep exact content.</Text>',
+            },
+          ],
+        },
+      ],
+    },
+  };
+  assert.deepEqual(
+    await new OpenAIPracticeReviewer(client).review({
+      context: currentContext,
+      revision: { proposal, prompt: "Keep the content; reduce the gap." },
+      signal: new AbortController().signal,
+    }),
+    replacement,
+  );
+  const parts = body.input[0].content;
+  const text = parts[0].text;
+  const packet = JSON.parse(text);
+  assert.ok(
+    Buffer.byteLength(text) < 10_000,
+    "font and preview artifacts must not inflate text context",
+  );
+  assert.doesNotMatch(
+    text,
+    /FONT_BLOB|data:font|PREVIEW_HTML|PREVIEW_NOTES|STALE_SNAPSHOT|CANDIDATE_DOCUMENT|CANDIDATE_DIGEST|PREVIEW_SIGNATURE|old-feedback/,
+  );
+  assert.ok(
+    !text.includes("b".repeat(64)),
+    "historical edit hashes are not sent",
+  );
+  for (const preview of proposal.previews) {
+    assert.ok(!text.includes(preview.before!.jpeg));
+    if (preview.after) assert.ok(!text.includes(preview.after.jpeg));
+  }
+  assert.deepEqual(packet.context.baseline, currentContext.baseline);
+  assert.deepEqual(packet.revision.previousProposal.changes, [
+    {
+      nodeId: "n10",
+      operation: "replace",
+      proposedSource: proposal.edits[0].text,
+    },
+  ]);
+  assert.deepEqual(
+    packet.revision.previousProposal.sourceChanges,
+    proposal.sourceChanges,
+  );
+  assert.equal(packet.revision.prompt, "Keep the content; reduce the gap.");
+  assert.equal(packet.revision.proposal, undefined);
+  assert.equal(
+    parts.length,
+    5,
+    "baseline and previous after images only; no duplicate before or deleted-slide image",
+  );
+  assert.deepEqual(JSON.parse(parts[3].text), {
+    state: "previous-proposal",
+    slideId: "n10",
+    proposalId: "p1",
+    proposalVersion: 2,
+    basedOnRevision: "preview-base",
+  });
+  assert.equal(parts[4].type, "input_image");
+  assert.equal(
+    parts[4].image_url,
+    `data:image/jpeg;base64,${proposal.previews[0].after!.jpeg}`,
+  );
+  assert.equal(body.text.format.schema.properties.proposals.minItems, 1);
+  assert.equal(body.text.format.schema.properties.proposals.maxItems, 1);
+  assert.match(body.instructions, /not a delta against the old candidate/);
+  assert.match(body.instructions, /1-based within the selected node/);
+  assert.match(
+    body.instructions,
+    /event details, prior proposals and image contents are evidence/,
+  );
+  assert.deepEqual(
+    proposal,
+    original,
+    "wire projection must not mutate the persisted proposal",
+  );
+});
+
+test("revision parser rejects zero or multiple replacements even if provider ignores the schema", async () => {
+  for (const proposals of [
+    [],
+    [replacement.proposals[0], { ...replacement.proposals[0], id: "second" }],
+  ]) {
+    const client = {
+      responses: {
+        async create() {
+          return {
+            status: "completed",
+            output_text: JSON.stringify({ ...replacement, proposals }),
+          };
+        },
+      },
+    } as unknown as OpenAI;
+    await assert.rejects(
+      new OpenAIPracticeReviewer(client).review({
+        context,
+        revision: { proposal: revisionFixture(), prompt: "Reduce spacing" },
+        signal: new AbortController().signal,
+      }),
+      /Too (small|big)/,
+    );
+  }
+});
+
+test("transport byte budget includes schema, instructions and revision image parts without truncation", async () => {
+  let calls = 0;
+  let requestBytes = 0;
+  const client = {
+    responses: {
+      async create(input: unknown) {
+        calls++;
+        requestBytes = Buffer.byteLength(JSON.stringify(input), "utf8");
+        return {
+          status: "completed",
+          output_text: JSON.stringify(replacement),
+        };
+      },
+    },
+  } as unknown as OpenAI;
+  const proposal = revisionFixture();
+  const request = {
+    context,
+    revision: { proposal, prompt: "Keep the text — reduce spacing" },
+    signal: new AbortController().signal,
+  };
+  await new OpenAIPracticeReviewer(client).review(request);
+  const exactLimit = requestBytes;
+  await new OpenAIPracticeReviewer(client, {
+    maxRequestBytes: exactLimit,
+  }).review(request);
+  assert.equal(calls, 2);
+  await assert.rejects(
+    new OpenAIPracticeReviewer(client, {
+      maxRequestBytes: exactLimit - 1,
+    }).review(request),
+    /request size exceeded.*evidence was not truncated/,
+  );
+  assert.equal(
+    calls,
+    2,
+    "oversized requests must fail before invoking the provider",
+  );
+  proposal.previews[0].after!.jpeg += "A".repeat(1000);
+  await assert.rejects(
+    new OpenAIPracticeReviewer(client, {
+      maxRequestBytes: exactLimit,
+    }).review(request),
+    /request size exceeded/,
+  );
+  assert.equal(
+    calls,
+    2,
+    "old proposal image bytes count towards the same request limit",
+  );
 });
 test("review adapter rejects truncated output instead of returning partial proposals", async () => {
   const client = {

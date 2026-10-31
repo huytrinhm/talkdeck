@@ -84,6 +84,9 @@ export interface Visit {
 export interface SlideImage {
   slideId: string;
   sourceRevision: string;
+  /** Absent only on legacy persisted contexts. */
+  evidenceId?: string;
+  provenance?: "final_baseline_render";
   jpeg: string;
 }
 export interface ReviewContext {
@@ -97,6 +100,26 @@ export interface ReviewContext {
   slides: { id: string; notes: string; originalTranscript: string }[];
   speech: SpeechSpan[];
   speechHistory: SpeechSpan[];
+  /** Explicit evidence limits; absent on legacy persisted contexts. */
+  coverage?: {
+    speech: {
+      effectiveField: "speech";
+      historyField: "speechHistory";
+      supersededIds: string[];
+      completeness: "unknown";
+      semantics: string;
+    };
+    audio: {
+      providedToReviewer: false;
+      recordedIntervals: { startMs: number; endMs: number }[];
+    };
+    recognition: {
+      source: "transcriber" | "provided_transcript";
+      completeness: "unknown";
+    };
+    absenceClaims: string;
+    convenienceExtracts: string;
+  };
   events: PracticeEvent[];
   visits: Visit[];
   priorDecks: { revision: string; source: string }[];
@@ -111,8 +134,10 @@ export interface ReviewContext {
   images: SlideImage[];
   evidence: {
     id: string;
-    kind: "source" | "speech" | "event" | "visit" | "measurement";
+    kind: "source" | "speech" | "event" | "visit" | "measurement" | "render";
     revision?: string;
+    slideId?: string;
+    provenance?: "final_baseline_render";
   }[];
 }
 export interface Preview {
@@ -171,6 +196,7 @@ export interface ReviewRequest {
   signal: AbortSignal;
 }
 export interface Reviewer {
+  /** Bound the complete model transport after projecting internal proposal artifacts. */
   review(request: ReviewRequest): Promise<ReviewOutput>;
 }
 export interface Transcriber {

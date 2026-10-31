@@ -143,7 +143,9 @@ test("one end-pass receives full frozen context, prepares real previews privatel
     async review({ context }) {
       calls++;
       packet = context;
-      return output(context);
+      const result = output(context);
+      result.feedback[0].evidenceIds.push(context.images[0].evidenceId!);
+      return result;
     },
   });
   try {
@@ -156,6 +158,29 @@ test("one end-pass receives full frozen context, prepares real previews privatel
     assert.equal(f.backend.historyStatus().undoDepth, history);
     assert.equal(packet!.speech[0].text, "After is the clearer title.");
     assert.equal(packet!.images.length, 1);
+    assert.deepEqual(
+      packet!.evidence.find((e) => e.id === packet!.images[0].evidenceId),
+      {
+        id: "render-n10",
+        kind: "render",
+        slideId: "n10",
+        revision: packet!.baseline.revision,
+        provenance: "final_baseline_render",
+      },
+    );
+    assert.equal(packet!.images[0].provenance, "final_baseline_render");
+    assert.equal(packet!.coverage!.audio.providedToReviewer, false);
+    assert.deepEqual(packet!.coverage!.audio.recordedIntervals, []);
+    assert.equal(packet!.coverage!.recognition.source, "provided_transcript");
+    assert.equal(packet!.coverage!.speech.completeness, "unknown");
+    assert.match(
+      packet!.coverage!.absenceClaims,
+      /supplied effective transcript/,
+    );
+    assert.match(
+      packet!.coverage!.convenienceExtracts,
+      /same baseline source evidence/,
+    );
     assert.equal(packet!.design?.skill, "talkdeck-slide-design");
     assert.match(packet!.design!.instructions, /L10 — Side-by-side comparison/);
     assert.match(packet!.design!.instructions, /There is no Chart, Table/);
@@ -187,6 +212,7 @@ test("one end-pass receives full frozen context, prepares real previews privatel
 
 test("practice cancels old inference, never feeds narration to canonical generation, and permits explicit push-to-edit", async () => {
   const pending = deferred<ModelResult>();
+  const started = deferred<void>();
   let calls = 0;
   const f = await setup(
     {
@@ -197,12 +223,14 @@ test("practice cancels old inference, never feeds narration to canonical generat
     {
       async infer() {
         calls++;
+        started.resolve();
         return calls === 1 ? pending.promise : done;
       },
     },
   );
   try {
     f.actors.pushToEdit("Old build work");
+    await started.promise;
     assert.equal(calls, 1);
     const r = await f.practice.start();
     pending.resolve({
@@ -285,6 +313,12 @@ test("review records visits, earlier revisions, pauses and corrections without r
     assert.equal(result.speech.length, 2);
     assert.equal(result.context!.speech.length, 1);
     assert.equal(result.context!.speech[0].text, "Five");
+    assert.deepEqual(result.context!.coverage!.speech.supersededIds, ["wrong"]);
+    assert.deepEqual(
+      result.context!.speechHistory.map((s) => s.id),
+      ["wrong", "correct"],
+    );
+    assert.equal(result.context!.measurements.wordCount, 1);
     assert(result.context!.visits.some((v) => v.slideId === second.id));
     assert(result.context!.priorDecks.length > 0);
     assert(result.context!.events.some((e) => e.type === "pause"));
@@ -635,6 +669,13 @@ test("audio recording is durable and batch transcription maps sample time back a
     const result = await service.wait(r.id);
     assert.equal(result.status, "ready", result.error ?? "");
     assert.equal(calls, 1);
+    assert.equal(result.context!.coverage!.recognition.source, "transcriber");
+    assert.equal(result.context!.coverage!.recognition.completeness, "unknown");
+    assert.equal(result.context!.coverage!.audio.providedToReviewer, false);
+    assert.deepEqual(result.context!.coverage!.audio.recordedIntervals, [
+      { startMs: 1000, endMs: 2000 },
+      { startMs: 4000, endMs: 5000 },
+    ]);
     assert.deepEqual(
       result.context!.speech.map((s) => [s.startMs, s.endMs, s.text]),
       [

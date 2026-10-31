@@ -498,7 +498,7 @@ export class PracticeService {
     const speech = r.speech
       .filter((s) => !superseded.has(s.id))
       .sort((a, b) => a.startMs - b.startMs);
-    // Every displayed revision boundary is a distinct visit, including edits on the same slide.
+    // Host selection/source revision boundaries define visits, not verified audience paint.
     const boundaries = r.events
       .filter((e) =>
         ["slide_selected", "deck_changed", "undo", "redo"].includes(e.type),
@@ -543,7 +543,7 @@ export class PracticeService {
       practiceId: r.id,
       instructions:
         this.options.reviewInstructions ??
-        "Review the entire rehearsal and propose useful conservative changes; preserve substantive facts, qualifiers and original source evidence.",
+        "Review all supplied rehearsal evidence and propose useful conservative changes; preserve substantive facts, qualifiers and original source evidence. Absence claims apply only to the supplied effective transcript, not unrecorded or unrecognized speech.",
       brief: r.brief,
       design: this.options.backend.designContext("review"),
       baseline: { ...baseline, reads: makeReads(fork, source) },
@@ -557,6 +557,34 @@ export class PracticeService {
       }),
       speech,
       speechHistory: r.speech,
+      coverage: {
+        speech: {
+          effectiveField: "speech",
+          historyField: "speechHistory",
+          supersededIds: r.speech
+            .filter((s) => superseded.has(s.id))
+            .map((s) => s.id),
+          completeness: "unknown",
+          semantics:
+            "speech contains effective, non-superseded spans in time order. speechHistory retains the original spans and corrections; repeated IDs across these fields are the same evidence, not additional speech. Aligned timestamps do not establish complete recognition or recording coverage.",
+        },
+        audio: {
+          providedToReviewer: false,
+          recordedIntervals: r.audio.map(({ startMs, endMs }) => ({
+            startMs,
+            endMs,
+          })),
+        },
+        recognition: {
+          source:
+            r.brief.input === "audio" ? "transcriber" : "provided_transcript",
+          completeness: "unknown",
+        },
+        absenceClaims:
+          "Limit absence claims to the supplied effective transcript. Missing spans or audio intervals do not establish silence or omission by the speaker; recognition may omit or normalize speech. No audio is supplied for delivery judgments.",
+        convenienceExtracts:
+          "slides[].notes and slides[].originalTranscript are convenience extracts of the same baseline source evidence, not independent corroboration or additional rehearsal speech. baseline.reads repeats that source with executable anchors. Final-baseline images are review-time renders, not captures of audience-visible rehearsal frames.",
+      },
       events: r.events,
       visits,
       priorDecks: Object.entries(r.sources)
@@ -593,14 +621,6 @@ export class PracticeService {
         { id: "timing-summary", kind: "measurement" as const },
       ],
     };
-    if (
-      new Set(context.evidence.map((e) => e.id)).size !==
-      context.evidence.length
-    )
-      throw new SourceError(
-        "review_reference",
-        "Evidence identifiers collide; use distinct stable utterance IDs",
-      );
     for (const slide of sourceSlides) {
       signal.throwIfAborted();
       const image = (
@@ -609,9 +629,26 @@ export class PracticeService {
       context.images.push({
         slideId: slide.id!,
         sourceRevision: baseline.revision,
+        evidenceId: `render-${slide.id!}`,
+        provenance: "final_baseline_render",
         jpeg: Buffer.from(image.jpeg).toString("base64"),
       });
+      context.evidence.push({
+        id: `render-${slide.id!}`,
+        kind: "render",
+        slideId: slide.id!,
+        revision: baseline.revision,
+        provenance: "final_baseline_render",
+      });
     }
+    if (
+      new Set(context.evidence.map((e) => e.id)).size !==
+      context.evidence.length
+    )
+      throw new SourceError(
+        "review_reference",
+        "Evidence identifiers collide; use distinct stable utterance IDs",
+      );
     if (
       Buffer.byteLength(JSON.stringify(context)) >
       (this.options.maxContextBytes ?? 24 * 1024 * 1024)
