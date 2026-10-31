@@ -13,6 +13,8 @@
     "smoke:generation": "node --import tsx scripts/generation-smoke.ts",
     "headless:run": "node --import tsx scripts/headless-run.ts",
     "headless:replay": "node --import tsx scripts/headless-replay.ts",
+    "headless:batch": "node --import tsx scripts/headless-batch.ts",
+    "headless:actor-replay": "node --import tsx scripts/headless-actor-replay.ts",
     "eval:talks": "node --import tsx src/evaluation/cli.ts talks",
     "eval:replay": "node --import tsx src/evaluation/cli.ts replay",
     "eval:compare": "node --import tsx src/evaluation/cli.ts compare",
