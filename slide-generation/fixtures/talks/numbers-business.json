@@ -1,0 +1,419 @@
+{
+  "schemaVersion": 1,
+  "id": "numbers-business",
+  "title": "Numbers-heavy business review",
+  "purpose": "Rapid values, decimal precision, qualifiers, corrections, negative values, long values, and deliberate removal.",
+  "initialContext": "This is a fictional rehearsal. Create and edit a multi-slide deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. New-slide and editing commands are part of the spoken input.",
+  "timing": {
+    "mode": "utterance-end",
+    "speed": 1,
+    "wordsPerSecond": 3,
+    "postTalkObservationMs": 15000,
+    "maxDrainMs": 120000
+  },
+  "events": [
+    {
+      "id": "numbers-business-001",
+      "startMs": 1000,
+      "endMs": 4667,
+      "kind": "utterance",
+      "text": "New slide titled Q3 fictional business review. Revenue was $12.4 million.",
+      "targetAlias": "overview",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-002",
+      "startMs": 4667,
+      "endMs": 10001,
+      "kind": "utterance",
+      "text": "Revenue growth was 42%, compared with Q3 last year. This is revenue growth, not profit growth.",
+      "targetAlias": "overview",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-003",
+      "startMs": 10001,
+      "endMs": 13668,
+      "kind": "utterance",
+      "text": "Gross margin was 61.5%. Keep revenue growth and gross margin distinct.",
+      "targetAlias": "overview",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-004",
+      "startMs": 13668,
+      "endMs": 17668,
+      "kind": "utterance",
+      "text": "Change revenue growth from 42% to 40.2%. The earlier 42% was incorrect.",
+      "targetAlias": "overview",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-005",
+      "startMs": 17668,
+      "endMs": 21002,
+      "kind": "utterance",
+      "text": "New slide titled Customer measures. We had 1,248 active accounts.",
+      "targetAlias": "customers",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-006",
+      "startMs": 21002,
+      "endMs": 22669,
+      "kind": "utterance",
+      "text": "Net revenue retention was 108.3%.",
+      "targetAlias": "customers",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-007",
+      "startMs": 22669,
+      "endMs": 26669,
+      "kind": "utterance",
+      "text": "Monthly churn was 0.8%, not 8%. Show only the correct churn value.",
+      "targetAlias": "customers",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-008",
+      "startMs": 26669,
+      "endMs": 31003,
+      "kind": "utterance",
+      "text": "The account count is preliminary. Keep the word preliminary with the account figure.",
+      "targetAlias": "customers",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-009",
+      "startMs": 31003,
+      "endMs": 34670,
+      "kind": "utterance",
+      "text": "New slide titled Cash and costs. Operating cash flow was -$240,000.",
+      "targetAlias": "cash",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-010",
+      "startMs": 34670,
+      "endMs": 38337,
+      "kind": "utterance",
+      "text": "Cash balance was $1,234,567.89. Preserve every digit and both decimal places.",
+      "targetAlias": "cash",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-011",
+      "startMs": 38337,
+      "endMs": 41337,
+      "kind": "utterance",
+      "text": "The cloud cost was $18,450. Do not round it.",
+      "targetAlias": "cash",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-012",
+      "startMs": 41337,
+      "endMs": 44004,
+      "kind": "utterance",
+      "text": "Correction: the cloud cost was $18,540, not $18,450.",
+      "targetAlias": "cash",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-013",
+      "startMs": 44004,
+      "endMs": 49004,
+      "kind": "utterance",
+      "text": "Remove the cloud cost from this slide, but keep what I said in the notes.",
+      "targetAlias": "cash",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-014",
+      "startMs": 49004,
+      "endMs": 51671,
+      "kind": "utterance",
+      "text": "New slide titled Service measures. Availability was 99.95%.",
+      "targetAlias": "service",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-015",
+      "startMs": 51671,
+      "endMs": 56005,
+      "kind": "utterance",
+      "text": "The 95th percentile response time was 245 ms. The median was 84 ms.",
+      "targetAlias": "service",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-016",
+      "startMs": 56005,
+      "endMs": 60339,
+      "kind": "utterance",
+      "text": "We recorded 0 data-loss incidents. Do not turn zero into a missing placeholder.",
+      "targetAlias": "service",
+      "silenceAfterMs": 3000
+    },
+    {
+      "id": "numbers-business-017",
+      "startMs": 63339,
+      "endMs": 68006,
+      "kind": "utterance",
+      "text": "New slide titled Next-quarter range. The forecast range is $13.0 million to $13.8 million.",
+      "targetAlias": "forecast",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-018",
+      "startMs": 68006,
+      "endMs": 72006,
+      "kind": "utterance",
+      "text": "This range is a forecast, not a commitment. Keep that qualification visible.",
+      "targetAlias": "forecast",
+      "silenceAfterMs": 0
+    },
+    {
+      "id": "numbers-business-019",
+      "startMs": 72006,
+      "endMs": 77673,
+      "kind": "utterance",
+      "text": "Do not calculate a midpoint, annual total, or extra growth percentage. I have not supplied those figures.",
+      "targetAlias": "forecast",
+      "silenceAfterMs": 5000
+    }
+  ],
+  "expectations": [
+    {
+      "id": "numbers-business-a001",
+      "triggerEventId": "numbers-business-001",
+      "targetAlias": "overview",
+      "kind": "visible_exact",
+      "texts": [
+        "Q3 fictional business review"
+      ]
+    },
+    {
+      "id": "numbers-business-a002",
+      "triggerEventId": "numbers-business-001",
+      "targetAlias": "overview",
+      "kind": "number_exact",
+      "value": "$12.4 million",
+      "label": "Revenue"
+    },
+    {
+      "id": "numbers-business-a003",
+      "triggerEventId": "numbers-business-002",
+      "targetAlias": "overview",
+      "kind": "number_exact",
+      "value": "42%",
+      "label": "Revenue growth"
+    },
+    {
+      "id": "numbers-business-a004",
+      "triggerEventId": "numbers-business-002",
+      "targetAlias": "overview",
+      "kind": "visible_exact",
+      "texts": [
+        "compared with Q3 last year"
+      ]
+    },
+    {
+      "id": "numbers-business-a005",
+      "triggerEventId": "numbers-business-003",
+      "targetAlias": "overview",
+      "kind": "number_exact",
+      "value": "61.5%",
+      "label": "Gross margin"
+    },
+    {
+      "id": "numbers-business-a006",
+      "triggerEventId": "numbers-business-004",
+      "targetAlias": "overview",
+      "kind": "correction",
+      "old": "42%",
+      "new": "40.2%",
+      "label": "Revenue growth"
+    },
+    {
+      "id": "numbers-business-a007",
+      "triggerEventId": "numbers-business-004",
+      "targetAlias": "overview",
+      "kind": "source_retained",
+      "texts": [
+        "42%",
+        "40.2%"
+      ]
+    },
+    {
+      "id": "numbers-business-a008",
+      "triggerEventId": "numbers-business-005",
+      "targetAlias": "customers",
+      "kind": "number_exact",
+      "value": "1,248",
+      "label": "active accounts"
+    },
+    {
+      "id": "numbers-business-a009",
+      "triggerEventId": "numbers-business-006",
+      "targetAlias": "customers",
+      "kind": "number_exact",
+      "value": "108.3%",
+      "label": "Net revenue retention"
+    },
+    {
+      "id": "numbers-business-a010",
+      "triggerEventId": "numbers-business-007",
+      "targetAlias": "customers",
+      "kind": "number_exact",
+      "value": "0.8%",
+      "label": "Monthly churn"
+    },
+    {
+      "id": "numbers-business-a011",
+      "triggerEventId": "numbers-business-007",
+      "targetAlias": "customers",
+      "kind": "visible_absent",
+      "texts": [
+        "8%"
+      ],
+      "match": "standalone-numeric-token"
+    },
+    {
+      "id": "numbers-business-a012",
+      "triggerEventId": "numbers-business-008",
+      "targetAlias": "customers",
+      "kind": "visible_exact",
+      "texts": [
+        "preliminary"
+      ]
+    },
+    {
+      "id": "numbers-business-a013",
+      "triggerEventId": "numbers-business-008",
+      "targetAlias": "customers",
+      "kind": "must_preserve_qualifier",
+      "label": "active accounts",
+      "qualifier": "preliminary"
+    },
+    {
+      "id": "numbers-business-a014",
+      "triggerEventId": "numbers-business-009",
+      "targetAlias": "cash",
+      "kind": "number_exact",
+      "value": "-$240,000",
+      "label": "Operating cash flow"
+    },
+    {
+      "id": "numbers-business-a015",
+      "triggerEventId": "numbers-business-010",
+      "targetAlias": "cash",
+      "kind": "number_exact",
+      "value": "$1,234,567.89",
+      "label": "Cash balance"
+    },
+    {
+      "id": "numbers-business-a016",
+      "triggerEventId": "numbers-business-011",
+      "targetAlias": "cash",
+      "kind": "number_exact",
+      "value": "$18,450",
+      "label": "cloud cost"
+    },
+    {
+      "id": "numbers-business-a017",
+      "triggerEventId": "numbers-business-012",
+      "targetAlias": "cash",
+      "kind": "correction",
+      "old": "$18,450",
+      "new": "$18,540",
+      "label": "cloud cost"
+    },
+    {
+      "id": "numbers-business-a018",
+      "triggerEventId": "numbers-business-013",
+      "targetAlias": "cash",
+      "kind": "visible_absent",
+      "texts": [
+        "$18,540"
+      ],
+      "match": "exact"
+    },
+    {
+      "id": "numbers-business-a019",
+      "triggerEventId": "numbers-business-013",
+      "targetAlias": "cash",
+      "kind": "source_retained",
+      "texts": [
+        "$18,450",
+        "$18,540"
+      ]
+    },
+    {
+      "id": "numbers-business-a020",
+      "triggerEventId": "numbers-business-014",
+      "targetAlias": "service",
+      "kind": "number_exact",
+      "value": "99.95%",
+      "label": "Availability"
+    },
+    {
+      "id": "numbers-business-a021",
+      "triggerEventId": "numbers-business-015",
+      "targetAlias": "service",
+      "kind": "number_exact",
+      "value": "245 ms",
+      "label": "95th percentile response time"
+    },
+    {
+      "id": "numbers-business-a022",
+      "triggerEventId": "numbers-business-015",
+      "targetAlias": "service",
+      "kind": "number_exact",
+      "value": "84 ms",
+      "label": "median"
+    },
+    {
+      "id": "numbers-business-a023",
+      "triggerEventId": "numbers-business-016",
+      "targetAlias": "service",
+      "kind": "number_exact",
+      "value": "0",
+      "label": "data-loss incidents"
+    },
+    {
+      "id": "numbers-business-a024",
+      "triggerEventId": "numbers-business-017",
+      "targetAlias": "forecast",
+      "kind": "visible_exact",
+      "texts": [
+        "$13.0 million",
+        "$13.8 million"
+      ]
+    },
+    {
+      "id": "numbers-business-a025",
+      "triggerEventId": "numbers-business-018",
+      "targetAlias": "forecast",
+      "kind": "visible_exact",
+      "texts": [
+        "a forecast, not a commitment"
+      ]
+    },
+    {
+      "id": "numbers-business-a026",
+      "triggerEventId": "numbers-business-019",
+      "targetAlias": "forecast",
+      "kind": "no_derived_numbers",
+      "scope": "deck"
+    }
+  ],
+  "finalExpectations": {
+    "slideCount": 5,
+    "allUserSourceRetained": true,
+    "noInventedOrDuplicatedClaims": true,
+    "correctedValuesOnlyVisible": true,
+    "presentationReady": true
+  }
+}

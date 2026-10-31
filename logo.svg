@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="119 150 270 145" role="img" aria-label="TalkDeck"><title>TalkDeck — softened abstract slide with teal and coral accents</title><!-- Detached voice bars on both sides, with subtly varied heights. -->
+<g fill="#153B40">
+<rect x="134" y="208" width="22" height="38" rx="11"/>
+<rect x="161" y="187" width="24" height="78" rx="12"/>
+<rect x="323" y="190" width="24" height="72" rx="12"/>
+<rect x="352" y="211" width="22" height="32" rx="11"/>
+</g><g transform="translate(76.5 0) scale(.7 1)"><g fill="#153B40"><!-- Organic asymmetry: unequal rounded peaks and shallow flowing valleys. -->
+<path d="M165 199
+ C165 181 176 174 191 178
+ C213 184 229 170 252.5 170
+ C276 170 292 184 314 178
+ C329 174 340 181 340 199
+ V255
+ C340 273 329 280 314 276
+ C292 270 276 284 252.5 284
+ C229 284 213 270 191 276
+ C176 280 165 273 165 255 Z"/>
+</g>
+</g><g transform="translate(253 227) scale(.9) translate(-253 -227)"><!-- Interior centered at (253,227): 96-unit width, equal outer padding.
+     Pie diameter 60; right stack 24 x 60; inter-column gap 12. -->
+<g transform="translate(235 227) scale(.92) translate(-235 -227)"><path d="M235 227V197A30 30 0 1 0 265 227Z" fill="#65B8B2"/>
+<!-- Quarter stays within the same circle; a 3-unit negative-space division. -->
+<path d="M238 197.15A30 30 0 0 1 264.85 224H238Z" fill="#FFFFFF"/></g>
+<rect x="277" y="197" width="24" height="24" rx="5" fill="#FFFFFF"/>
+<rect x="277" y="233" width="24" height="24" rx="5" fill="#F19A80"/></g>
+</svg>
