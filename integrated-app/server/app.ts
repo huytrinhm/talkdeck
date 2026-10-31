@@ -199,6 +199,8 @@ export function createProductApp(
         startMs: z.number().nonnegative(),
         endMs: z.number().nonnegative(),
         sequence: z.number().int().nonnegative(),
+        utteranceId: id.optional(),
+        final: z.boolean().optional(),
       })
       .parse({
         id: c.req.header("X-Input-Id"),
@@ -207,6 +209,8 @@ export function createProductApp(
         startMs: Number(c.req.header("X-Start-Ms")),
         endMs: Number(c.req.header("X-End-Ms")),
         sequence: Number(c.req.header("X-Audio-Sequence")),
+        utteranceId: c.req.header("X-Utterance-Id"),
+        final: c.req.header("X-Audio-Final") === undefined ? undefined : c.req.header("X-Audio-Final") === "true",
       });
     return c.json(
       await owner.audio(session, input, Buffer.from(await c.req.arrayBuffer())),

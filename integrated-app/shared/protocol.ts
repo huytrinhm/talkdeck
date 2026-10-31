@@ -36,7 +36,7 @@ export interface Snapshot {
   selectedId: string;
   slides: { id: string; title: string; notes: string; thumbnail: string }[];
   transcripts: Transcript[];
-  /** Provisional ASR, editor-only; not retained or dispatched to generation. */
+  /** Provisional ASR display, editor-only; final text replaces it. */
   pendingTranscripts?: { id: string; epoch: number; slideId: string; text: string }[];
   materials: Material[];
   practiceId?: string;

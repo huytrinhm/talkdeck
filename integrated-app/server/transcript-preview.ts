@@ -1,4 +1,4 @@
-/** Private, provisional ASR text. Never canonical narration or generation input. */
+/** Provisional ASR display; the host retains supersedable evidence separately for live drafting. */
 export class TranscriptPreview {
   private items = new Map<string, { text: string; final: boolean }>();
   constructor(readonly id: string, readonly epoch: number, readonly slideId: string) {}

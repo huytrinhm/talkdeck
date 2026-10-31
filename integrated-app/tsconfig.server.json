@@ -5,5 +5,6 @@
     "strict": true, "skipLibCheck": true, "noEmit": true,
     "esModuleInterop": true, "types": ["node"]
   },
+  "exclude": ["tests/microphone.test.ts"],
   "include": ["server", "shared", "tests/*.test.ts", "../slide-generation/src/render/apca-w3.d.ts"]
 }

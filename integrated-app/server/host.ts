@@ -79,9 +79,12 @@ interface Persisted {
       receipt?: Receipt;
       error?: string;
       pending?: boolean;
+      audio?: AudioPacket;
     }
   >;
 }
+type AudioPacket = Omit<Utterance, "text"> & { sequence: number; utteranceId?: string; final?: boolean };
+interface AudioTurn { input: AudioPacket; mode: Mode; reservation: ReturnType<ProductProviders["reserveTranscription"]>; correctionOf?: string; revision: number; lastPreviewAt: number; finalized?: boolean; settled?: boolean; }
 interface Attachment {
   dto: Session;
   publication: GenerationSession;
@@ -96,11 +99,13 @@ export class ProjectOwner {
   providers!: ProductProviders;
   readonly sessions = new Map<string, Attachment>();
   private tail: Promise<unknown> = Promise.resolve();
+  private queuedAudioBytes = 0;
+  private audioTail: Promise<void> = Promise.resolve();
   private saveTail: Promise<unknown> = Promise.resolve();
   private imageCache = new Map<string, Promise<Uint8Array>>();
   private live = new Map<
     string,
-    { transcriber: LiveTranscription; finals: string[]; pending?: TranscriptPreview }
+    { transcriber: LiveTranscription; finals: string[]; pending?: TranscriptPreview; turn?: AudioTurn }
   >();
   private unsubscribe: (() => void)[] = [];
   private commandTrace?: ReturnType<typeof serverNavigationTrace>;
@@ -372,7 +377,9 @@ export class ProjectOwner {
   }
   async detach(a: Attachment) {
     this.sessions.delete(a.dto.id);
-    this.live.get(a.dto.id)?.transcriber.close();
+    const live = this.live.get(a.dto.id);
+    if (live?.turn) this.finishAudioTurn(live.turn, new Error("Capture disconnected before utterance completion; PCM retained"));
+    live?.transcriber.close();
     this.live.delete(a.dto.id);
     a.listeners.clear();
     await a.publication.close();
@@ -581,8 +588,10 @@ export class ProjectOwner {
         "recording_open",
         "Finish or cancel practice before changing mode",
       );
-    for (const live of this.live.values()) live.transcriber.close();
-    this.live.clear();
+    // An admitted utterance may finish in its original epoch after this transition.
+    for (const [id, live] of this.live) if (!live.pending) {
+      live.transcriber.close(); this.live.delete(id);
+    }
     const priorMode = this.data.mode,
       priorPractice = this.runtime.actors.practiceMode,
       priorPaused = this.runtime.actors.paused;
@@ -788,7 +797,7 @@ export class ProjectOwner {
   }
   async audio(
     a: Attachment,
-    input: Omit<Utterance, "text"> & { sequence: number },
+    input: AudioPacket,
     pcm: Buffer,
   ): Promise<Receipt> {
     return this.serialize(async () => {
@@ -813,12 +822,14 @@ export class ProjectOwner {
       this.checkEpoch(input.epoch);
       if (!["talk", "practice", "present"].includes(this.data.mode))
         throw new ProductError("mode", "Voice mode is not active");
-      if (!pcm.length || pcm.length % 2 || pcm.length > 48_000 * 30)
+      if ((!pcm.length && !(input.utteranceId && input.final)) || pcm.length % 2 || pcm.length > 48_000 * 30)
         throw new ProductError(
           "audio",
           "Expected at most30 seconds of mono24k PCM16",
         );
       this.runtime.backend.get(input.slideId);
+      if (this.queuedAudioBytes + pcm.length > 8 * 1024 * 1024)
+        throw new ProductError("audio_backpressure", "Transcription is catching up. Audio remains in the client retry buffer.");
       await mkdir(join(this.directory, "audio"), { recursive: true });
       await writeFile(
         join(this.directory, "audio", `${digest(input.id)}.pcm`),
@@ -827,98 +838,131 @@ export class ProjectOwner {
       );
       this.data.inputs[input.id] = { fingerprint, pending: true };
       await this.save();
-      try {
-        let text: string | undefined;
-        if (this.data.mode === "practice")
-          await this.runtime.practice.addAudio(
-            this.data.practiceId!,
-            input.sequence,
-            input.startMs,
-            pcm,
-          );
-        else {
-          let live = this.live.get(a.dto.id);
-          if (!live) {
-            const finals: string[] = [];
-            const transcriber = new LiveTranscription(
-              this.providers.client,
-              models().transcription,
-              () => {},
-              {
-                write: (type, data) => {
-                  this.providers.record({ type, ...data });
-                  const event = data.event as any;
-                  if (event && this.live.get(a.dto.id)?.pending?.event(event)) this.broadcastSnapshot();
-                  if (
-                    event?.type ===
-                    "conversation.item.input_audio_transcription.completed"
-                  )
-                    finals.push(event.transcript ?? "");
-                },
-                observation() {},
-              },
-              { maxConnectionAttempts: 1 },
-            );
-            live = { transcriber, finals };
-            this.live.set(a.dto.id, live);
-            await transcriber.connect();
-          }
-          const reservation = this.providers.reserveTranscription();
-          let failure: unknown;
-          try {
-            live.finals.length = 0;
-            live.pending = new TranscriptPreview(input.id, input.epoch, input.slideId);
-            this.broadcastSnapshot();
-            live.transcriber.append(pcm);
-            await live.transcriber.commit();
-            text = live.finals.join(" ").trim();
-          } catch (error) {
-            failure = error;
-            live.transcriber.close();
-            this.live.delete(a.dto.id);
-            throw error;
-          } finally {
-            this.providers.finishTranscription(reservation, failure);
-          }
-          if (text) {
-            this.authorizeCapture(a);
-            delete this.data.inputs[input.id];
-            const typed = await this.retainInput({ ...input, text });
-            this.data.inputs[input.id] = { fingerprint, receipt: typed };
-            await this.save();
-            return typed;
+      const mode = this.data.mode;
+      const receipt: Receipt = { id: input.id, retained: true, duplicate: false,
+        mode, epoch: input.epoch, slideId: input.slideId };
+      if (mode === "practice") {
+        await this.runtime.practice.addAudio(this.data.practiceId!, input.sequence, input.startMs, pcm);
+        this.data.inputs[input.id] = { fingerprint, receipt };
+      } else {
+        // A receipt acknowledges durable PCM, not completed ASR. Provider latency
+        // must not hold the project command queue or prevent the next upload.
+        this.data.inputs[input.id] = { fingerprint, receipt, pending: true, audio: input };
+        this.queuedAudioBytes += pcm.length;
+        this.audioTail = this.audioTail.catch(() => {}).then(() => this.transcribeAudio(a, input, pcm, fingerprint, mode))
+          .finally(() => { this.queuedAudioBytes -= pcm.length; });
+      }
+      await this.save();
+      return receipt;
+    });
+  }
+  async settleAudio() { await this.audioTail; }
+  private finishAudioTurn(turn: AudioTurn, error?: unknown) {
+    if (turn.settled) return;
+    turn.settled = true;
+    this.providers.finishTranscription(turn.reservation, error);
+  }
+  private queueSpeechPreview(a: Attachment) {
+    const live = this.live.get(a.dto.id), turn = live?.turn;
+    if (!live?.pending || !turn || Date.now() - turn.lastPreviewAt < 500) return;
+    turn.lastPreviewAt = Date.now();
+    void this.serialize(async () => {
+      if (this.captureOwner !== a.dto.id || !this.sessions.has(a.dto.id) || turn.finalized || turn.mode !== "talk" || turn.input.epoch !== this.data.epoch ||
+        this.data.mode !== "talk" || !this.runtime.backend.list().some(s => s.id === turn.input.slideId)) return;
+      const text = live.pending?.snapshot().text;
+      if (!text) return;
+      // Durable, supersedable recognition evidence. UI remains grey until final ASR.
+      const id = `asr_${turn.input.id}_${++turn.revision}`;
+      await this.runtime.actors.deliverUtterance({ id, slideId: turn.input.slideId, text,
+        deliveredAtMs: turn.input.endMs, correctionOf: turn.correctionOf });
+      turn.correctionOf = id;
+    }).catch(error => { this.error = safeError(error); this.broadcastSnapshot(); });
+  }
+  private async transcribeAudio(a: Attachment, input: AudioPacket,
+    pcm: Buffer, fingerprint: string, mode: Mode) {
+    let turn: AudioTurn | undefined;
+    let finished = false;
+    try {
+      if (this.closed) throw new Error("Audio processing interrupted; PCM retained");
+      let live = this.live.get(a.dto.id);
+      if (!live) {
+        const finals: string[] = [];
+        const transcriber = new LiveTranscription(this.providers.client, models().transcription, () => {}, {
+          write: (type, data) => {
+            this.providers.record({ type, ...data });
+            const event = data.event as any;
+            if (event && this.live.get(a.dto.id)?.pending?.event(event)) {
+              this.broadcastSnapshot();
+              if (event.type === "conversation.item.input_audio_transcription.delta") this.queueSpeechPreview(a);
+            }
+            if (event?.type === "conversation.item.input_audio_transcription.completed") finals.push(event.transcript ?? "");
+          }, observation() {},
+        }, { maxConnectionAttempts: 1 });
+        live = { transcriber, finals, pending: new TranscriptPreview(input.utteranceId ?? input.id, input.epoch, input.slideId) };
+        this.live.set(a.dto.id, live);
+        await transcriber.connect();
+      }
+      const utteranceId = input.utteranceId ?? input.id;
+      if (live.turn && live.turn.input.id !== utteranceId) throw new Error("Previous utterance must be finalized before another begins");
+      if (!live.turn) {
+        live.finals.length = 0;
+        live.pending = new TranscriptPreview(utteranceId, input.epoch, input.slideId);
+        live.turn = { input: { ...input, id: utteranceId }, mode,
+          reservation: this.providers.reserveTranscription(), revision: 0, lastPreviewAt: 0 };
+      }
+      turn = live.turn;
+      if (turn.input.slideId !== input.slideId || turn.input.epoch !== input.epoch)
+        throw new Error("An audio utterance cannot cross slide or epoch boundaries");
+      turn.input.endMs = input.endMs;
+      this.broadcastSnapshot();
+      if (pcm.length) live.transcriber.append(pcm);
+      if (input.final === false) {
+        await this.serialize(async () => { this.data.inputs[input.id].pending = false; await this.save(); });
+        return;
+      }
+      await live.transcriber.commit();
+      const text = live.finals.join(" ").trim();
+      const finalTurn = turn;
+      await this.serialize(async () => {
+        finalTurn.finalized = true;
+        const original = finalTurn.input;
+        let receipt: Receipt = { id: original.id, retained: true, duplicate: false,
+          mode: finalTurn.mode, epoch: original.epoch, slideId: original.slideId, text };
+        if (text || finalTurn.correctionOf) {
+          const current = this.captureOwner === a.dto.id && this.sessions.has(a.dto.id) && original.epoch === this.data.epoch && finalTurn.mode === this.data.mode &&
+            this.runtime.backend.list().some(slide => slide.id === original.slideId);
+          if (current) {
+            delete this.data.inputs[original.id];
+            receipt = await this.retainInput({ ...original, text, correctionOf: finalTurn.correctionOf });
+          } else {
+            this.data.transcripts.push({ id: original.id, text, slideId: original.slideId,
+              mode: finalTurn.mode, epoch: original.epoch, atMs: original.endMs, correctionOf: finalTurn.correctionOf });
           }
         }
-        const receipt: Receipt = {
-          id: input.id,
-          retained: true,
-          duplicate: false,
-          mode: this.data.mode,
-          epoch: this.data.epoch,
-          slideId: input.slideId,
-          text,
-        };
-        this.data.inputs[input.id] = { fingerprint, receipt };
-        await this.save();
-        this.broadcastSnapshot();
-        return receipt;
-      } catch (error) {
-        this.providers.record({
-          type: "audio_failed",
-          id: input.id,
-          error: safeError(error),
-        });
-        this.data.inputs[input.id] = { fingerprint, error: safeError(error) };
-        this.error = safeError(error);
-        await this.save();
-        this.broadcastSnapshot();
-        throw error;
-      } finally {
-        const live = this.live.get(a.dto.id);
-        if (live?.pending?.id === input.id) delete live.pending;
-        this.broadcastSnapshot();
+        // Packet receipt remains keyed by its upload ID; transcript by utterance ID.
+        this.data.inputs[input.id] = { fingerprint, receipt: { ...receipt, id: input.id }, audio: input };
+        await this.save(); this.broadcastSnapshot();
+      });
+      this.finishAudioTurn(turn);
+      finished = true;
+      delete live.pending; delete live.turn;
+    } catch (error) {
+      const live = this.live.get(a.dto.id);
+      turn ??= live?.turn;
+      if (turn && !finished) this.finishAudioTurn(turn, error);
+      live?.transcriber.close(); this.live.delete(a.dto.id);
+      await this.serialize(async () => {
+        this.providers.record({ type: "audio_failed", id: input.id, error: safeError(error) });
+        this.data.inputs[input.id] = { ...this.data.inputs[input.id], fingerprint, pending: false, error: safeError(error) };
+        this.error = safeError(error); await this.save(); this.broadcastSnapshot();
+      });
+    } finally {
+      const live = this.live.get(a.dto.id);
+      if (finished && live && (input.epoch !== this.data.epoch || this.closed)) {
+        live.transcriber.close(); this.live.delete(a.dto.id);
       }
-    });
+      this.broadcastSnapshot();
+    }
   }
   async practiceCall(
     path: string,
@@ -1045,13 +1089,15 @@ export class ProjectOwner {
         "revision_changed",
         "Reload the latest slide thumbnail",
       );
-    const key = `${current}:${slideId}`;
+    const artifact = await this.runtime.local.renderer.render(source, slideId);
+    const key = digest([slideId, artifact.html, artifact.css, artifact.fonts, artifact.dependencies]);
     let pending = this.imageCache.get(key);
     if (!pending) {
       pending = this.runtime.local.browser
         .screenshot(source, [slideId])
         .then((frames) => frames[0].jpeg);
       this.imageCache.set(key, pending);
+      void pending.catch(() => { if (this.imageCache.get(key) === pending) this.imageCache.delete(key); });
       while (this.imageCache.size > 40)
         this.imageCache.delete(this.imageCache.keys().next().value!);
     }
@@ -1062,6 +1108,8 @@ export class ProjectOwner {
     if (this.timer) clearInterval(this.timer);
     for (const unsub of this.unsubscribe) unsub();
     for (const live of this.live.values()) live.transcriber.close();
+    await this.audioTail;
+    for (const live of this.live.values()) if (live.turn) this.finishAudioTurn(live.turn, new Error("Shutdown interrupted utterance; PCM retained"));
     await this.tail;
     await Promise.all(
       [...this.sessions.values()].map((a) => a.publication.close()),

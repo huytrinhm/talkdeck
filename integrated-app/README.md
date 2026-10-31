@@ -59,3 +59,30 @@ and versioned in the Sites source repository. No model key is uploaded to Sites.
 See [the implementation evidence](docs/IMPLEMENTATION-EVIDENCE.md). The user
 explicitly skipped the remaining verification after deployment. Do not interpret
 the deployed application as having passed every M0–M5 release gate.
+
+## Responsive speech and controls
+
+Talk/Present upload 250 ms PCM transport frames with a stable `X-Utterance-Id`;
+`X-Audio-Final` commits only at a 500 ms pause, slide/capture boundary, or a 12 s
+utterance limit. Those limits no longer delay upload or recognition. Practice
+retains its 1 s recording chunks and end-pass review. Legacy whole-utterance
+uploads without the new headers remain supported. A final packet can be empty.
+
+Audio receipts acknowledge durable PCM, not completed transcription. An ordered,
+bounded ASR queue runs outside project-command serialization. Each chunk ID is
+idempotent; final ASR creates one transcript by utterance ID. Pending text is grey,
+final text white. In Talk, coalesced partial ASR is retained as correction-linked
+evidence and sent through the normal decision gate, allowing drafting before a
+pause. The final transcript supersedes the last provisional evidence. Present
+partials do not generate slides; practice remains end-pass. Late results keep
+the original slide/mode/epoch and never edit a replacement slide or a new mode.
+
+Live transcription is configured for English and Vietnamese (`en`, `vi`). Do not
+force the single-language `en` parameter on alternative transcription models.
+Provider errors remain visible and raw PCM remains on disk; no automatic paid
+retry is introduced. Interrupted uncommitted speech requires recovery from saved
+evidence/PCM, not guessed completion.
+
+Canonical validation reuses exact rendered browser evidence; thumbnail pixels
+are keyed by rendered output/dependencies instead of whole-deck revision. This
+avoids recapturing every thumbnail when only one slide or private narration changes.

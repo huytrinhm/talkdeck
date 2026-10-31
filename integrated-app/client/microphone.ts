@@ -12,6 +12,7 @@ export class CanonicalMicrophone {
   private binding?: Binding;
   private captureStart = 0;
   private sequence = 0;
+  private utteranceId?: string;
   private parts: ArrayBuffer[] = [];
   private startMs = 0;
   private silenceMs = 0;
@@ -63,28 +64,33 @@ export class CanonicalMicrophone {
   }
   private receive(pcm: ArrayBuffer, startSample: number, rms: number) {
     if (!this.binding) return;
+    if (this.utteranceId && this.binding.slideId !== this.options.binding().slideId) this.finalize();
     this.options.level(Math.min(1, rms * 10));
     const duration = pcm.byteLength / 48;
-    if (!this.parts.length) { this.startMs = Math.max(0, this.captureStart + startSample / 24); this.binding.slideId = this.options.binding().slideId; }
+    if (!this.parts.length) { this.startMs = Math.max(0, this.captureStart + startSample / 24); if (!this.utteranceId) this.binding.slideId = this.options.binding().slideId; }
     this.parts.push(pcm); this.durationMs += duration;
     if (rms > 0.008) { this.voiced = true; this.silenceMs = 0; } else this.silenceMs += duration;
-    if (this.binding.practice ? this.durationMs >= 1000 : (this.voiced && this.silenceMs >= 750) || this.durationMs >= 12000) this.finalize();
+    if (this.binding.practice ? this.durationMs >= 1000 : (this.voiced && this.silenceMs >= 500) || this.durationMs >= 12000) this.finalize();
+    else if (!this.binding.practice && this.voiced) this.finalize(false);
     if (!this.binding.practice && !this.voiced && this.durationMs >= 1000) { this.parts = this.parts.slice(-1); this.durationMs = duration; this.startMs = Math.max(0, this.captureStart + startSample / 24); }
   }
-  private finalize() {
-    if (!this.binding || !this.parts.length) return;
+  private finalize(final = true) {
+    if (!this.binding || (!this.parts.length && !this.utteranceId)) return;
     if (this.binding.practice || this.voiced) {
       const pcm = new Uint8Array(this.parts.reduce((sum, part) => sum + part.byteLength, 0)); let offset = 0;
       for (const part of this.parts) { pcm.set(new Uint8Array(part), offset); offset += part.byteLength; }
       const chunk: AudioInput = { id: crypto.randomUUID(), epoch: this.binding.epoch, slideId: this.binding.slideId,
-        sequence: this.sequence++, startMs: this.startMs, endMs: this.startMs + this.durationMs, pcm: pcm.buffer };
+        sequence: this.sequence++,
+        ...(!this.binding.practice ? { utteranceId: this.utteranceId ??= crypto.randomUUID(), final } : {}), startMs: this.startMs, endMs: this.startMs + pcm.byteLength / 48, pcm: pcm.buffer };
       this.queue.push(chunk); this.options.pending(this.queue.length);
       if (this.queue.reduce((sum, item) => sum + item.pcm.byteLength, 0) > 8 * 1024 * 1024) {
         this.failure = new Error('Audio upload buffer is full. Capture stopped; queued audio is retained. Reconnect and retry before continuing.');
         this.options.error(this.failure.message); this.capture.stop();
       } else void this.pump();
     }
-    this.parts = []; this.durationMs = 0; this.silenceMs = 0; this.voiced = false;
+    if (!final) this.startMs += this.parts.reduce((sum, part) => sum + part.byteLength / 48, 0);
+    this.parts = [];
+    if (final) { this.utteranceId = undefined; this.durationMs = 0; this.silenceMs = 0; this.voiced = false; }
   }
   private pump(): Promise<void> {
     if (this.sending) return this.sending;

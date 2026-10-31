@@ -4,6 +4,13 @@ import { ProviderBudget } from "../../slide-generation/src/headless/models.js";
 
 export function safeError(error: unknown) {
   let text = error instanceof Error ? error.message : String(error);
+  // The SDK wraps local budget/transport failures as "Connection error".
+  // Preserve the actionable cause, then redact credentials across the full chain.
+  let cause = error instanceof Error ? error.cause : undefined;
+  for (let depth = 0; cause instanceof Error && depth < 4; depth++) {
+    text += `: ${cause.message}`;
+    cause = cause.cause;
+  }
   for (const value of [process.env.OPENAI_API_KEY, process.env.OPENAI_KEY])
     if (value) text = text.split(value).join("[redacted]");
   return text.replace(/\bsk-[A-Za-z0-9_*.-]{6,}/g, "[redacted]");

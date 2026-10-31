@@ -180,8 +180,8 @@ export class LiveTranscription {
               transcription: {
                 model: this.model,
                 ...(this.model === "gpt-live-transcribe"
-                  ? { languages: ["en"], delay: "low" }
-                  : { language: "en" }),
+                  ? { languages: ["en", "vi"], delay: "low" }
+                  : { prompt: "Speech is in English and Vietnamese, sometimes mixed. Transcribe in the original language." }),
               },
               turn_detection: null,
             },

@@ -205,6 +205,7 @@ export class ProjectConnection {
     return json<Receipt>(`${this.base}/audio`, { method: 'POST', headers: this.headers({
       'Content-Type': 'application/octet-stream', 'X-Input-Id': chunk.id, 'X-Epoch': String(chunk.epoch),
       'X-Slide-Id': chunk.slideId, 'X-Start-Ms': String(chunk.startMs), 'X-End-Ms': String(chunk.endMs), 'X-Audio-Sequence': String(chunk.sequence),
+      ...(chunk.utteranceId ? { 'X-Utterance-Id': chunk.utteranceId, 'X-Audio-Final': String(chunk.final ?? true) } : {}),
     }), body: chunk.pcm as ArrayBuffer });
   }
   async acknowledge(acknowledgment: ViewerAcknowledgment) {
@@ -278,4 +279,4 @@ export class ProjectConnection {
     if (this.session) void fetch(`${this.base}/sessions/${this.session.id}`, { method: 'DELETE', headers: this.headers(), keepalive: true }).catch(() => {});
   }
 }
-export interface AudioInput { id: string; epoch: number; slideId: string; startMs: number; endMs: number; sequence: number; pcm: ArrayBuffer; }
+export interface AudioInput { id: string; epoch: number; slideId: string; startMs: number; endMs: number; sequence: number; utteranceId?: string; final?: boolean; pcm: ArrayBuffer; }

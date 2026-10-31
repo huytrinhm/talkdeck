@@ -22,6 +22,7 @@
   },
   "include": [
     "client",
+    "tests/microphone.test.ts",
     "shared",
     "vite.config.ts",
     "../slide-generation/src/**/*.d.ts"

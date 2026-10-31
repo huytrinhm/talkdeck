@@ -253,9 +253,51 @@ test('audio preview remains provisional until retained final text replaces it wi
     assert.equal(owner.snapshot().pendingTranscripts?.[0].text, 'Fourty');
     assert.equal(owner.snapshot().transcripts.length, 0);
     assert(!owner.runtime.local.engine.readDocument().source.includes('Fourty'));
-    release(); await completing;
+    await completing; // Upload receipt does not wait for provider completion.
+    // Controls must finish while ASR is still blocked, not only after its result.
+    await command(f.host, p, { type: 'add' });
+    await command(f.host, p, { type: 'delete', slideId: input.slideId });
+    assert(!owner.snapshot().slides.some(slide => slide.id === input.slideId));
+    release(); await owner.settleAudio();
     assert.deepEqual(owner.snapshot().pendingTranscripts, []);
     assert.deepEqual(owner.snapshot().transcripts.map(t => t.text), ['Forty people.']);
     assert.equal(owner.snapshot().transcripts[0].id, input.id);
+    assert.equal(owner.snapshot().transcripts[0].slideId, input.slideId);
+    assert(!owner.runtime.local.engine.readDocument().source.includes('Forty people.'), 'late deleted-slide speech must not edit the replacement');
   } finally { release?.(); await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
+});
+
+test('streaming packets retain corrected draft evidence before final ASR, without splitting utterances', async () => {
+  const f = await setup();
+  try {
+    const p = await project(f.host, 'Streaming recognition');
+    const owner = await f.host.store.open(p.id), state = owner.snapshot();
+    let commits = 0, appends = 0;
+    const live: any = { finals: [], transcriber: {
+      append() {
+        appends++;
+        live.pending.event({ type: 'conversation.item.input_audio_transcription.delta', item_id: 'item', delta: 'Fourty people' });
+        (owner as any).queueSpeechPreview(owner.sessions.get(p.session.id)!);
+      },
+      async commit() { commits++; live.finals.push('Forty people.'); }, close() {},
+    } };
+    (owner as any).live.set(p.session.id, live);
+    const packet = { id: 'packet-1', epoch: state.epoch, slideId: state.selectedId, sequence: 0,
+      startMs: 0, endMs: 250, utteranceId: 'utterance-1', final: false };
+    const attachment = owner.sessions.get(p.session.id)!;
+    await owner.audio(attachment, packet, Buffer.alloc(12000));
+    await owner.settleAudio();
+    assert.equal(commits, 0); assert.equal(appends, 1);
+    assert.equal(owner.snapshot().transcripts.length, 0);
+    assert.equal(owner.snapshot().pendingTranscripts?.[0].text, 'Fourty people');
+    assert.match(owner.runtime.local.engine.readDocument().source, /Fourty people/);
+    const final = { ...packet, id: 'packet-2', sequence: 1, startMs: 250, endMs: 250, final: true };
+    await owner.audio(attachment, final, Buffer.alloc(0)); await owner.settleAudio();
+    assert.equal(commits, 1); assert.equal(appends, 1);
+    assert.deepEqual(owner.snapshot().pendingTranscripts, []);
+    assert.deepEqual(owner.snapshot().transcripts.map(t => [t.id, t.text]), [['utterance-1', 'Forty people.']]);
+    assert.equal(owner.runtime.actors.gate.latest?.text, 'Forty people.');
+    assert.equal((await owner.audio(attachment, final, Buffer.alloc(0))).duplicate, true);
+    assert.equal(commits, 1);
+  } finally { await f.host.close(); await rm(f.directory, { recursive: true, force: true }); }
 });
