@@ -1,6 +1,6 @@
 import { TranscriptPreview } from './transcript-preview.js';
 import { randomBytes, randomUUID, createHash } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { createPracticeRuntime } from "../../slide-generation/src/practice/runtime.js";
 import { GenerationSession } from "../../slide-generation/src/host/session.js";
@@ -202,7 +202,10 @@ export class ProjectOwner {
     await this.save();
   }
   private serialize<T>(fn: () => Promise<T>) {
-    const run = this.tail.then(fn);
+    const run = this.tail.then(() => {
+      if (this.closed) throw new ProductError('project_closed', 'This project is closed', 410);
+      return fn();
+    });
     this.tail = run.catch(() => {});
     return run;
   }
@@ -261,6 +264,7 @@ export class ProjectOwner {
     for (const listener of a.listeners) listener(e);
   }
   async attach(role: "editor" | "audience") {
+    if (this.closed) throw new ProductError('project_closed', 'This project is closed', 410);
     // Every newly opened editor starts in Talk; modes are session state only.
     if (role === "editor") await this.serialize(async () => {
       if (this.data.practiceId && this.runtime.practice.get(this.data.practiceId).status === "recording")
@@ -353,6 +357,7 @@ export class ProjectOwner {
     return dto;
   }
   authorize(id: string | undefined, token: string | undefined, editor = false) {
+    if (this.closed) throw new ProductError('project_closed', 'This project is closed', 410);
     const a = id ? this.sessions.get(id) : undefined;
     if (!a || !token || a.dto.token !== token)
       throw new ProductError(
@@ -1114,6 +1119,7 @@ export class ProjectOwner {
     await Promise.all(
       [...this.sessions.values()].map((a) => a.publication.close()),
     );
+    this.sessions.clear();
     await this.runtime.close();
     await this.saveTail;
     await this.providers.close();
@@ -1121,6 +1127,7 @@ export class ProjectOwner {
 }
 export class ProjectStore {
   private owners = new Map<string, Promise<ProjectOwner>>();
+  private deletions = new Map<string, Promise<void>>();
   constructor(
     readonly directory: string,
     private factory: RuntimeFactory = createPracticeRuntime,
@@ -1129,11 +1136,13 @@ export class ProjectStore {
     await mkdir(this.directory, { recursive: true });
     const result: Project[] = [];
     for (const id of await readdir(this.directory)) {
-      if (!/^[a-f0-9-]{36}$/.test(id)) continue;
-      const data = JSON.parse(
-        await readFile(join(this.directory, id, "project.json"), "utf8"),
-      ) as Persisted;
-      result.push(data.project);
+      if (!/^[a-f0-9-]{36}$/.test(id) || this.deletions.has(id)) continue;
+      try {
+        const data = JSON.parse(await readFile(join(this.directory, id, 'project.json'), 'utf8')) as Persisted;
+        if (!this.deletions.has(id)) result.push(data.project);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
     }
     return result.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
@@ -1170,6 +1179,7 @@ export class ProjectStore {
   open(id: string) {
     if (!/^[a-f0-9-]{36}$/.test(id))
       throw new ProductError("project", "Invalid project ID", 404);
+    if (this.deletions.has(id)) throw new ProductError('project_deleted', 'This project is being deleted', 410);
     let pending = this.owners.get(id);
     if (!pending) {
       pending = (async () => {
@@ -1194,7 +1204,29 @@ export class ProjectStore {
     }
     return pending;
   }
+  delete(id: string): Promise<void> {
+    if (!/^[a-f0-9-]{36}$/.test(id)) throw new ProductError('project', 'Invalid project ID', 404);
+    const existing = this.deletions.get(id);
+    if (existing) return existing;
+    const pending = (async () => {
+      const owner = this.owners.get(id);
+      if (owner) {
+        try { await (await owner).close(); }
+        finally { this.owners.delete(id); }
+      }
+      // Retain source, uploads and provider evidence outside the active project list.
+      await mkdir(join(this.directory, '.deleted'), { recursive: true });
+      try { await rename(join(this.directory, id), join(this.directory, '.deleted', id)); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+    })();
+    this.deletions.set(id, pending);
+    void pending.finally(() => this.deletions.delete(id)).catch(() => {});
+    return pending;
+  }
   async close() {
+    await Promise.allSettled(this.deletions.values());
     await Promise.all(
       [...this.owners.values()].map(async (pending) => (await pending).close()),
     );

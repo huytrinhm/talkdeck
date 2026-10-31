@@ -7,7 +7,7 @@ import type { RawMicrophoneSnapshot } from '../../frontend/src/services/rawMicro
 import type { PracticeRecord } from '../../slide-generation/src/practice/contracts';
 import type { IncomingMessage } from '../../slide-generation/src/viewer/protocol';
 import type { Mode, Project, Snapshot } from '../shared/protocol';
-import { projects, ProjectConnection, uploadMaterial } from './api';
+import { projects, deleteProject, ProjectConnection, uploadMaterial } from './api';
 import { NewProjectDialog } from './NewProjectDialog';
 import { AssetUploads } from './AssetUploads';
 import { CanonicalMicrophone } from './microphone';
@@ -29,14 +29,24 @@ export function App() {
   return id ? <Workspace key={`${id}-${route.get('audience')}`} projectId={id} audience={route.get('audience') === '1'} onBack={() => navigate()} /> : <Projects onOpen={navigate} />;
 }
 function Projects({ onOpen }: { onOpen: (id: string) => void }) {
-  const [items, setItems] = useState<Project[]>([]);
+  const [items, setItems] = useState<Project[]>([]), [deleting, setDeleting] = useState('');
+  const removed = useRef(new Set<string>()), removing = useRef(false);
   const [creating, setCreating] = useState(false), [error, setError] = useState(''), [loading, setLoading] = useState(true);
-  const load = () => { setLoading(true); void projects().then(setItems).catch(error => setError(messageOf(error))).finally(() => setLoading(false)); };
+  const load = () => { setLoading(true); void projects().then(next => setItems(next.filter(project => !removed.current.has(project.id)))).catch(error => setError(messageOf(error))).finally(() => setLoading(false)); };
   useEffect(load, []);
+  const remove = async (id: string) => {
+    if (removing.current) return;
+    removing.current = true; setDeleting(id); setError('');
+    try {
+      await deleteProject(id);
+      removed.current.add(id); setItems(current => current.filter(project => project.id !== id));
+    } catch (error) { setError(messageOf(error)); }
+    finally { removing.current = false; setDeleting(''); }
+  };
   return <main className="project-home"><header className="home-header"><a className="brand" href="/"><span className="brand-icon"><Presentation /></span>Talkdeck</a></header>
     <div className="projects-heading"><div><p className="eyebrow">Your workspace</p><h1>Projects</h1><p className="muted">Start with an idea. Talk it into a presentation.</p></div><Button onClick={() => setCreating(true)}><Plus />New project</Button></div>
     {error && <div className="error-banner" role="alert"><CircleAlert />{error}<Button variant="ghost" size="sm" onClick={load}>Retry</Button></div>}
-    {loading ? <p className="empty-state">Opening your projects…</p> : <div className="project-grid">{items.map(project => <button key={project.id} className="project-card" onClick={() => onOpen(project.id)}><div className="project-card-preview"><Presentation /></div><div><h2>{project.name}</h2><p>{project.context || 'No context added yet'}</p><small>Updated {new Date(project.updatedAt).toLocaleDateString()}</small></div></button>)}</div>}
+    {loading ? <p className="empty-state">Opening your projects…</p> : <div className="project-grid">{items.map(project => <div key={project.id} className="project-card-item"><button className="project-card" disabled={deleting === project.id} onClick={() => onOpen(project.id)}><div className="project-card-preview"><Presentation /></div><div><h2>{project.name}</h2><p>{project.context || 'No context added yet'}</p><small>Updated {new Date(project.updatedAt).toLocaleDateString()}</small></div></button><Button className="project-delete" variant="ghost" size="icon-sm" aria-label={`Delete project ${project.name}`} title={`Delete ${project.name}`} disabled={!!deleting} onClick={() => { void remove(project.id); }}>{deleting === project.id ? <LoaderCircle className="spin" /> : <Trash2 />}</Button></div>)}</div>}
     {!loading && !items.length && !creating && <div className="empty-state"><Presentation /><h2>A clear idea starts here</h2><p>Create a project, add your context, and start talking.</p><Button variant="secondary" onClick={() => setCreating(true)}><Plus />Create your first project</Button></div>}
     {creating && <NewProjectDialog open={creating} onClose={() => { setCreating(false); load(); }} onOpen={onOpen} />}
   </main>;

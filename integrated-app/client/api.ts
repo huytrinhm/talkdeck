@@ -13,6 +13,7 @@ export async function json<T>(url: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 export const projects = () => json<Project[]>('/api/projects');
+export const deleteProject = (id: string) => json<{ deleted: boolean }>(`/api/projects/${encodeURIComponent(id)}`, { method: 'DELETE' });
 export const createProject = (name: string, context: string) => json<Project>('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, context }) });
 export function uploadMaterial(projectId: string, session: Session, file: File) {
   const form = new FormData(); form.set('file', file);

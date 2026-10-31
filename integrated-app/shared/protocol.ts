@@ -122,6 +122,7 @@ export type ServerEvent = {
 };
 /**
  * GET/POST /api/projects -> Project[] / Project (POST {name,context?})
+ * DELETE /api/projects/:project -> {deleted:true} (shared workspace; closes runtime and archives project data).
  * POST /api/projects/:project/sessions {role?:'editor'|'audience'} -> Session
  * All remaining requests send X-Session-Id + X-Session-Token; SSE/image URLs may use ?session=ID&token=TOKEN.
  * GET /api/projects/:project/state -> Snapshot (editor only)

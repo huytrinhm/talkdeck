@@ -26,3 +26,5 @@
 .asset-list .asset-preview{width:48px;height:48px;object-fit:contain;flex-shrink:0;border-radius:4px;background:#151515}.asset-list .asset-error{color:#f8c9cc}
 
 .context-files .asset-uploads{padding-top:12px}
+
+.project-card-item{position:relative;min-width:0}.project-card-item .project-card{display:block;width:100%;height:100%}.project-card-item .project-delete{position:absolute;top:10px;right:10px;z-index:1;opacity:0;pointer-events:none;background:#191919e8;color:#eee;border:1px solid #555;transition:opacity .12s}.project-card-item:hover .project-delete,.project-card-item:focus-within .project-delete,.project-card-item .project-delete:disabled{opacity:1;pointer-events:auto}.project-card-item .project-delete:hover{background:#653139;color:#fff}.project-card-item .project-delete:disabled{cursor:wait}@media(hover:none){.project-card-item .project-delete{opacity:1;pointer-events:auto}}

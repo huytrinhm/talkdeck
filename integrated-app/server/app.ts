@@ -75,6 +75,10 @@ export function createProductApp(
     }),
   );
   app.get("/api/projects", async (c) => c.json(await store.list()));
+  app.delete('/api/projects/:project', async (c) => {
+    await store.delete(c.req.param('project'));
+    return c.json({ deleted: true });
+  });
   app.post("/api/projects", async (c) => {
     const body = z
       .object({

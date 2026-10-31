@@ -44,6 +44,10 @@ exact canonical image references. Search calls are recorded as `asset_search` ev
 in the project's provider log. Decision gates receive catalog availability so image
 requests can be dispatched to an agent with access to this tool.
 
+Project cards expose a delete button on hover or keyboard focus (always visible on touch).
+Deletion closes the project runtime and moves its data into ignored `.data/projects/.deleted/`;
+the project disappears from the homepage and can no longer be opened through the API.
+
 ## Hosting
 
 The public ChatGPT Site is https://talkdeck-integrated.thintulip.chatgpt.site.
