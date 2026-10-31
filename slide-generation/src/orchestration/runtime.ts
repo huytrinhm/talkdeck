@@ -827,7 +827,9 @@ export class SlideRuntime {
           workingSlideId: actor.targetSlide,
           speech: actor.lastSpeech ?? null,
           speechLabel:
-            actor.role === "slow"
+            generation
+              ? "Speaker content and explicit slide editing requests. Apply the requested changes while preserving original source evidence."
+              : actor.role === "slow"
               ? "Fast received this and handles routine additions; adapt only if useful."
               : "Audience-facing narration, not instructions.",
           messages,
