@@ -54,6 +54,11 @@ Final typecheck and all **318 tests passed**. All three quality fixtures passed 
 isolation checks with zero model calls. Evidence under `.artifacts/environment/`: `pass-02-final-suite.tap` and
 `quality-fixture-validation.json`.
 
+After rebasing onto upstream `ad09ccf`, typecheck and all **337 tests passed** (including the newly integrated practice
+and design-skill tests). Evidence: `.artifacts/environment/pass-02-post-rebase-suite.tap`. All 300 local documentation
+links resolved, and every outgoing changed path remains inside `slide-generation/`. This integration check does not
+change the frozen versions or live-model evidence reported above.
+
 The new [quality fixtures](../../fixtures/quality/README.md) cover mixed layouts (12 slides), themes/decoration (10), and
 motion/builds (8). All three are schema/controller/input-isolation validated, **not live-model tested**. Every normal new
 run includes all actual final slides in `final/deck-contact-sheet.png`; missing captures fail explicitly. Videos and
