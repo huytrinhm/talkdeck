@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { createDeck } from '../src/bootstrap.js';
 import { allocateIds } from '../src/source/candidate.js';
 import { HonoSlideRenderer } from '../src/render/renderer.js';
 import { LUCIDE_VERSION } from '../src/render/icons.js';
+import { MemoryAssetResolver } from '../src/render/assets.js';
 
 test('real Chromium renders fixed canvas, shared fonts, nested Icon colors, floors and definition utilities', async () => {
   const browser=await chromium.launch({headless:true});
@@ -35,4 +36,29 @@ test('real Chromium renders fixed canvas, shared fonts, nested Icon colors, floo
     await writeFile('.artifacts/renderer-gallery/manifest.json',JSON.stringify({artifactKey:artifact.artifactKey,dependencies:artifact.dependencies,measured},null,2));
     await context.close();
   } finally {await browser.close();}
+});
+
+test('single-face custom fonts visibly synthesize bold instead of reporting an undrawn weight', async () => {
+  const assets = new MemoryAssetResolver();
+  assets.add({ reference: { id: 'regular-only', version: '1' }, mediaType: 'font/ttf',
+    bytes: await readFile(new URL('../assets/fonts/NotoSans-Regular.ttf', import.meta.url)) });
+  const source = allocateIds(createDeck().source
+    .replace('<Theme id="n3">', '<Theme id="n3" font={{id:"regular-only",version:"1"}}>')
+    .replace('<SpeakerNotes id="n12" />', '<SpeakerNotes id="n12"/><Text role="title">Bold glyph test</Text>')).source;
+  const artifact = await new HonoSlideRenderer({ assets }).render(source, 'n10');
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    await page.setContent(`<style>${artifact.css}</style>${artifact.html}`);
+    await page.evaluate(() => document.fonts.ready);
+    const target = page.locator('[data-role="title"]');
+    assert.equal(await target.evaluate(el => getComputedStyle(el).fontWeight), '700');
+    const bold = await target.screenshot();
+    await target.evaluate(el => { (el as HTMLElement).style.fontWeight = '400'; });
+    const regular = await target.screenshot();
+    await target.evaluate(el => { const style = (el as HTMLElement).style; style.fontWeight = '700'; style.fontSynthesis = 'style'; });
+    const disabled = await target.screenshot();
+    assert.equal(disabled.equals(regular), true, 'Control proves computed 700 alone does not draw bold when synthesis is disabled');
+    assert.equal(bold.equals(regular), false, 'Renderer must draw visibly heavier glyphs for its computed bold weight');
+  } finally { await browser.close(); }
 });
