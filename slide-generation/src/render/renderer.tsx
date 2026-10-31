@@ -172,7 +172,7 @@ export class HonoSlideRenderer {
           return finish('ul', children(node).map((child,i) => {
             const marker = props.marker === 'number' ? `${i+1}.` : props.marker === 'dash' ? '—' : props.marker === 'none' ? '' : '•';
             glyphText.push(marker);
-            return jsx('li', { class: 'td-bullet' }, marker ? jsx('span', { class:'td-bullet-marker', 'aria-hidden':'true' }, marker) : null, render(child,{ ...ctx,listRole:role }));
+            return jsx('li', { class: 'td-bullet' }, marker ? jsx('span', { class:'td-bullet-marker', 'aria-hidden':'true', ...roleProps(role!, ctx) }, marker) : null, render(child,{ ...ctx,listRole:role }));
           }));
         }
         case 'Quote':
