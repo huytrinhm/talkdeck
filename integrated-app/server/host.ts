@@ -150,11 +150,13 @@ export class ProjectOwner {
       await this.runtime.backend.navigate(this.data.selectedId);
     this.data.selectedId = this.runtime.backend.selectedId;
     this.data.epoch++;
-    if (this.data.mode === "practice") this.data.mode = "review";
-    if (this.data.mode !== "talk") {
-      await this.runtime.actors.setPracticeMode(true);
-      this.runtime.actors.pause();
-    }
+    this.data.mode = "view";
+    this.data.build = 0;
+    this.data.blackout = false;
+    delete this.data.practiceId;
+    this.data.modeStartedAtMs = Date.now();
+    await this.runtime.actors.setPracticeMode(true);
+    this.runtime.actors.pause();
     for (const input of Object.values(this.data.inputs))
       if (input.pending) {
         input.pending = false;
@@ -182,7 +184,8 @@ export class ProjectOwner {
     return run;
   }
   save() {
-    const body = JSON.stringify(this.data);
+    const { mode, modeStartedAtMs, practiceId, build, blackout, ...saved } = this.data;
+    const body = JSON.stringify(saved);
     const run = this.saveTail
       .catch(() => {})
       .then(() => atomicWrite(join(this.directory, "project.json"), body));
@@ -190,7 +193,7 @@ export class ProjectOwner {
     return run;
   }
   snapshot(): Snapshot {
-    const { local, backend, actors, practice } = this.runtime;
+    const { local, backend, actors } = this.runtime;
     return {
       protocol: 1,
       project: { ...this.data.project },
@@ -204,14 +207,9 @@ export class ProjectOwner {
         notes: local.engine.readSpeakerNotes(s.id).notes,
         thumbnail: `/api/projects/${this.data.project.id}/slides/${s.id}/image?revision=${local.engine.state().revision}`,
       })),
-      transcripts: this.data.transcripts.filter(
-        (t) =>
-          !["present", "practice"].includes(this.data.mode) ||
-          t.epoch === this.data.epoch,
-      ),
+      transcripts: this.data.transcripts.filter((t) => t.epoch === this.data.epoch),
       materials: this.data.materials,
       practiceId: this.data.practiceId,
-      history: backend.historyStatus(),
       actors: actors.statuses().map((s) => ({
         ...s,
         error: s.error ? safeError(s.error) : undefined,
@@ -219,12 +217,6 @@ export class ProjectOwner {
       build: this.data.build,
       blackout: this.data.blackout,
       generationPaused: actors.paused,
-      reviewList: practice.list().map((r: any) => ({
-        id: r.id,
-        status: r.status,
-        startedAt: r.startedAt,
-        error: r.error,
-      })),
       usage: this.providers.snapshot(),
       serverTimeMs: Date.now(),
       modeStartedAtMs: this.data.modeStartedAtMs,
@@ -243,6 +235,17 @@ export class ProjectOwner {
     for (const listener of a.listeners) listener(e);
   }
   async attach(role: "editor" | "audience") {
+    // Every newly opened editor starts in View; modes are session state only.
+    if (role === "editor") await this.serialize(async () => {
+      if (this.data.practiceId && this.runtime.practice.get(this.data.practiceId).status === "recording")
+        await this.runtime.practice.cancel(this.data.practiceId);
+      await this.mode("view", "transcript");
+      delete this.data.practiceId;
+      this.data.build = 0;
+      this.data.blackout = false;
+      await this.save();
+      this.broadcastSnapshot();
+    });
     if (role === "audience" && this.data.mode !== "present")
       throw new ProductError(
         "presentation_required",
@@ -472,13 +475,6 @@ export class ProjectOwner {
               "Slides can be added in View or Talk",
             );
           await this.runtime.backend.createSlide();
-        } else if (command.type === "undo" || command.type === "redo") {
-          if (this.data.mode === "present")
-            throw new ProductError(
-              "presentation_frozen",
-              "Return to Talk or Review to edit",
-            );
-          result = await this.runtime.actors[command.type]();
         } else if (command.type === "pause") this.runtime.actors.pause();
         else if (command.type === "resume") {
           if (this.data.mode !== "talk" && this.data.mode !== "practice")
@@ -1025,7 +1021,7 @@ export class ProjectStore {
     };
     await atomicWrite(
       join(this.directory, id, "project.json"),
-      JSON.stringify(data),
+      JSON.stringify({ project, epoch: 0, transcripts: [], materials: [], commands: {}, inputs: {} }),
     );
     await this.open(id);
     return project;

@@ -74,3 +74,15 @@ qualification were not completed before the user stopped verification. No latenc
 or quality-improvement claim is made. Public hosting exposes one shared local
 workspace and depends on the running machine/tunnel; independent durable cloud
 hosting and multi-user isolation are not established.
+
+## Subsequent workspace simplification
+
+At the user's request, the legacy entry/link, PDF/PPTX exports, Undo/Redo
+commands and UI, history projections and saved-practice listing were removed
+from the integrated product. The sidebar moved to the right. Every new editor
+attachment starts in View; mode/build/blackout/current-review routing are not
+persisted. Reopening stops an active rehearsal without making a review call;
+retained canonical evidence is preserved. Runtime source/transaction validation
+continues to use the shared backend. Public Site version2 contains the new UI.
+The production build passed; focused product contracts cover View on reopening
+and restart, absence of persisted mode, and refusal of removed API capabilities.

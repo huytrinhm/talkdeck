@@ -36,12 +36,6 @@ export interface Snapshot {
   transcripts: Transcript[];
   materials: Material[];
   practiceId?: string;
-  history: {
-    canUndo: boolean;
-    canRedo: boolean;
-    undoDepth: number;
-    redoDepth: number;
-  };
   actors: {
     id: string;
     role: string;
@@ -52,12 +46,6 @@ export interface Snapshot {
   build: number;
   blackout: boolean;
   generationPaused: boolean;
-  reviewList: {
-    id: string;
-    status: string;
-    startedAt: string;
-    error?: string;
-  }[];
   usage: {
     calls: number;
     inputTokens: number;
@@ -91,8 +79,6 @@ export interface Command {
     | "next"
     | "previous"
     | "add"
-    | "undo"
-    | "redo"
     | "pause"
     | "resume"
     | "blackout"
@@ -146,5 +132,4 @@ export type ServerEvent = {
  * POST /api/projects/:project/practice/:id/finish|retry|cancel|pause|resume and proposal routes proxy existing PracticeService.
  * GET /api/projects/:project/practice/:id -> existing PracticeRecord (images/diff/version)
  * POST /api/projects/:project/practice/:id/request-change {slideId,prompt}
- * GET /api/projects/:project/pdf -> canonical PDF (PPTX unavailable)
  */

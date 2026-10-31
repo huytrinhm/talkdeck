@@ -4,7 +4,6 @@ import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
 import { ProjectStore, ProductError, type RuntimeFactory } from "./host.js";
 import { safeError } from "./providers.js";
 
@@ -20,8 +19,6 @@ const commandSchema = z
       "next",
       "previous",
       "add",
-      "undo",
-      "redo",
       "pause",
       "resume",
       "blackout",
@@ -224,6 +221,7 @@ export function createProductApp(
   app.all("/api/projects/:project/practice/*", async (c) => {
     const { owner } = await ownerAndSession(c, true);
     const path = c.req.path.slice(c.req.path.indexOf("/practice"));
+    if (!/^\/practice\/[^/]+(?:\/.*)?$/.test(path)) return c.notFound();
     const result = await owner.practiceCall(
       path,
       c.req.method,
@@ -232,53 +230,6 @@ export function createProductApp(
         : await c.req.json().catch(() => undefined),
     );
     return c.json(result.data, result.status as any);
-  });
-  app.get("/api/projects/:project/practice", async (c) => {
-    const { owner } = await ownerAndSession(c, true);
-    return c.json(owner.runtime.practice.list());
-  });
-  app.get("/api/projects/:project/pdf", async (c) => {
-    const { owner } = await ownerAndSession(c, true);
-    const readiness = await owner.runtime.local.engine.readiness();
-    if (!readiness.ready)
-      throw new ProductError(
-        "export_blocked",
-        "Resolve slide validation findings before exporting",
-      );
-    const revision = owner.runtime.local.engine.state().revision;
-    const images = [];
-    for (const slide of owner.runtime.backend.list())
-      images.push(
-        Buffer.from(await owner.image(slide.id, revision)).toString("base64"),
-      );
-    const browser = await chromium.launch({ headless: true });
-    try {
-      const page = await browser.newPage();
-      await page.setContent(
-        `<style>@page{size:1920px 1080px;margin:0}body{margin:0}img{width:1920px;height:1080px;display:block;break-after:page}</style>${images.map((img) => `<img src="data:image/jpeg;base64,${img}">`).join("")}`,
-      );
-      await page.evaluate(async () =>
-        Promise.all([...document.images].map((img) => img.decode())),
-      );
-      return new Response(
-        new Uint8Array(
-          await page.pdf({
-            width: "1920px",
-            height: "1080px",
-            printBackground: true,
-          }),
-        ),
-        {
-          headers: {
-            "content-type": "application/pdf",
-            "content-disposition": 'attachment; filename="talkdeck.pdf"',
-            "x-deck-revision": revision,
-          },
-        },
-      );
-    } finally {
-      await browser.close();
-    }
   });
   app.onError((error, c) => {
     if (error instanceof z.ZodError)

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createProductApp } from '../server/app.js';
 import { createPracticeRuntime } from '../../slide-generation/src/practice/runtime.js';
@@ -29,7 +29,7 @@ async function request(host: Host, path: string, body?: unknown, session?: Sessi
   const response = await host.app.request(path, { method, headers: { 'Content-Type': 'application/json',
     ...(session ? { 'X-Session-Id': session.id, 'X-Session-Token': session.token } : {}) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
-  return { status: response.status, body: await response.json() as any };
+  return { status: response.status, body: await response.json().catch(() => ({})) as any };
 }
 async function project(host: Host, name: string) {
   const created = await request(host, '/api/projects', { name, context: 'Private project context' });
@@ -78,6 +78,14 @@ test('product projects, receipts, epochs, Present privacy and restart recovery u
     const entering = await command(host, a, { type: 'mode', mode: 'present' });
     assert.equal(entering.status, 200, JSON.stringify(entering.body));
     assert.notEqual((await request(host, `${a.base}/input`, { ...input, id: 'late-input' }, a.session)).status, 200);
+    const reopened = await request(host, `${a.base}/sessions`, { role: 'editor' });
+    a.session = reopened.body;
+    assert.equal((await state(host, a)).mode, 'view', 'reopening starts in View');
+    const persisted = JSON.parse(await readFile(`${owner.directory}/project.json`, 'utf8'));
+    assert.equal('mode' in persisted, false, 'previous mode is never saved');
+    assert.equal((await request(host, `${a.base}/pdf`, undefined, a.session)).status, 404);
+    assert.equal((await request(host, `${a.base}/practice`, undefined, a.session)).status, 404);
+    assert.equal((await command(host, a, { type: 'mode', mode: 'present' })).status, 200);
     const before = owner.runtime.local.engine.readDocument().source;
     const present = await state(host, a);
     assert.equal((await request(host, `${a.base}/input`, { ...input, id: 'narration', epoch: present.epoch, text: 'Delete this slide.' }, a.session)).status, 202);
@@ -95,12 +103,13 @@ test('product projects, receipts, epochs, Present privacy and restart recovery u
     await host.close(); host = await f.make();
     const reattached = await request(host, `${a.base}/sessions`, { role: 'editor' }); a.session = reattached.body;
     assert.equal((await state(host, a)).slides.length, 1);
-    assert.equal((await state(host, a)).history.canUndo, false);
+    assert.equal((await state(host, a)).mode, 'view');
+    assert.equal('history' in await state(host, a), false);
     assert.match((await host.store.open(a.id)).runtime.local.engine.readDocument().source, /Private raw evidence/);
   } finally { await host.close(); await rm(f.directory, { recursive: true, force: true }); }
 });
 
-test('practice seals once, keeps narration private, prepares exact diffs and accepts only the viewed version with Undo', async () => {
+test('practice seals once, keeps narration private, prepares exact diffs and accepts only the viewed version without history controls', async () => {
   const f = await setup(), host = f.host;
   try {
     const p = await project(host, 'Review journey'), owner = await seed(host, p.id);
@@ -124,12 +133,10 @@ test('practice seals once, keeps narration private, prepares exact diffs and acc
     assert.equal(accepted.status, 200, JSON.stringify(accepted.body));
     assert.equal(accepted.body.status, 'accepted');
     assert.match(owner.runtime.local.engine.readDocument().source, />After</);
-    const depth = owner.runtime.backend.historyStatus().undoDepth;
     assert.equal((await request(host, accept, { version: proposal.version }, p.session)).body.status, 'accepted');
-    assert.equal(owner.runtime.backend.historyStatus().undoDepth, depth);
-    assert.equal((await command(host, p, { type: 'undo' })).status, 200);
-    assert.match(owner.runtime.local.engine.readDocument().source, />Before</);
+    assert.equal((await command(host, p, { type: 'undo' })).status, 400);
+    assert.match(owner.runtime.local.engine.readDocument().source, />After</);
     const reloaded = await request(host, route, undefined, p.session);
-    assert.equal(reloaded.body.proposals[0].status, 'accepted', 'receipt remains historical after Undo');
+    assert.equal(reloaded.body.proposals[0].status, 'accepted', 'acceptance receipt remains available for the current review');
   } finally { await host.close(); await rm(f.directory, { recursive: true, force: true }); }
 });

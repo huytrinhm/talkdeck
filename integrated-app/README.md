@@ -22,9 +22,9 @@ npm run dev
 
 Open http://localhost:3000. The API listens on loopback port 3001. Application code
 reads process environment only. Projects and provider evidence live in ignored
-`.data/projects/`; one runtime owns each project. Legacy workspace v3 remains at
-`/legacy.html` without migration. Undo is in-memory and unavailable after backend
-restart. Canonical PDF is supported; editable PPTX is disabled for canonical decks.
+`.data/projects/`; one runtime owns each project. Projects always open in View.
+Modes are not saved. The editor sidebar is on the right. Legacy workspace,
+exports, Undo/Redo and saved-session history controls have been removed.
 
 `npm run check` covers browser and server TypeScript; `npm test` exercises product
 contracts and races using real Chromium with explicitly fake provider adapters.

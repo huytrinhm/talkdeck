@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, X, RefreshCw, ChevronLeft, ChevronRight, Eye, MessageSquare, Undo2 } from 'lucide-react';
+import { Check, X, RefreshCw, ChevronLeft, ChevronRight, Eye, MessageSquare } from 'lucide-react';
 import { Button } from '../../frontend/src/components/ui/button';
 import { Textarea } from '../../frontend/src/components/ui/textarea';
 import type { PracticeRecord, PreparedProposal, Preview } from '../../slide-generation/src/practice/contracts';
@@ -9,9 +9,9 @@ type Rect = { x: number; y: number; width: number; height: number };
 type Change = { id: string; kind: string; nodeId: string; label: string; before: Rect[]; after: Rect[]; properties?: string[]; beforeText?: string; afterText?: string; precision: string };
 type Diff = { proposalVersion: number; changes: Change[]; beforeIndex?: number; afterIndex?: number; canvas: { width: number; height: number } };
 type ComparedPreview = Preview & { visualDiff?: Diff };
-export function Review({ connection, record, onRecord, onError, selectedSlide, slides, canUndo, onUndo }: {
+export function Review({ connection, record, onRecord, onError, selectedSlide, slides }: {
   connection: ProjectConnection; record: PracticeRecord; onRecord: (record: PracticeRecord) => void;
-  onError: (error: string) => void; selectedSlide: string; slides: { id: string; title: string }[]; canUndo: boolean; onUndo: () => void;
+  onError: (error: string) => void; selectedSlide: string; slides: { id: string; title: string }[];
 }) {
   const [proposalId, setProposalId] = useState(''), [slideId, setSlideId] = useState(selectedSlide);
   const [highlights, setHighlights] = useState(true), [zoom, setZoom] = useState(1);
@@ -35,7 +35,7 @@ export function Review({ connection, record, onRecord, onError, selectedSlide, s
       const result = await connection.post<PreparedProposal | PracticeRecord>(`/practice/${record.id}/proposals/${encodeURIComponent(proposal.id)}/${action}`, action === 'accept' ? { version: proposal.version } : action === 'revise' ? { prompt } : {});
       if (action === 'revise' && 'proposals' in result) { onRecord(result); setPrompt(''); }
       else {
-        if (action === 'accept' && 'previews' in result) setNotice(result.status === 'accepted' ? 'Accepted into the deck. You can undo this change.' : result.status === 'ready' ? 'The preview changed. Review both panes, then accept the new version.' : `Not applied: ${result.error ?? result.status}`);
+        if (action === 'accept' && 'previews' in result) setNotice(result.status === 'accepted' ? 'Accepted into the deck.' : result.status === 'ready' ? 'The preview changed. Review both panes, then accept the new version.' : `Not applied: ${result.error ?? result.status}`);
         await reload();
       }
     } catch (error) { onError(error instanceof Error ? error.message : String(error)); }
@@ -61,7 +61,7 @@ export function Review({ connection, record, onRecord, onError, selectedSlide, s
     if (event.key === ']') setChangeIndex(index => Math.min(changes.length - 1, index + 1));
     if (event.key === '[') setChangeIndex(index => Math.max(0, index - 1));
   }}>
-    <header className="review-summary"><div><p className="eyebrow">Practice review</p><h2>{record.review?.summary ?? 'Your rehearsal is saved'}</h2></div><Button variant="outline" disabled={!canUndo} onClick={onUndo}><Undo2 /> Undo</Button></header>
+    <header className="review-summary"><div><p className="eyebrow">Practice review</p><h2>{record.review?.summary ?? 'Your rehearsal is saved'}</h2></div></header>
     {!!record.review?.feedback.length && <details className="feedback" open={!proposal}><summary>{record.review.feedback.length} feedback {record.review.feedback.length === 1 ? 'item' : 'items'}</summary>{record.review.feedback.map(item => <article key={item.id}><strong>{item.observation}</strong><p>{item.suggestion}</p></article>)}</details>}
     <div className="review-proposals" aria-label="Proposed changes">{record.proposals.map(p => <button className={p.id === proposal?.id ? 'selected' : ''} key={p.id} onClick={() => setProposalId(p.id)}><span>{p.title}</span><small>{p.status} · v{p.version}</small></button>)}</div>
     {proposal ? <>
