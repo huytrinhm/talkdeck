@@ -147,3 +147,15 @@ test('an unresolved renderer or asset resolver cannot hang validation or report 
     await assert.rejects(validator.screenshot(createDeck().source,['n10']),/resolution timed out/);
   }finally{await validator.close();}
 });
+
+test('fully off-canvas native text yields actionable overflow, not validation-unavailable', async () => {
+  const artifact = await fixture('<p data-node="t1" data-content="text" data-role="body" style="top:1102px">Exact wording must remain visible.</p>');
+  const validator = pipeline(artifact);
+  try {
+    const report = await validator.check(artifact.source);
+    assert.equal(report.complete, true, JSON.stringify(report.findings));
+    assert(report.findings.some(f => f.check === 'overflow' && f.nodeId === 't1'));
+    assert(!report.findings.some(f => f.check === 'validation-unavailable'));
+    assert(report.findings.some(f => f.message.includes('contrast cannot be sampled')));
+  } finally { await validator.close(); }
+});

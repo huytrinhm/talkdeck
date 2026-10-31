@@ -19,7 +19,7 @@ The tsx function-name helper is installed as an identity operation by trusted au
 ## Measurements and relative-error magnitudes
 
 All geometry is at design-canvas scale, including cumulative content zoom. The check-policy version is
-`browser-checks-v1`, combined with the exact APCA dependency version in evidence. Leaf DOM Text-node Range fragments
+`browser-checks-v2`, combined with the exact APCA dependency version in evidence. Leaf DOM Text-node Range fragments
 represent words once, avoiding the parent/descendant duplicate-text problem. Every text run has its source/expanded
 identity, role, computed weight, effective pixel size, foreground alpha, own bounds and containing surfaces.
 
@@ -85,3 +85,7 @@ identical source/artifact digests. The JPEG is decoded independently to verify19
 `.artifacts/browser/clean-evidence.json`, `clean.jpg`, and `hono-slide.jpg`. The latter was visually inspected: exact
 headline/body words and Stat value/label, clear typography and no overlap/overflow. These are subsystem tests, not live-model talks or
 an improvement-loop qualification claim.
+
+Fully off-canvas glyph runs have no viewport contrast samples. They return blocking
+overflow findings and must be brought on-canvas before contrast can be evaluated.
+Unmeasurable on-canvas glyphs still fail closed.

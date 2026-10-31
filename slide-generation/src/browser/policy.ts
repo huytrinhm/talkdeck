@@ -2,7 +2,7 @@ import type { Finding } from '../contracts.js';
 import { apcaContrast, blend, requiredLc } from '../render/contrast.js';
 import type { Rect, SlideMeasurement, TextRun } from './types.js';
 
-export const CHECK_POLICY_VERSION = 'browser-checks-v1';
+export const CHECK_POLICY_VERSION = 'browser-checks-v2';
 // Spec floors, measured after content zoom. Viewer-fit scaling never enters these values.
 const floors: Record<string, number> = { label: 20, caption: 24, body: 32, lead: 36, subtitle: 36,
   heading: 44, quote: 44, title: 72, stat: 112, numeral: 128, display: 144, hero: 180 };
@@ -49,7 +49,18 @@ export function evaluateMeasurement(measured: SlideMeasurement): Finding[] {
       if (excess > tolerance) add('overflow', text.nodeId, `${text.id}:bound:${bound.id}`, excess - tolerance,
         `Text exceeds ${bound.id} by ${excess.toFixed(2)}px (allowance ${tolerance.toFixed(2)}px)`, 'Use a larger text box or a composition that fits the complete wording.');
     }
-    if (!text.backgrounds.length) throw new Error(`No composited background measured for ${text.id}`);
+    if (!text.backgrounds.length) {
+      // Contrast is not measurable outside the viewport; never silently pass it.
+      // Geometry was evaluated above and a dedicated error covers even tiny runs
+      // that happen to fit the ordinary overflow tolerance.
+      if (text.rects.length && text.rects.every(r => intersectionArea(r, measured.canvas) === 0)) {
+        add('overflow', text.nodeId, `${text.id}:off-canvas`, 1,
+          'Text is entirely outside the canvas; contrast cannot be sampled until it is visible.',
+          'Move the complete wording onto the canvas, then revalidate contrast.');
+        continue;
+      }
+      throw new Error(`No composited background measured for ${text.id}`);
+    }
     const threshold = requiredLc(text.fontPx, text.fontWeight >= 700);
     let lowest = Infinity;
     for (const bg of text.backgrounds) lowest = Math.min(lowest, Math.abs(apcaContrast(blend(text.color, text.alpha, bg), bg)));

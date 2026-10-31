@@ -151,9 +151,10 @@ export async function measurePage(page: Page, artifact: RenderArtifact): Promise
         }
       }
       if (!colors.size) {
-        // A completely clipped/off-canvas run still gets geometry findings. No visible
-        // glyph means no meaningful measured contrast: mark its unavailable sample.
-        throw new Error(`No native glyph coverage could be measured for ${text.id}`);
+        // Fully off-canvas glyphs cannot have viewport contrast samples. Keep their
+        // measured geometry so policy can return actionable overflow findings.
+        const outside = text.rects.every(r => r.x + r.width <= 0 || r.y + r.height <= 0 || r.x >= bg.width || r.y >= bg.height);
+        if (!outside) throw new Error(`No native glyph coverage could be measured for ${text.id}`);
       }
       return [...colors].map(packed => [packed >> 16 & 255, packed >> 8 & 255, packed & 255] as [number,number,number]);
     });
