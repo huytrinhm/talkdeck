@@ -64,7 +64,7 @@ test('native ordered text, quote, absent tokens and attached qualifiers use actu
   ] }).expectations;
   const content = [{ nodeId: 'a', kind: 'Text', text: 'Draft' }, { nodeId: 'b', kind: 'Text', text: 'Review' },
     { nodeId: 'c', kind: 'Quote', text: 'Listen.', by: 'Mara' }, { nodeId: 'd', kind: 'Stat', text: '142', label: 'active accounts, preliminary' }];
-  const good = auditHeadless({ ...data, frames: [frame(15, '', { content })] });
+  const good = auditHeadless({ ...data, frames: [frame(5, '42'), frame(15, '', { content })] });
   assert.ok(good.observations.every(o => o.firstCorrectVisibleAtMs === 15));
   const bad = auditHeadless({ ...data, frames: [frame(15, '', { content: [content[1], content[0], { ...content[2], by: 'Wrong' }, { ...content[3], text: '42', label: 'active accounts' }, { nodeId: 'q', kind: 'Text', text: 'preliminary' }] })] });
   assert.ok(bad.observations.every(o => o.firstCorrectVisibleAtMs === undefined));
@@ -126,4 +126,38 @@ test('creation evidence validates exact source chain and create-input associatio
   assert.equal(buildCreationEvidence(initial, allCommits, [...operations, input]).length, 1);
   const evidence = buildCreationEvidence(initial, allCommits, [...operations, { kind: 'create', slideId: 'n100', sourceSha256: lineHash(created) }, input]);
   assert.equal(evidence.length, 2); assert.equal(evidence[1].kind, 'created'); assert.equal(evidence[1].beforeSource, first);
+});
+
+
+test('removal requires prior verified visible presence; blanks and private input do not prove deletion', () => {
+  const data = scenario();
+  data.fixture.expectations = fixtureSchema.parse({ ...data.fixture, expectations: [
+    { id: 'remove', triggerEventId: 'u2', targetAlias: 'overview', kind: 'visible_absent', texts: ['42%'], match: 'exact' },
+  ] }).expectations;
+  // The canonical Prompt already contains 42%; even an explicit private notes
+  // value must not substitute for prior visible native content.
+  data.source = data.source.replace('</SpeakerNotes>', '42%</SpeakerNotes>');
+  const blank = frame(30, '', { content: [] });
+  const neverVisible = auditHeadless({ ...data, frames: [frame(15, '', { content: [] }), blank] });
+  assert.equal(neverVisible.observations[0].firstCorrectVisibleAtMs, undefined);
+  assert.equal(neverVisible.observations[0].missingReason, 'manual-review');
+  assert.match(neverVisible.audit.checks[0].result.reason, /never observed.*before the trigger/);
+  const removed = auditHeadless({ ...data, frames: [frame(15, '42%'), blank] });
+  assert.equal(removed.observations[0].firstCorrectVisibleAtMs, 30);
+  assert.deepEqual(removed.observations[0].evidence, ['viewer/frame-15.png', 'viewer/frame-30.png']);
+  const invalidPriorFrames = [frame(15, '42%', { slideId: 'other' }), frame(15, '42%', { visibilityVerified: undefined }),
+    frame(15, '42%', { visibilityVerified: false }), frame(15, '42%', { domEquivalent: false }),
+    frame(15, '42%', { painted: false }), frame(15, '42%', { coherent: false }), frame(15, '42%', { pending: true }),
+    frame(15, '42%', { trigger: 'painted' }), frame(20, '42%'), frame(25, '42%'), frame(15, '42%', { captureFinishedAtMs: 21 }),
+    frame(15, '', { content: [{ nodeId: 'private', kind: 'Prompt', text: '42%' }] }),
+    frame(15, '', { content: [{ nodeId: 'private', kind: 'SpeakerNotes', text: '42%' }] })];
+  for (const prior of invalidPriorFrames) {
+    const audited = auditHeadless({ ...data, frames: [prior, blank] });
+    assert.equal(audited.observations[0].firstCorrectVisibleAtMs, undefined);
+    assert.equal(audited.observations[0].missingReason, 'manual-review');
+  }
+  data.fixture.expectations = fixtureSchema.parse({ ...data.fixture, expectations: [
+    { id: 'remove', triggerEventId: 'u2', targetAlias: 'overview', kind: 'visible_absent', texts: ['42%', 'Draft'] },
+  ] }).expectations;
+  assert.equal(auditHeadless({ ...data, frames: [frame(15, '42%'), blank] }).observations[0].firstCorrectVisibleAtMs, undefined);
 });

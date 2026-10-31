@@ -169,12 +169,30 @@ export function auditHeadless(input: AuditHeadlessInput) {
     } else {
       const candidates = sortedFrames.filter(frame => frame.atMs >= start && frame.atMs <= end && (next === undefined || frame.atMs < next)
         && frame.slideId === targetSlideId && frame.coherent && frame.painted && !frame.pending);
-      const results = candidates.map(frame => ({ frame, check: inspect(e, frame) }));
+      // Absence alone is vacuous on a blank slide. Require each removed value to
+      // have been visibly present on this target before the removal utterance.
+      // Private canonical Prompt/notes never establish audience-visible presence.
+      const priorPresence = e.kind === 'visible_absent' ? strings(e).map(value => sortedFrames.find(frame =>
+        frame.atMs >= run.startMs && frame.atMs < start && frame.captureFinishedAtMs <= start && frame.slideId === targetSlideId
+        && frame.coherent && frame.painted && !frame.pending && frame.trigger === 'settled'
+        && frame.domEquivalent === true && frame.visibilityVerified === true
+        && frame.content.filter(content => ['Text', 'Stat', 'Quote'].includes(content.kind))
+          .flatMap(content => [content.text, content.label, content.by]).some(text => text !== undefined
+            && (e.match === 'standalone-numeric-token' ? token(text, value) : same(text, value))))) : [];
+      const inspectCandidate = (frame: CapturedFrame): CheckResult => {
+        const check = inspect(e, frame);
+        if (e.kind !== 'visible_absent' || check.outcome !== 'pass') return check;
+        if (priorPresence.some(prior => !prior)) return result('manual-review',
+          'Removal is unverified: requested text was never observed in a verified visible target before the trigger; absence on a blank slide is insufficient', check.evidence);
+        return result('pass', 'Previously visible requested text is absent from the settled target after the trigger',
+          [...new Set([...priorPresence.map(prior => prior!.evidence), ...check.evidence])]);
+      };
+      const results = candidates.map(frame => ({ frame, check: inspectCandidate(frame) }));
       const success = results.find(r => r.check.outcome === 'pass');
       if (success) {
         observation.firstVisibleAtMs = success.frame.atMs; observation.firstCorrectVisibleAtMs = success.frame.atMs;
         observation.evidence = success.check.evidence;
-        const settled = candidates.find(frame => frame.trigger === 'settled' && frame.atMs >= success.frame.atMs && inspect(e, frame).outcome === 'pass');
+        const settled = candidates.find(frame => frame.trigger === 'settled' && frame.atMs >= success.frame.atMs && inspectCandidate(frame).outcome === 'pass');
         if (settled) observation.settledAtMs = settled.atMs;
         outcome = success.check;
       } else {
