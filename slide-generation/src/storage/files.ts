@@ -16,17 +16,28 @@ export async function syncDirectory(path: string) {
 }
 export class DurabilityError extends Error {
   readonly replacementOccurred = true;
-  constructor(readonly path: string, options: ErrorOptions) { super('Atomic replacement occurred but directory sync failed; reload before retry', options); }
+  constructor(readonly path: string, options: ErrorOptions) { super('Atomic replacement occurred but post-replacement confirmation failed; reload before retry', options); }
 }
 export async function atomicWrite(path: string, contents: string) {
   const parent = dirname(path);
   await mkdir(parent, { recursive: true });
   const temporary = `${path}.${randomUUID()}.tmp`;
+  let replaced = false, failed = false;
   try {
     const file = await open(temporary, 'wx', 0o600);
     try { await file.writeFile(contents, 'utf8'); await file.sync(); } finally { await file.close(); }
-    await rename(temporary, path);
-    try { await syncDirectory(parent); } catch (cause) { throw new DurabilityError(path, { cause }); }
-  } finally { await rm(temporary, { force: true }); }
+    await rename(temporary, path); replaced = true;
+    await syncDirectory(parent);
+  } catch (cause) {
+    failed = true;
+    if (replaced) throw new DurabilityError(path, { cause });
+    throw cause;
+  } finally {
+    try { await rm(temporary, { force: true }); } catch (cause) {
+      // Cleanup must not replace a more informative operation failure or report
+      // a generic rollback after the canonical file has already been replaced.
+      if (!failed) { if (replaced) throw new DurabilityError(path, { cause }); throw cause; }
+    }
+  }
 }
 export function missing(error: unknown): boolean { return (error as NodeJS.ErrnoException)?.code === 'ENOENT'; }

@@ -18,13 +18,14 @@ export type TraceEvent = z.infer<typeof eventSchema>;
 /** Only typed causal metadata enters this log; never environment variables or credentials. */
 export class Trace {
   private sequence = 0;
+  failures = 0;
   private readonly start = performance.now();
   private readonly wallStart = new Date().toISOString();
   constructor(private readonly sink: (event: TraceEvent) => void = () => {}) {}
   emit(kind: TraceEvent['kind'], cause: Cause, code?: string) {
     const event = eventSchema.parse({ schemaVersion: 1, id: randomUUID(), sequence: this.sequence++,
       monotonicMs: performance.now() - this.start, wallStart: this.wallStart, kind, cause, code });
-    this.sink(event);
+    try { Promise.resolve(this.sink(event)).catch(() => { this.failures++; }); } catch { this.failures++; }
     return event;
   }
 }

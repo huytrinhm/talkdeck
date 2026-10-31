@@ -2,7 +2,7 @@ import type { DeckDocument } from './contracts.js';
 
 /** Source-valid seed. Rendering readiness still requires the real validation pipeline. */
 export function createDeck(): DeckDocument {
-  return { schemaVersion: 1, source: `<Deck id="n1" version={1}>
+  return { schemaVersion: 1, source: `<Deck id="n1" version={1} nextId={14}>
   <Brief id="n2" />
   <Theme id="n3">
     <Token id="n4" name="--color-bg" value="#fafafa" />

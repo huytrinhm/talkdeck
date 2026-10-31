@@ -8,7 +8,11 @@ import { atomicWrite, missing, serialized } from './files.js';
 
 const envelope = z.object({ schemaVersion: z.literal(1), source: z.string().max(2_000_000) }).strict();
 function canonical(input: unknown): DeckDocument {
-  const doc = envelope.parse(input), root = parseSource(doc.source);
+  const parsed = envelope.parse(input);
+  // Canonical source uses LF at every persistence boundary. User CR characters
+  // enter trusted transcripts as entities and are not affected by this conversion.
+  const doc = { ...parsed, source: parsed.source.replace(/\r\n?/g, '\n') };
+  const root = parseSource(doc.source);
   if ([...nodes(root)].some(n => !n.id)) throw new SourceError('storage_identity', 'Persisted nodes require assigned IDs');
   return doc;
 }
@@ -16,6 +20,8 @@ export interface StoredDeck { document: DeckDocument; revision: string }
 export interface DeckRepository {
   load(): Promise<StoredDeck>;
   initialize(document: DeckDocument): Promise<StoredDeck>;
+  /** Ordinary rejection guarantees no replacement. If replacement happened, adapters
+   * must throw DurabilityError so callers do not falsely expose the previous source. */
   compareAndSwap(expectedRevision: string, document: DeckDocument): Promise<StoredDeck>;
 }
 /** Atomic JSON envelope replacement; visual validation remains the engine's mandatory responsibility. */
@@ -31,7 +37,7 @@ export class FileDeckRepository implements DeckRepository {
     return serialized(this.path, async () => {
       try { return await this.load(); } catch (error) { if (!missing(error)) throw error; }
       await atomicWrite(this.path, JSON.stringify(candidate) + '\n');
-      return this.load();
+      return { document: candidate, revision: lineHash(candidate.source) };
     });
   }
   async compareAndSwap(expectedRevision: string, document: DeckDocument) {
@@ -41,7 +47,7 @@ export class FileDeckRepository implements DeckRepository {
       if (previous.revision !== expectedRevision) throw new SourceError('revision_conflict', 'Committed source changed; restage and revalidate');
       if (previous.document.source === candidate.source) return previous;
       await atomicWrite(this.path, JSON.stringify(candidate) + '\n');
-      return this.load();
+      return { document: candidate, revision: lineHash(candidate.source) };
     });
   }
 }
