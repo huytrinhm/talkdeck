@@ -1,0 +1,157 @@
+{
+  "version": "1.0.0",
+  "styles": [
+    {
+      "id": "S01",
+      "name": "Quiet editorial",
+      "purpose": "Thoughtful \u00b7 spacious \u00b7 literary",
+      "file": "styles/S01.md"
+    },
+    {
+      "id": "S02",
+      "name": "Clear professional",
+      "purpose": "Precise \u00b7 clear \u00b7 dependable",
+      "file": "styles/S02.md"
+    },
+    {
+      "id": "S03",
+      "name": "Bold graphic",
+      "purpose": "Confident \u00b7 energetic \u00b7 direct",
+      "file": "styles/S03.md"
+    },
+    {
+      "id": "S04",
+      "name": "Dark focused",
+      "purpose": "Focused \u00b7 high contrast \u00b7 calm",
+      "file": "styles/S04.md"
+    },
+    {
+      "id": "S05",
+      "name": "Warm humanist",
+      "purpose": "Welcoming \u00b7 gentle \u00b7 grounded",
+      "file": "styles/S05.md"
+    }
+  ],
+  "patterns": [
+    {
+      "id": "L01",
+      "name": "Title / opening",
+      "purpose": "Open a presentation",
+      "file": "patterns/L01.md"
+    },
+    {
+      "id": "L02",
+      "name": "Section divider",
+      "purpose": "Mark a chapter or transition",
+      "file": "patterns/L02.md"
+    },
+    {
+      "id": "L03",
+      "name": "Single statement",
+      "purpose": "Emphasize one idea",
+      "file": "patterns/L03.md"
+    },
+    {
+      "id": "L04",
+      "name": "Text and visual",
+      "purpose": "Explain a subject with an image",
+      "file": "patterns/L04.md"
+    },
+    {
+      "id": "L05",
+      "name": "Image-led slide",
+      "purpose": "Show a scene, object or visual evidence",
+      "file": "patterns/L05.md"
+    },
+    {
+      "id": "L06",
+      "name": "Agenda / ordered list",
+      "purpose": "Orient or summarize a short list",
+      "file": "patterns/L06.md"
+    },
+    {
+      "id": "L07",
+      "name": "Two content columns",
+      "purpose": "Explain two related groups",
+      "file": "patterns/L07.md"
+    },
+    {
+      "id": "L08",
+      "name": "Three key ideas",
+      "purpose": "Present three principles, benefits or themes",
+      "file": "patterns/L08.md"
+    },
+    {
+      "id": "L09",
+      "name": "Simple grid",
+      "purpose": "Show four to six peer items",
+      "file": "patterns/L09.md"
+    },
+    {
+      "id": "L10",
+      "name": "Side-by-side comparison",
+      "purpose": "Compare options or before/after states",
+      "file": "patterns/L10.md"
+    },
+    {
+      "id": "L11",
+      "name": "Quotation",
+      "purpose": "Give a voice or excerpt prominence",
+      "file": "patterns/L11.md"
+    },
+    {
+      "id": "L12",
+      "name": "One important number",
+      "purpose": "Highlight a single metric",
+      "file": "patterns/L12.md"
+    },
+    {
+      "id": "L13",
+      "name": "Metric summary",
+      "purpose": "Summarize a few metrics",
+      "file": "patterns/L13.md"
+    },
+    {
+      "id": "L14",
+      "name": "Chart and takeaway",
+      "purpose": "Explain a quantitative relationship",
+      "file": "patterns/L14.md"
+    },
+    {
+      "id": "L15",
+      "name": "Readable table",
+      "purpose": "Compare exact values or attributes",
+      "file": "patterns/L15.md"
+    },
+    {
+      "id": "L16",
+      "name": "Timeline",
+      "purpose": "Show milestones over time",
+      "file": "patterns/L16.md"
+    },
+    {
+      "id": "L17",
+      "name": "Simple process",
+      "purpose": "Explain steps or a workflow",
+      "file": "patterns/L17.md"
+    },
+    {
+      "id": "L18",
+      "name": "Simple relationship diagram",
+      "purpose": "Explain a hierarchy or system",
+      "file": "patterns/L18.md"
+    },
+    {
+      "id": "L19",
+      "name": "Code / formula and explanation",
+      "purpose": "Explain a technical artifact",
+      "file": "patterns/L19.md"
+    },
+    {
+      "id": "L20",
+      "name": "Closing / next action",
+      "purpose": "Close with a next step",
+      "file": "patterns/L20.md"
+    }
+  ]
+}
