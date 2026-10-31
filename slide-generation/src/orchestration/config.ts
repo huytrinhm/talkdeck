@@ -1,28 +1,8 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import OpenAI from "openai";
+/** Credentials are supplied by the process; this module never opens an environment file. */
 export function clientFromEnv(): OpenAI {
-  const values: Record<string, string> = {};
-  try {
-    for (const line of readFileSync(
-      fileURLToPath(new URL("../../.env", import.meta.url)),
-      "utf8",
-    ).split(/\r?\n/)) {
-      const match = line.match(/^\s*(?:export\s+)?([\w]+)\s*=\s*(.*?)\s*$/);
-      if (match) values[match[1]] = match[2].replace(/^(['"])(.*)\1$/, "$2");
-    }
-  } catch {
-    /* Environment-only configuration is supported. */
-  }
-  const apiKey =
-    process.env.OPENAI_API_KEY ??
-    process.env.OPENAI_KEY ??
-    values.OPENAI_API_KEY ??
-    values.OPENAI_KEY;
-  if (!apiKey)
-    throw new Error(
-      "Set OPENAI_API_KEY or OPENAI_KEY in the environment or root .env",
-    );
+  const apiKey = process.env.OPENAI_API_KEY ?? process.env.OPENAI_KEY;
+  if (!apiKey) throw new Error("Set OPENAI_API_KEY or OPENAI_KEY in the process environment");
   return new OpenAI({ apiKey, maxRetries: 0, timeout: 120_000 });
 }
 export const models = () => ({

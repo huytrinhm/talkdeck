@@ -72,13 +72,14 @@ export class OpenAIModel implements Model {
     private client: OpenAI,
     private models: Record<Role, string>,
     private log: Log = silentLog,
+    private options: { maxOutputTokens?: number } = {},
   ) {}
   async infer(input: ModelInput): Promise<ModelResult> {
     const start = performance.now();
     const response = await this.client.responses.create(
       {
         model: this.models[input.role],
-        instructions: instructions[input.role],
+        instructions: input.instructions ?? instructions[input.role],
         input: input.input,
         tools: input.tools,
         parallel_tool_calls: false,
@@ -90,14 +91,12 @@ export class OpenAIModel implements Model {
                 ? "medium"
                 : "low",
         },
-        ...(input.role !== "specialist"
-          ? { service_tier: "fast" as const }
-          : {}),
+        service_tier: "fast" as const,
         store: false,
         include: ["reasoning.encrypted_content"],
-        max_output_tokens: 12000,
+        max_output_tokens: this.options.maxOutputTokens ?? 12000,
       },
-      { signal: input.signal, maxRetries: 2, timeout: 60000 },
+      { signal: input.signal, maxRetries: 0, timeout: 60000 },
     );
     this.log.write("model_response", {
       agent: input.agent,
@@ -136,11 +135,11 @@ export class OpenAISlowDecider implements SlowDecider {
                 type: "input_text",
                 text: JSON.stringify({ ...input, current }),
               },
-              {
-                type: "input_image",
+              ...(screenshot.length ? [{
+                type: "input_image" as const,
                 image_url: `data:image/png;base64,${screenshot.toString("base64")}`,
-                detail: "auto",
-              },
+                detail: "auto" as const,
+              }] : []),
             ],
           },
         ],

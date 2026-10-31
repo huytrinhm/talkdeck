@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import type OpenAI from "openai";
 import { OpenAIModel } from "../../src/orchestration/openai.js";
 
-test("Fast uses Luna/fast/none; Slow uses Sol/fast/medium; specialists keep Sol/default/low", async () => {
+test("Fast uses Luna/fast/none; Slow uses Sol/fast/medium; specialists use Sol/fast/low", async () => {
   const requests: Record<string, any>[] = [];
   const client = {
     responses: {
@@ -37,6 +37,6 @@ test("Fast uses Luna/fast/none; Slow uses Sol/fast/medium; specialists keep Sol/
   assert.equal(requests[1].service_tier, "fast");
   assert.equal(requests[1].reasoning.effort, "medium");
   assert.equal(requests[2].model, "gpt-6-sol");
-  assert.equal(requests[2].service_tier, undefined);
+  assert.equal(requests[2].service_tier, "fast");
   assert.equal(requests[2].reasoning.effort, "low");
 });
