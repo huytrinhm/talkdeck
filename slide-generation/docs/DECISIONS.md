@@ -79,7 +79,7 @@ story. There is no evidence that this subsystem achieves them. Treat them as tar
 | ID | Trigger / question | Current boundary |
 |---|---|---|
 | O01 (resolved by D56) | Approved Stat counting vs “never invented numbers” | User explicitly chose bounded counting on 2026-10-31; intermediate digits are animation rather than factual claims. See D56 and the preserved evidence/question below. |
-| O02 | Exact host API hooks and ownership for JSX publication, multi-slide attribution, frontend bridge | Integration contract with neighboring owners remains unconfirmed. Do not assume current RuntimeOptions can replace Publisher/tools. Work within scope and document missing hooks. |
+| O02 (headless ownership resolved by D58) | Exact host API hooks and ownership for JSX publication, multi-slide attribution, frontend bridge | User authorized consolidating both packages and connecting the actual scheduler. Backend injection and headless publication are implemented. Product frontend integration remains outside this headless task. |
 | O03 | Asset/font provider API and selected licensed bundled font | Provisional by explicit request. Use an injected versioned resolver; do not lock a provider/storage/cropping contract prematurely. Routine selection can be documented unless it adds a real product constraint. |
 
 These are not reasons to pause all work. Continue independent milestones. Ask product questions only when the relevant
@@ -143,3 +143,20 @@ comparison condition, not a measured code-only speed improvement. Existing direc
 Verification: a shell-sourced, bounded one-request probe using the updated client and `gpt-6-luna` returned HTTP 200,
 `service_tier: "fast"`, completed output `OK`, and 23 total tokens. Exact request/response/result evidence is under
 `.artifacts/environment/fast-mode-2026-10-31T05-47-08-017Z/`. This verifies API configuration, not generation latency.
+
+API capability clarification for the consolidated scheduler: Responses requests explicitly use Fast mode. The existing
+Decisions endpoint does not expose `service_tier`; requests retain endpoint-default policy and report it separately.
+No unsupported parameter, silent model substitution, or claim of universal served Fast tier is permitted. See
+[provider evidence and policy](HEADLESS_PROVIDERS.md).
+
+## D58 — consolidate and connect the headless scheduler (2026-10-31)
+
+User instruction (verbatim): **“connect into a headless harness (combine two directories into a single directory), and
+start the improvement loop, document each iteration, including statistics, hypothesis, improvements, and screenshots of
+generated slides, fan out to many subagents if possible”**.
+
+The combined package is `slide-generation/`, including the original scheduler under `src/orchestration/`. This explicitly
+supersedes the earlier separate-directory ownership restriction for that consolidation. Use the actual scheduler with
+an injected canonical JSX backend and the packaged headless viewer. Keep a single canonical editable deck, preserve
+legacy artifacts as historical, and retain strict recording/budget/replay requirements. No product frontend is required
+for the headless loop; its future bridge is not represented as implemented. Accepted.
