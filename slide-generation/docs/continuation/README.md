@@ -38,7 +38,7 @@ host-error with 21 canonical inputs from 22 durable receipts because a later edi
 The checklist lost Publish and retained Launch instead of Release; final readiness=true is not faithfulness.
 See [round 03 case](../rounds/headless-round-03/cases/edit-heavy-01-visible-but-unfaithful.md).
 
-New changes awaiting fresh measurement: `509f5d2` delegates the exact original request by stable utterance ID;
+Changes subsequently measured in round 04 below: `509f5d2` delegates the exact original request by stable utterance ID;
 `7967297` supplies actual canonical source and explicit editing intent to Slow gates; `2bacb78` retains an explicit
 pending rename as a routing alias without changing visible content. Contact sheets (`192651c`, `b1aa0ab`) now combine
 every final live slide in canonical order into `final/deck-contact-sheet.png`, preserving original per-slide captures.
@@ -46,8 +46,7 @@ Missing, duplicate, extra or invalid captures produce an explicit incomplete sta
 for later passes. Historical round 03 has a separate derived image under
 `.artifacts/review/round03-deck-contact-sheet/`; its original run remains immutable.
 
-Next: finish package checks and push after fetch/rebase; freeze a clean candidate; measure a fresh bounded pair against
-the previous functioning marker-fixed `734d84a` export, then broaden to the five timed talks. Keep the original
+The fresh bounded pair against the previous functioning marker-fixed `734d84a` export completed; see the round 04 checkpoint below. Next broaden to the five timed talks. Keep the original
 blank-output baseline for historical diagnosis, not as evidence of competitive speed. All-five-talk repeated qualification
 and separately verified refactors remain unfinished.
 
@@ -57,6 +56,37 @@ Commands are current in [README](../../README.md): `headless:run --frozen`, `hea
 reports or upgrades failed trials. Next: inspect each real failure and screenshot, make small verified fixes, replay, then
 repeat compatible frozen comparisons. All-five-talk qualification, human semantic/design review and separately verified
 refactors remain unfinished. Historical direct smoke or legacy HTML results cannot substitute for that loop.
+
+## Round 04 checkpoint — whole-deck images verified in live runs
+
+`7aee9be` was pushed after fetch/rebase, typecheck and 318 passing tests
+(`.artifacts/environment/pre-push-round04-final-suite.tap`). Frozen source lives under
+`.artifacts/baselines/headless-candidate-7aee9be/`. The fresh serial pair used functioning marker-fixed `734d84a`
+as baseline, unchanged edit-heavy input at speed 1, and the same evaluator/observer/pinned dependencies.
+Both completed with 22/22 canonical inputs, ready=true and complete recording. Both exported complete ordered images
+at `final/deck-contact-sheet.png` without replacing their original screenshots.
+
+Baseline: 89 calls, 938,894 input tokens, 2,851 output tokens. Candidate: 88 calls, 1,112,369 input tokens,
+6,204 output tokens. Both scored 8/30 automatic successes. Successful p50 was 6,292.166 versus 5,660.394 ms,
+but successful expectation identities differ: the formal comparison refuses a speed delta. Both retained a blank
+third slide and wrong deck order; the candidate additionally put Verify before Publish. Do not promote it as a
+faithfulness improvement. Exact cost remains unknown.
+
+Candidate Slow decisions now demonstrably receive actual source and explicit editing intent. Stable-ID delegation
+for the reorder succeeds and wakes Slow, but two later reorder attempts conflict with incoming canonical changes.
+No speech gate suppression was observed: all 98 provider answers across the pair were dispatch. Do not assign a
+measured failure to the contradictory legacy gate wording without evidence.
+
+Current-engine offline transaction replay passed both originals with real Chromium and exact final-source equality:
+baseline 46 steps, candidate 55 steps, under `.artifacts/replays/headless-round04-{baseline,candidate}/`.
+This does not establish actor replay. [Replay plan](../rounds/headless-round-04/replay-plan.md) records the remaining
+lifecycle identity/timing and navigation boundaries; arbitrary context ignoring or live fallback is prohibited.
+
+Formal comparison: `.artifacts/comparisons/headless-round-04/`. Full-deck images and iteration report:
+[round 04](../rounds/headless-round-04/README.md). Both dependency unions match the original initial/state render
+records; final-render dependency coverage remains explicitly unverified. Repeated five-talk qualification,
+complete audience/build review and separately verified refactors remain unfinished. Next useful measurement is
+breadth across the other four scripts before treating edit-heavy-specific fixes as general improvements.
 
 ## Previous continuation — after permission restart
 
