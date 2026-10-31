@@ -85,8 +85,9 @@ test('raw retention requires exact-once Prompt identity across archive; final re
 });
 test('report exposes censored coverage, unknown usage, actual served tiers and original galleries', () => {
   const data = scenario(), evaluated = auditHeadless({ ...data, frames: [] });
-  const report = renderMarkdownReport({ ...data, ...evaluated, model: { calls: 2, inputTokens: null, outputTokens: 10, servedTiers: ['fast'] }, finalSlides: [{ slideId: 'n10', path: 'final/slide-1.jpg' }], viewerGalleryPath: 'viewer-gallery.html' });
+  const report = renderMarkdownReport({ ...data, ...evaluated, model: { calls: 2, inputTokens: null, outputTokens: 10, servedTiers: ['fast'] }, finalSlides: [{ slideId: 'n10', path: 'final/slide-1.jpg' }], viewerGalleryPath: 'viewer-gallery.html', contactSheetPath: 'final/deck-contact-sheet.png' });
   assert.match(report, /Qualification complete: false/); assert.match(report, /Input tokens: unknown/); assert.match(report, /Actual served tiers: fast/);
+  assert.match(report, /Entire final deck in canonical order/); assert.match(report, /final\/deck-contact-sheet\.png/);
   assert.match(report, /viewer-gallery\.html/); assert.match(report, /final\/slide-1\.jpg/); assert.match(report, /Miss\/censored/);
   assert.throws(() => renderMarkdownReport({ ...data, ...evaluated, model: { calls: 0, inputTokens: 0, outputTokens: 0 }, finalSlides: [{ slideId: 'n10', path: '../../secret' }] }), /relative run artifacts/);
 });

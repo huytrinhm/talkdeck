@@ -15,6 +15,7 @@
     "headless:replay": "node --import tsx scripts/headless-replay.ts",
     "headless:batch": "node --import tsx scripts/headless-batch.ts",
     "headless:actor-replay": "node --import tsx scripts/headless-actor-replay.ts",
+    "headless:contact-sheet": "node --import tsx scripts/headless-contact-sheet.ts",
     "eval:talks": "node --import tsx src/evaluation/cli.ts talks",
     "eval:replay": "node --import tsx src/evaluation/cli.ts replay",
     "eval:compare": "node --import tsx src/evaluation/cli.ts compare",
