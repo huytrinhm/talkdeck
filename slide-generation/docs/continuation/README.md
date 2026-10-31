@@ -1,4 +1,44 @@
-# Restart checkpoint — 2026-10-31
+# Current continuation — 2026-10-31, after permission restart
+
+Work on master, only under slide-generation/. Fetch/rebase origin/master, check, then push; never force-push.
+The historical pause below is retained for diagnosis and is **superseded** by this update and TECHNICAL.md.
+
+Browser and network permissions now work. Real Chromium validation, rendering, successful durable source commits,
+input retention/archive handling, private tools/API and sandbox viewer are implemented and tested. The seven commits
+through `0f84e18` were pushed after the initial permission probe. Subsequent focused implementation commits are in Git;
+inspect current status/log rather than assuming this document identifies the latest HEAD.
+
+The user supplied a local `.env` and explicitly required shell sourcing. It is ignored/untracked. New code reads only
+process environment. Never print its contents or copy it into artifacts. Model access and an actual 16-token Responses
+connectivity test passed. Then one bounded **direct subsystem generation smoke** passed with `gpt-6-luna`: six requests,
+55,531 input tokens, 250 output tokens, one accepted validated edit, three real viewer publications. No second paid run
+was made. Exact output, raw evidence preservation, readiness and final DOM equivalence passed. See
+`docs/rounds/subsystem-smoke-2026-10-31.md` and its immutable artifact paths for the recordings and replay result.
+
+O01 is settled as D56. User's answer: “Keep bounded counting; treat intermediate digits as animation rather than factual
+claims.” Source endpoints/final target remain exact, intermediate frames stay recorded, and visible-correct latency waits
+for the requested value. Do not reopen this decision.
+
+P7 independent review fixed reproduced storage, concurrent-input, page-version and observer failures. Eleven focused
+regressions passed; `docs/P7_REVIEW.md` records the evidence. Final typecheck and all 185 tests passed after evaluation,
+client and capability additions. Exact output: `.artifacts/environment/final-implementation-suite.tap`.
+
+The timed driver, recording, replay, audit and frozen-comparison foundations are under src/evaluation/. They accept an
+injected real host; they do not manufacture an actor scheduler. GenerationSession is the publication/ack adapter.
+
+**Remaining blocker:** the neighboring orchestration runtime still hardcodes its old HTML Publisher, prompt and tools.
+It has no injection hook for the new engine. See `docs/HOST_PORT.md` for the four concrete integration sites and the tested
+adapter. No neighboring files have been modified. The user has been asked which owner will wire the integration; no
+answer has authorized changing scope. Continue independent in-scope work, but do not call the direct smoke an integrated
+five-talk run. The full timed five-talk repetitions, live frozen-baseline comparison and subsequent verified refactoring
+passes remain unfinished and depend on that real host connection.
+
+Next: finish the host-owner connection within the agreed scope; run P9/P10 end-to-end acceptance; freeze the first fully
+working integrated version; then follow docs/IMPROVEMENT_LOOP.md with bounded, recorded real-model repetitions.
+
+---
+
+# Historical pause checkpoint — superseded after permission restart
 
 The user explicitly stopped parallel work to restart Codex with more permissions. This is a pause checkpoint,
 not a completion claim. Resume on master in `/home/zap/Dev/codex-hackathon/talkdeck/slide-generation/`.
