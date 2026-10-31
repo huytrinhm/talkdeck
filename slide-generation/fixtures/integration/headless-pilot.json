@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "headless-pilot",
+  "title": "Integrated headless pilot",
+  "purpose": "Bounded integration probe, not one of the five benchmark talks: exact numbers, correction, and a new slide.",
+  "initialContext": "This is a fictional rehearsal. Create and edit a multi-slide deck from the speaker’s words. Do not invent facts. Follow the slide editing system instructions. New-slide and editing commands are part of the spoken input.",
+  "timing": { "mode": "utterance-end", "speed": 1, "wordsPerSecond": 3, "postTalkObservationMs": 5000, "maxDrainMs": 90000 },
+  "events": [
+    { "id": "pilot-001", "startMs": 1000, "endMs": 6000, "kind": "utterance", "text": "Create a slide titled Revenue update. Revenue grew 42% compared with Q3 last year.", "targetAlias": "revenue", "silenceAfterMs": 0 },
+    { "id": "pilot-002", "startMs": 6000, "endMs": 14000, "kind": "utterance", "text": "Correct revenue growth from 42% to 40.2%. Keep the comparison with Q3 last year.", "targetAlias": "revenue", "silenceAfterMs": 0 },
+    { "id": "pilot-003", "startMs": 14000, "endMs": 24000, "kind": "utterance", "text": "New slide titled Customer measures. Show 1,248 active accounts.", "targetAlias": "customers", "silenceAfterMs": 0 }
+  ],
+  "expectations": [
+    { "id": "pilot-correction", "kind": "correction", "triggerEventId": "pilot-002", "targetAlias": "revenue", "old": "42%", "new": "40.2%" },
+    { "id": "pilot-qualifier", "kind": "visible_exact", "triggerEventId": "pilot-002", "targetAlias": "revenue", "texts": ["compared with Q3 last year"] },
+    { "id": "pilot-accounts", "kind": "number_exact", "triggerEventId": "pilot-003", "targetAlias": "customers", "value": "1,248", "label": "active accounts" }
+  ],
+  "finalExpectations": { "slideCount": 2, "allUserSourceRetained": true, "presentationReady": true, "quotesVerbatim": true, "noInventedMetrics": true }
+}

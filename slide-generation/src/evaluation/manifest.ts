@@ -11,6 +11,8 @@ export const manifestSchema = z.object({
   dependencies: z.array(dependency),
   model: z.object({ provider: z.string(), name: z.string(), resolvedVersion: z.string().optional(),
     serviceTier: z.enum(['fast', 'priority', 'default', 'auto', 'flex', 'scale', 'ultrafast']).optional(),
+    roles: z.record(z.string(), z.string()).optional(),
+    settingsSha256: digest.optional(),
     maxCalls: z.number().int().positive(), maxTokens: z.number().int().positive() }).strict().optional(),
   mode: z.enum(['environment', 'live', 'transaction-replay', 'actor-replay']),
 }).strict();
