@@ -211,6 +211,12 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
       sourceSha256: recording.finalSourceSha256,
     });
     await assert.rejects(run(unsupported), /unsupported control\/image/);
+    const deckRequest = structuredClone(recording);
+    deckRequest.scheduler.push({
+      type: "tool_result",
+      name: "request_deck_edit",
+    });
+    await assert.rejects(run(deckRequest), /specialist\/task identity/);
     assert.equal(network.evidence().blockedAttempts, 0);
   } finally {
     await actor.close();

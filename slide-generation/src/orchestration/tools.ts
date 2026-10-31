@@ -130,6 +130,28 @@ export function parseTool(
   return schemas[name as ToolName].parse(JSON.parse(args));
 }
 
+const deckRequestSchema = z
+  .object({
+    scope: z.enum(["cross_slide", "theme", "library"]),
+    sourceQuote: z
+      .string()
+      .max(16_000)
+      .refine((value) => value.trim().length > 0, "Quote must not be blank"),
+  })
+  .strict();
+
+/** Canonical-only parse; legacy tool rights remain unchanged. */
+export function parseLifecycleTool(
+  role: Role,
+  name: string,
+  args: string,
+): Record<string, unknown> {
+  if (name !== "request_deck_edit") return parseTool(role, name, args);
+  if (role !== "fast")
+    throw new Error("Only canonical Fast may request a deck edit");
+  return deckRequestSchema.parse(JSON.parse(args));
+}
+
 /** Scheduler lifecycle tools remain local when generation tools come from a backend. */
 export function lifecycleDefinitions(role: Role): FunctionTool[] {
   const legacy = new Set([
@@ -140,5 +162,15 @@ export function lifecycleDefinitions(role: Role): FunctionTool[] {
     "split_slide",
     "merge_slides",
   ]);
-  return definitions(role).filter((tool) => !legacy.has(tool.name));
+  const tools = definitions(role).filter((tool) => !legacy.has(tool.name));
+  if (role === "fast")
+    tools.push({
+      type: "function",
+      name: "request_deck_edit",
+      strict: true,
+      description:
+        "Forward an explicit user request requiring cross-slide, theme, or library work to Slow immediately. Copy one COMPLETE original user input from your current retained speech into sourceQuote, including every qualifier or negation. A substring or paraphrase is rejected. Do not invent, rewrite, or broaden the request; do not use this for autonomous refinement. No Fast publication is required. Repeated identical requests from this speech revision queue only once. Fast's source-edit scope remains unchanged.",
+      parameters: z.toJSONSchema(deckRequestSchema),
+    });
+  return tools;
 }

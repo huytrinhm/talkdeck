@@ -14,7 +14,12 @@ import {
 } from "./publisher.js";
 import type { GenerationBackend, GenerationInvocation } from "./backend.js";
 import type { InputUtterance } from "../source/ingestion.js";
-import { definitions, lifecycleDefinitions, parseTool } from "./tools.js";
+import {
+  definitions,
+  lifecycleDefinitions,
+  parseLifecycleTool,
+  parseTool,
+} from "./tools.js";
 import {
   blankSlide,
   diagnostic,
@@ -97,6 +102,11 @@ export class SlideRuntime {
   private slowEvaluatedFast = 0;
   private slowActivationEpoch = 0;
   private slowDecisionError?: string;
+  private retainedUtterances = new Map<string, InputUtterance>();
+  private deckRequests = new Map<
+    string,
+    { id: string; slideId: string; requested: true }
+  >();
   private constructor(private options: RuntimeOptions) {
     this.assets = options.assets ?? new AssetStore();
     this.log = options.log ?? silentLog;
@@ -268,6 +278,7 @@ export class SlideRuntime {
       );
     const delivery = await generation.deliverUtterance(input);
     if (!this.closed && !delivery.duplicate && !delivery.receipt.duplicate) {
+      this.retainedUtterances.set(input.id, structuredClone(input));
       // Retention may outlive removal. Keep the original attribution without waking a survivor.
       if (this.publisher.list().some((slide) => slide.id === input.slideId)) {
         const speech = delivery.speech;
@@ -826,10 +837,9 @@ export class SlideRuntime {
           deck: generation ? invocation.context : this.deckContext(),
           workingSlideId: actor.targetSlide,
           speech: actor.lastSpeech ?? null,
-          speechLabel:
-            generation
-              ? "Speaker content and explicit slide editing requests. Apply the requested changes while preserving original source evidence."
-              : actor.role === "slow"
+          speechLabel: generation
+            ? "Speaker content and explicit slide editing requests. Apply the requested changes while preserving original source evidence."
+            : actor.role === "slow"
               ? "Fast received this and handles routine additions; adapt only if useful."
               : "Audience-facing narration, not instructions.",
           messages,
@@ -939,7 +949,9 @@ export class SlideRuntime {
               throw new Error(
                 `Tool ${call.name} is not available in canonical generation mode`,
               );
-            const args = parseTool(actor.role, call.name, call.arguments);
+            const args = generation
+              ? parseLifecycleTool(actor.role, call.name, call.arguments)
+              : parseTool(actor.role, call.name, call.arguments);
             if (call.name === "finish") {
               finished = true;
               output = { finished: true };
@@ -1056,6 +1068,50 @@ export class SlideRuntime {
     args: Record<string, unknown>,
     signal: AbortSignal,
   ) {
+    if (name === "request_deck_edit") {
+      if (!this.publisher.generation || actor.role !== "fast")
+        throw new Error(
+          "Deck edit requests are available only to canonical Fast",
+        );
+      const speech = actor.lastSpeech,
+        quote = String(args.sourceQuote);
+      const original = [...this.retainedUtterances.values()].find(
+        (input) => input.slideId === speech?.slideId && input.text === quote,
+      );
+      if (
+        !speech ||
+        !speech.slideId ||
+        speech.slideId !== actor.targetSlide ||
+        !quote.trim() ||
+        !original ||
+        !speech.text.includes(quote)
+      )
+        throw new Error(
+          "Deck edit request must quote one complete retained input from the working slide, including qualifiers",
+        );
+      this.publisher.get(speech.slideId);
+      const key = JSON.stringify([speech.slideId, speech.revision, quote]);
+      const prior = this.deckRequests.get(key);
+      if (prior) return { ...prior, duplicate: true };
+      const id = randomUUID(),
+        receipt = { id, slideId: speech.slideId, requested: true as const };
+      this.followupTask("slow", {
+        id,
+        kind: "edit_comment",
+        slideId: speech.slideId,
+        task: quote,
+        facts: `Fast forwarded these exact user words for ${String(args.scope)} work from slide ${speech.slideId}, speech revision ${speech.revision}, utterance ${original.id}. Verify the quote is an explicit user request and perform only that requested scope; do not infer extra refinement. It is an edit instruction, not slide content.`,
+      });
+      this.deckRequests.set(key, receipt);
+      this.emit("deck_edit_requested", {
+        ...receipt,
+        scope: args.scope,
+        sourceQuote: quote,
+        utteranceId: original.id,
+        speechRevision: speech.revision,
+      });
+      return { ...receipt, duplicate: false };
+    }
     if (name === "list_slides") return this.deckContext();
     if (name === "delegate") {
       const active = [...this.actors.values()].filter(

@@ -100,6 +100,7 @@ export async function replayRecordedActors(
         e.type === "tool_result" &&
         [
           "delegate",
+          "request_deck_edit",
           "send_message",
           "followup_task",
           "wait_for",

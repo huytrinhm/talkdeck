@@ -139,7 +139,7 @@ test("canonical actor boundary uses injected prompt/context/tools and only expli
     assert.equal(inputs[0].instructions, "Canonical instructions fast");
     assert.deepEqual(
       inputs[0].tools.map((t) => t.name),
-      ["read_source", "screenshot", "finish"],
+      ["read_source", "screenshot", "finish", "request_deck_edit"],
     );
     assert.ok(!JSON.stringify(inputs[0].input).includes("input_image"));
     assert.ok(
