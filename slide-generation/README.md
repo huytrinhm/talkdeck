@@ -5,6 +5,10 @@ The slide-generation subsystem scaffold for Talkdeck: a safe JSX data parser, pe
 - [Specification](SPEC.md): agreed behavior and provisional asset boundaries.
 - [Technical documentation](TECHNICAL.md): architecture, implementation rules, integration seams, and remaining work.
 - [Agent editing instructions](docs/AGENT_PROMPT.md): prompt rules for the editing agent.
+- [Implementation plan](IMPLEMENTATION_PLAN.md): start here when taking over; milestones, tests, and integration gates.
+- [Decision ledger](docs/DECISIONS.md): settled user choices and unresolved product questions.
+- [Improvement loop](docs/IMPROVEMENT_LOOP.md): real-model measurements, diagnosis, replay, and frozen comparisons.
+- [Five timed talks](fixtures/talks/README.md): speaking-pace inputs and evaluator-only expectations.
 
 ```sh
 npm ci

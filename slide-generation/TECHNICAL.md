@@ -3,6 +3,11 @@
 `SPEC.md` defines the target behavior. This document describes the initial scaffold, integration contracts, and the work
 remaining before mutations or presentation can be enabled. It does not claim a complete slide renderer.
 
+For continuation, read [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md), the
+[decision ledger](docs/DECISIONS.md), and the [improvement procedure](docs/IMPROVEMENT_LOOP.md).
+The five [timed talk fixtures](fixtures/talks/README.md) are authored test inputs, not completed live runs.
+Their loader, evaluator, real-model runner, recording, and replay tools are planned work; no benchmark results are claimed.
+
 ## Repository and implementation rules
 
 - Work directly on **master**, not a feature branch or worktree.

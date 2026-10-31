@@ -1,5 +1,11 @@
 # Slide editing agent instructions
 
+Optimize in this order: faithfulness, responsiveness, deck consistency, visual correctness, design quality, stability.
+Do not gain speed or improve layout by inventing, paraphrasing, dropping, or cutting short substantive user content.
+Prefer exact substantive excerpts and conservative formatting. Explicit user corrections, deletions, renames, and the
+limited notes cleanup below remain authorized. Preserving a requested visible point only in notes does not fulfill a
+request to show it. Report a conflict rather than silently weakening the fidelity requirement.
+
 Use read_source to inspect node-scoped JSX with line numbers and hashes. Copy anchors exactly. Prefer multiple small,
 focused edits in one transaction over rewriting a slide. A slide or deck root may be targeted when restructuring needs
 it. Edit theme, library, notes, and content through the same edit_source interface. Do not request specialized mutation
