@@ -9,6 +9,7 @@ import type {
   Model,
   ModelInput,
   ModelResult,
+  SlowDecisionInput,
 } from "../src/orchestration/types.js";
 import type { SourceRead } from "../src/contracts.js";
 
@@ -65,6 +66,7 @@ function scripted(title: string, inputs: ModelInput[] = []): Model {
 async function setup(
   model: Model,
   logs: { type: string; data: Record<string, unknown> }[] = [],
+  slowInputs: SlowDecisionInput[] = [],
 ) {
   await mkdir(".artifacts/tests", { recursive: true });
   const directory = await mkdtemp(".artifacts/tests/jsx-actors-");
@@ -82,7 +84,8 @@ async function setup(
       },
     },
     slowDecider: {
-      async evaluate() {
+      async evaluate(input) {
+        slowInputs.push(structuredClone(input));
         return "hold";
       },
     },
@@ -107,8 +110,8 @@ async function setup(
 
 test("actual scheduler commits via canonical hashline tools and real Chromium; undo/redo retains late evidence", async () => {
   const inputs: ModelInput[] = [],
-    logs: { type: string; data: Record<string, unknown> }[] = [];
-  const f = await setup(scripted("Measured growth", inputs), logs);
+    logs: { type: string; data: Record<string, unknown> }[] = [], slowInputs: SlowDecisionInput[] = [];
+  const f = await setup(scripted("Measured growth", inputs), logs, slowInputs);
   try {
     await f.runtime.deliverUtterance({
       id: "u1",
@@ -123,6 +126,11 @@ test("actual scheduler commits via canonical hashline tools and real Chromium; u
     assert.doesNotMatch(source, /<html|<!doctype/i);
     assert.equal((await f.local.engine.readiness()).ready, true);
     assert.equal(f.backend.fastWatermark, 1);
+    assert.equal(slowInputs.length, 1);
+    assert.match(slowInputs[0].current.source, /Measured growth/);
+    assert.match(slowInputs[0].current.source, /Growth is 42%, provisionally/);
+    assert.equal(slowInputs[0].spokenEdits, true);
+    assert.equal(slowInputs[0].current.screenshot.length, 0);
     assert.equal(f.backend.historyStatus().undoDepth, 1);
     assert.ok(
       inputs.every((input) =>

@@ -628,7 +628,6 @@ export class SlideRuntime {
     const input = {
       current: {
         ...current,
-        ...(this.publisher.generation ? { source: "" } : {}),
         screenshot: Buffer.from(current.screenshot),
         geometry: structuredClone(current.geometry),
         diagnostics: structuredClone(current.diagnostics),
@@ -637,6 +636,7 @@ export class SlideRuntime {
       speech: structuredClone(slow.passiveSpeech ?? null),
       messages: structuredClone(slow.messages),
       context: this.options.context ?? "",
+      ...(this.publisher.generation ? { spokenEdits: true } : {}),
       deck: this.publisher.generation
         ? structuredClone(
             this.publisher.generation.context({

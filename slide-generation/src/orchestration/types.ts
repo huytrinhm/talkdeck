@@ -67,6 +67,8 @@ export interface SlowDecisionInput {
   messages: Message[];
   context: string;
   deck?: unknown;
+  /** Canonical headless speech carries explicit edit requests as well as content. */
+  spokenEdits?: boolean;
 }
 export interface SlowDecider {
   evaluate(
