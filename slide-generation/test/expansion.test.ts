@@ -82,3 +82,9 @@ test('unused repeated wrappers are checked even when minimum item count is zero'
     '<Component name="Repeated" description="Repeated"><Stack><Each slot="items" kind="text" min={0}><Panel><Deep><Slot name="body"><Item/></Slot></Deep></Panel></Each></Stack></Component>';
   assert.throws(() => expandSource(deck(library, '<Text>Unrelated</Text>')), /Expanded visual depth/);
 });
+
+test('authored Pending and missing-slot Pending both remain visible to readiness', () => {
+  const result = expandSource(deck('', '<Pending kind="image"/>'));
+  assert.equal(result.pendingNodeIds.length, 1);
+  assert.ok(all(result.slides[0]).some(n => n.tag === 'Pending' && result.pendingNodeIds.includes(n.id)));
+});

@@ -138,6 +138,7 @@ export function expandSource(source: string, options: SchemaOptions = {}): Expan
       return result;
     }
     const result = structural(node, ctx);
+    if (node.tag === 'Pending' && !pendingNodeIds.includes(result.id)) pendingNodeIds.push(result.id);
     result.children = node.children.flatMap<string | ExpandedNode>(child => typeof child === 'string' ? [child] : expand(child, ctx));
     return [result];
   }
