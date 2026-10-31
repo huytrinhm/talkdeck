@@ -75,6 +75,8 @@ export interface SlowDecider {
   ): Promise<"wake" | "hold">;
 }
 export interface ModelInput {
+  inferenceId?: string;
+  instructions?: string;
   agent: string;
   role: Role;
   input: ResponseInputItem[];

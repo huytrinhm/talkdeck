@@ -129,3 +129,16 @@ export function parseTool(
     throw new Error(`Tool ${name} is not available to ${role}`);
   return schemas[name as ToolName].parse(JSON.parse(args));
 }
+
+/** Scheduler lifecycle tools remain local when generation tools come from a backend. */
+export function lifecycleDefinitions(role: Role): FunctionTool[] {
+  const legacy = new Set([
+    "view_slide",
+    "edit",
+    "list_slides",
+    "edit_slides",
+    "split_slide",
+    "merge_slides",
+  ]);
+  return definitions(role).filter((tool) => !legacy.has(tool.name));
+}

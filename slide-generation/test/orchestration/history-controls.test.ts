@@ -75,7 +75,7 @@ const context = (input: ModelInput): any => {
   return JSON.parse((last as { content: string }).content);
 };
 const editTitle = (
-  p: Publisher,
+  p: Pick<Publisher, "branch" | "current" | "edit">,
   old: string,
   title: string,
   role: "fast" | "slow" = "slow",

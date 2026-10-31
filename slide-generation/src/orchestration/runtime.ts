@@ -12,7 +12,9 @@ import {
   type Edit,
   type HistoryResult,
 } from "./publisher.js";
-import { definitions, parseTool } from "./tools.js";
+import type { GenerationBackend, GenerationInvocation } from "./backend.js";
+import type { InputUtterance } from "../source/ingestion.js";
+import { definitions, lifecycleDefinitions, parseTool } from "./tools.js";
 import {
   blankSlide,
   diagnostic,
@@ -60,7 +62,8 @@ export interface RuntimeOptions {
   model: Model;
   decider: Decider;
   slowDecider: SlowDecider;
-  renderer: Renderer;
+  renderer?: Renderer;
+  backend?: GenerationBackend;
   assets?: AssetStore;
   log?: Log;
   context?: string;
@@ -70,7 +73,7 @@ export interface RuntimeOptions {
   maxSteps?: number;
 }
 export class SlideRuntime {
-  readonly publisher: Publisher;
+  readonly publisher: GenerationBackend;
   readonly gates = new Map<string, SpeechGate>();
   private archivedNarration = new Map<string, Speech>();
   get gate(): SpeechGate {
@@ -98,7 +101,10 @@ export class SlideRuntime {
     this.assets = options.assets ?? new AssetStore();
     this.log = options.log ?? silentLog;
     this.publicAssets = new Set(this.assets.refs());
-    this.publisher = new Publisher(options.renderer, this.log);
+    if (!options.backend && !options.renderer)
+      throw new Error("A generation backend or legacy renderer is required");
+    this.publisher =
+      options.backend ?? new Publisher(options.renderer!, this.log);
     this.publisher.validateAccess = (role, source) =>
       role === "fast"
         ? this.assets
@@ -245,8 +251,45 @@ export class SlideRuntime {
     slideId = this.publisher.selectedId,
   ) {
     if (this.closed) throw new Error("Runtime closed");
+    if (this.publisher.generation)
+      throw new Error(
+        "Canonical generation requires durable deliverUtterance, not transcript snapshots",
+      );
     this.gateFor(slideId).receive(text, revision);
     this.emit("transcript", { text, revision, slideId });
+  }
+  /** Durable evidence retention precedes eligibility; target is captured by the caller. */
+  async deliverUtterance(input: InputUtterance) {
+    if (this.closed) throw new Error("Runtime closed");
+    const generation = this.publisher.generation;
+    if (!generation)
+      throw new Error(
+        "Durable utterances require a canonical generation backend",
+      );
+    const delivery = await generation.deliverUtterance(input);
+    if (!this.closed && !delivery.duplicate && !delivery.receipt.duplicate) {
+      // Retention may outlive removal. Keep the original attribution without waking a survivor.
+      if (this.publisher.list().some((slide) => slide.id === input.slideId)) {
+        const speech = delivery.speech;
+        if (speech.slideId !== input.slideId)
+          throw new Error("Backend changed utterance attribution");
+        const gate = this.gateFor(input.slideId);
+        // Concurrent retained events can project the same cumulative canonical snapshot.
+        // Older snapshots are already represented by the newer gate revision.
+        if (
+          gate.latest?.revision === speech.revision &&
+          gate.latest.text !== speech.text
+        )
+          throw new Error("Canonical speech revision has conflicting text");
+        if (!gate.latest || speech.revision > gate.latest.revision)
+          gate.receive(speech.text, speech.revision, speech.receivedAt);
+      }
+      this.emit("utterance_retained", {
+        ...delivery.receipt,
+        slideId: input.slideId,
+      });
+    }
+    return delivery.receipt;
   }
   deckContext() {
     return {
@@ -258,7 +301,7 @@ export class SlideRuntime {
         id: s.id,
         title: s.title,
         observationId: s.observation.id,
-        source: s.observation.source,
+        ...(!this.publisher.generation ? { source: s.observation.source } : {}),
         narration: this.gates.get(s.id)?.latest ?? null,
       })),
     };
@@ -572,6 +615,7 @@ export class SlideRuntime {
     const input = {
       current: {
         ...current,
+        ...(this.publisher.generation ? { source: "" } : {}),
         screenshot: Buffer.from(current.screenshot),
         geometry: structuredClone(current.geometry),
         diagnostics: structuredClone(current.diagnostics),
@@ -580,7 +624,17 @@ export class SlideRuntime {
       speech: structuredClone(slow.passiveSpeech ?? null),
       messages: structuredClone(slow.messages),
       context: this.options.context ?? "",
-      deck: this.deckContext(),
+      deck: this.publisher.generation
+        ? structuredClone(
+            this.publisher.generation.context({
+              agent: "slow-decider",
+              role: "slow",
+              slideId: current.slideId,
+              inferenceId: randomUUID(),
+              signal: controller.signal,
+            }),
+          )
+        : this.deckContext(),
     };
     this.emit("slow_decision_started", {
       observationId: current.id,
@@ -643,6 +697,7 @@ export class SlideRuntime {
     this.emit("agent_status", { agent: actor.id, state });
   }
   private observe(actor: Actor, o: Observation) {
+    if (this.publisher.generation) return; // Canonical tools supply explicit observations/images.
     actor.history.observe(o);
     if (o.slideId) {
       actor.observedSlides.delete(o.slideId);
@@ -741,11 +796,34 @@ export class SlideRuntime {
           if (child.state === "failed") child.failureObservedByParent = true;
         }
       }
+      const inferenceId = randomUUID();
+      const generation = this.publisher.generation;
+      const generationTools = generation
+        ? structuredClone(generation.definitions(actor.role))
+        : [];
+      const invocation: GenerationInvocation = {
+        agent: actor.id,
+        role: actor.role,
+        slideId: actor.targetSlide,
+        inferenceId,
+        signal,
+        context: generation
+          ? structuredClone(
+              generation.context({
+                agent: actor.id,
+                role: actor.role,
+                slideId: actor.targetSlide,
+                inferenceId,
+                signal,
+              }),
+            )
+          : undefined,
+      };
       actor.history.add({
         role: "user",
         content: JSON.stringify({
           context: this.options.context ?? "",
-          deck: this.deckContext(),
+          deck: generation ? invocation.context : this.deckContext(),
           workingSlideId: actor.targetSlide,
           speech: actor.lastSpeech ?? null,
           speechLabel:
@@ -763,16 +841,26 @@ export class SlideRuntime {
       });
       this.observe(actor, current);
       actor.observedFast = this.publisher.fastWatermark;
-      const branch = this.publisher.branch(
-        actor.id,
-        actor.role,
-        current,
-        actor.lastSpeech,
-      );
+      const branch: Branch = generation
+        ? {
+            id: inferenceId,
+            historyEpoch: 0,
+            agent: actor.id,
+            role: actor.role,
+            source: "",
+            slideId: actor.targetSlide,
+            speech: actor.lastSpeech,
+          }
+        : this.publisher.branch(
+            actor.id,
+            actor.role,
+            current,
+            actor.lastSpeech,
+          );
       const branches = new Map<string, Branch>();
       // Every deck source is supplied verbatim in this boundary's text context.
       // Screenshots remain limited to the latest two actual observations.
-      for (const slide of this.publisher.list())
+      for (const slide of generation ? [] : this.publisher.list())
         branches.set(
           slide.id,
           slide.id === current.slideId
@@ -797,8 +885,14 @@ export class SlideRuntime {
         this.options.model.infer({
           agent: actor.id,
           role: actor.role,
+          inferenceId: branch.id,
           input,
-          tools: definitions(actor.role),
+          tools: generation
+            ? [...generationTools, ...lifecycleDefinitions(actor.role)]
+            : definitions(actor.role),
+          ...(generation
+            ? { instructions: generation.instructions(actor.role) }
+            : {}),
           signal,
         }),
         signal,
@@ -812,81 +906,109 @@ export class SlideRuntime {
         (item) => item.type === "function_call",
       );
       const observations: Observation[] = [];
+      const explicitModelItems: OpenAI.Responses.ResponseInputItem[] = [];
       let finished = false;
       for (const call of calls) {
+        const toolStartedAtMs = performance.now();
         let output: unknown;
         try {
           while (this.paused && !this.closed && !signal.aborted)
             await this.pauseBoundary(signal);
           signal.throwIfAborted();
           if (this.closed) throw new Error("Runtime closed");
-          const args = parseTool(actor.role, call.name, call.arguments);
-          if (call.name === "finish") {
-            finished = true;
-            output = { finished: true };
-          } else if (call.name === "view_slide") {
-            const id = String(args.slideId ?? actor.targetSlide);
-            const o = this.publisher.get(id).observation;
-            observations.push(o);
-            output = { observationId: o.id };
-          } else if (call.name === "edit") {
-            const id = String(args.slideId ?? actor.targetSlide);
-            if (actor.role === "fast" && id !== branch.slideId)
-              throw new Error(
-                "Fast edits only its narration target; broader work belongs to Slow",
-              );
-            const targetBranch = branches.get(id);
-            if (!targetBranch)
-              throw new Error(
-                "Inspect this slide with view_slide before editing it in a later inference",
-              );
-            const r = await this.publisher.edit(
-              targetBranch,
-              call.call_id,
-              args as unknown as Edit,
-            );
-            observations.push(r.current);
-            output = {
-              outcome: r.outcome,
-              observationId: r.current.id,
-              diagnostics: r.diagnostics,
-            };
-          } else if (
-            call.name === "edit_slides" ||
-            call.name === "split_slide" ||
-            call.name === "merge_slides"
+          if (
+            generation &&
+            generationTools.some((tool) => tool.name === call.name)
           ) {
-            const getBranch = (id: string) => {
-              const b = branches.get(id);
-              if (!b)
-                throw new Error(
-                  `Inspect slide ${id} before restructuring or editing it`,
-                );
-              return b;
-            };
-            if (call.name === "edit_slides")
-              output = await this.publisher.editMany(
-                (
-                  args.edits as { slideId: string; old: string; new: string }[]
-                ).map((e) => ({ branch: getBranch(e.slideId), edit: e })),
-                call.call_id,
-              );
-            else if (call.name === "split_slide")
-              output = await this.publisher.split(
-                getBranch(String(args.slideId)),
-                args.parts as { title: string; source: string }[],
-              );
-            else
-              output = await this.publisher.mergeSlides(
-                (args.slideIds as string[]).map(getBranch),
-                { title: String(args.title), source: String(args.source) },
-              );
-            actor.observedSlides.clear();
-            observations.push(
-              this.publisher.list().find((s) => s.id === actor.targetSlide)
-                ?.observation ?? this.publisher.current,
+            const result = await generation.invoke(
+              invocation,
+              call.name,
+              JSON.parse(call.arguments),
             );
-          } else output = await this.workTool(actor, call.name, args, signal);
+            output = result.output;
+            explicitModelItems.push(...(result.modelItems ?? []));
+          } else {
+            if (
+              generation &&
+              !lifecycleDefinitions(actor.role).some(
+                (tool) => tool.name === call.name,
+              )
+            )
+              throw new Error(
+                `Tool ${call.name} is not available in canonical generation mode`,
+              );
+            const args = parseTool(actor.role, call.name, call.arguments);
+            if (call.name === "finish") {
+              finished = true;
+              output = { finished: true };
+            } else if (call.name === "view_slide") {
+              const id = String(args.slideId ?? actor.targetSlide);
+              const o = this.publisher.get(id).observation;
+              observations.push(o);
+              output = { observationId: o.id };
+            } else if (call.name === "edit") {
+              const id = String(args.slideId ?? actor.targetSlide);
+              if (actor.role === "fast" && id !== branch.slideId)
+                throw new Error(
+                  "Fast edits only its narration target; broader work belongs to Slow",
+                );
+              const targetBranch = branches.get(id);
+              if (!targetBranch)
+                throw new Error(
+                  "Inspect this slide with view_slide before editing it in a later inference",
+                );
+              const r = await this.publisher.edit(
+                targetBranch,
+                call.call_id,
+                args as unknown as Edit,
+              );
+              observations.push(r.current);
+              output = {
+                outcome: r.outcome,
+                observationId: r.current.id,
+                diagnostics: r.diagnostics,
+              };
+            } else if (
+              call.name === "edit_slides" ||
+              call.name === "split_slide" ||
+              call.name === "merge_slides"
+            ) {
+              const getBranch = (id: string) => {
+                const b = branches.get(id);
+                if (!b)
+                  throw new Error(
+                    `Inspect slide ${id} before restructuring or editing it`,
+                  );
+                return b;
+              };
+              if (call.name === "edit_slides")
+                output = await this.publisher.editMany(
+                  (
+                    args.edits as {
+                      slideId: string;
+                      old: string;
+                      new: string;
+                    }[]
+                  ).map((e) => ({ branch: getBranch(e.slideId), edit: e })),
+                  call.call_id,
+                );
+              else if (call.name === "split_slide")
+                output = await this.publisher.split(
+                  getBranch(String(args.slideId)),
+                  args.parts as { title: string; source: string }[],
+                );
+              else
+                output = await this.publisher.mergeSlides(
+                  (args.slideIds as string[]).map(getBranch),
+                  { title: String(args.title), source: String(args.source) },
+                );
+              actor.observedSlides.clear();
+              observations.push(
+                this.publisher.list().find((s) => s.id === actor.targetSlide)
+                  ?.observation ?? this.publisher.current,
+              );
+            } else output = await this.workTool(actor, call.name, args, signal);
+          }
         } catch (e) {
           output = { error: errorMessage(e) };
         }
@@ -900,12 +1022,17 @@ export class SlideRuntime {
           inference: branch.id,
           callId: call.call_id,
           name: call.name,
+          argumentsJson: call.arguments,
+          resultJson: JSON.stringify(output),
+          startedAtMs: toolStartedAtMs,
+          finishedAtMs: performance.now(),
           output,
         });
       }
       if (signal.aborted || this.closed) return;
       // Append observations after ALL sibling call results to preserve call/output pairing.
       for (const o of observations) this.observe(actor, o);
+      for (const item of explicitModelItems) actor.history.add(item);
       if (calls.length && !finished) continue;
       if (actor.role === "slow") {
         // A finished child still has a required result until a model boundary
