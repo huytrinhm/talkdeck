@@ -26,6 +26,7 @@ export const buildSchema = z.object({
 }).strict();
 export const incomingSchema = z.discriminatedUnion('type', [publicationSchema, buildSchema]);
 export type PublicationMessage = z.infer<typeof publicationSchema>;
+export type BuildMessage = z.infer<typeof buildSchema>;
 export type IncomingMessage = z.infer<typeof incomingSchema>;
 export type OutboundMessage = IncomingMessage extends infer Message ? Message extends IncomingMessage ? Omit<Message, 'version' | 'channel'> : never : never;
 export const acknowledgmentSchema = z.object({

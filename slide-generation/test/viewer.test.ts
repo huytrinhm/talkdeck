@@ -66,9 +66,14 @@ test('real sandbox displays fixed canvas and enforces reserved geometry for nest
     assert.equal((await ack(h.page, 'painted', 1)).visibleNodeIds?.includes('child'), false);
     await send(h.page, { version: 1, channel, type: 'build', sequence: 2, revision: 'r1', build: 2, holdIds: [] });
     await ack(h.page, 'painted', 2);
+    assert.equal((await ack(h.page, 'applied', 2)).build, 2);
+    assert.equal((await ack(h.page, 'settled', 2)).domEquivalent, true);
     const after = await geometry(h.frame, 'child');
     assert.equal(after.visibility, 'visible');
     assert.deepEqual({ ...after, visibility: 'hidden' }, before);
+    await send(h.page, { version: 1, channel, type: 'build', sequence: 3, revision: 'r1', build: 0, holdIds: [] });
+    await ack(h.page, 'painted', 3);
+    assert.equal((await geometry(h.frame, 'child')).visibility, 'hidden');
     await h.page.setViewportSize({ width: 960, height: 540 });
     await h.page.waitForTimeout(50);
     assert.equal(Math.round((await h.frame.locator('#viewport').boundingBox())!.width), 960);
