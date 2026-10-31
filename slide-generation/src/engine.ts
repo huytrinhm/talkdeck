@@ -1,3 +1,4 @@
+import { parseAndValidate } from './schema.js';
 import { randomUUID } from 'node:crypto';
 import { Trace } from './telemetry/trace.js';
 import { lineHash } from './hashline.js';
@@ -74,6 +75,7 @@ export class SlideEngine {
       }
       if (previous.tag === 'Slide' && !newNodes.some(node => node.id === previous.id)) throw new SourceError('not_implemented', 'Slide deletion requires the archival adapter', previous.id);
     }
+    parseAndValidate(candidate);
     const baseline = await this.validation.check(current);
     const report = await this.validation.check(candidate);
     if (!baseline.complete || !report.complete) throw new SourceError('validation_unavailable', 'All required validation stages must complete before an edit can commit');

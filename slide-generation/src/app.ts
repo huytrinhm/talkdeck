@@ -20,7 +20,7 @@ export function createApp(engine: SlideEngine) {
     if (error instanceof ZodError) return c.json({ accepted: false, code: 'request', issues: error.issues }, 400);
     if (error instanceof SourceError) {
       const status = ['validation_unavailable', 'not_implemented'].includes(error.code) ? 503 : error.code === 'missing_node' ? 404 : 422;
-      return c.json({ accepted: false, code: error.code, message: error.message, nodeId: error.nodeId }, status);
+      return c.json({ accepted: false, code: error.code, message: error.message, nodeId: error.nodeId, span: error.span }, status);
     }
     return c.json({ accepted: false, code: 'internal', message: 'Operation failed; source unchanged' }, 500);
   });

@@ -36,3 +36,8 @@ test('only one JSX root is accepted', () => {
   assert.throws(() => parseSource('<Deck id="n1" />; run()'));
   assert.throws(() => parseSource('<Slide id="n1" />'));
 });
+
+test('literal failures report the nearest available identity and source span', () => {
+  assert.throws(() => parseSource('<Deck id="n1"><Text id="t2" transform={{scale: call()}}>A</Text></Deck>'),
+    (e: any) => e.nodeId === 't2' && e.span.start === 14 && /CallExpression/.test(e.message));
+});

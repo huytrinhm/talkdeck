@@ -230,3 +230,20 @@ the proposed integration boundary and the confirmed old-Publisher mismatch. The 
 Environment probes: baseline `dae4a82`; initial typecheck and four test files passed. Git fetch failed with
 `Could not resolve host: github.com`. Installed Playwright Chromium failed at launch with `sandbox_host_linux.cc:41`,
 `Operation not permitted`. Browser validation and pushes cannot be verified in this environment; no live scores exist.
+
+## P1 implementation update
+
+`src/schema.ts` now validates strict primitive props, typed object shapes, metadata placement/cardinality, child rules,
+visual depth, class allowlists, required base colors, and token/frame constraints. Structure errors carry node IDs and
+source spans. Parser literal failures now retain the nearest available authored ID. Engine candidates run these
+checks before the unavailable browser pipeline. Definition expansion and resolved palette checks remain later stages.
+
+Icon is recognized as a dedicated primitive with required name/version/alt, inherited-or-token color semantics, existing
+transforms/builds, no children and no stroke/fill/size/path props. Definition utilities cannot override strokes. Exact
+catalog resolution is mandatory: without an injected resolver Icon validation refuses `icons_unavailable`. No catalog
+or renderer is installed or advertised available. Catalog tests use an explicitly labeled test resolver, not Lucide data.
+
+Instance syntax for the expansion milestone: named `<Slot name="…">one child</Slot>` bindings; definition declarations
+are empty `<Slot name="…" kind="…" />`. Each repeats a wrapper using Item; repeated bindings are resolved in P4.
+Literal text remains byte-preserving in source and is not trimmed by schemas. Inline emphasis is text syntax, not raw
+HTML/JSX tags. Persisted envelope schema remains version 1; no automatic migration is performed by schema validation.

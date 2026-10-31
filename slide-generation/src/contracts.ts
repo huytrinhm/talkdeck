@@ -58,7 +58,7 @@ export interface SlideRenderer {
   screenshot(source: string, slideId: string): Promise<Uint8Array>;
 }
 export class SourceError extends Error {
-  constructor(public code: string, message: string, public nodeId?: string) {
+  constructor(public code: string, message: string, public nodeId?: string, public span?: { start: number; end: number }) {
     super(message);
     this.name = 'SourceError';
   }

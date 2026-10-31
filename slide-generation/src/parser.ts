@@ -3,7 +3,7 @@ import jsx from 'acorn-jsx';
 import { SourceError, type Literal, type SourceNode } from './contracts.js';
 
 const JSXParser = Parser.extend(jsx());
-const tags = new Set(('Deck Brief Theme Token Scale Frame Motif Library Layout Component Slide Transcript Prompt SpeakerNotes Archive ArchivedSlide Stack Row Grid Split Center Spacer Panel Band Text Stat Bullets Quote Image Rule Badge Shape Pending Slot Each Item Index').split(' '));
+const tags = new Set(('Deck Brief Theme Token Scale Frame Motif Library Layout Component Slide Transcript Prompt SpeakerNotes Archive ArchivedSlide Stack Row Grid Split Center Spacer Panel Band Text Stat Bullets Quote Image Icon Rule Badge Shape Pending Slot Each Item Index').split(' '));
 const forbiddenKeys = new Set(['__proto__', 'prototype', 'constructor']);
 // Acorn's JSX plugin extends ESTree without exporting an AST type. This local boundary
 // is intentionally dynamic; every accepted construct is explicitly inspected below.
@@ -63,6 +63,7 @@ export function parseSource(source: string): SourceNode {
     if (depth > 64) fail(node, 'parser nesting exceeds 64');
     if (node.type !== 'JSXElement') fail(node);
     const opening = node.openingElement;
+    try {
     if (opening.name.type !== 'JSXIdentifier') fail(opening.name);
     const props: Record<string, Literal> = Object.create(null);
     for (const attr of opening.attributes) {
@@ -83,6 +84,14 @@ export function parseSource(source: string): SourceNode {
         return walk(child, depth + 1);
       }),
     };
+    } catch (error) {
+      if (error instanceof SourceError) {
+        const identity = opening.attributes.find((a: Ast) => a.type === 'JSXAttribute' && a.name.name === 'id' && a.value?.type === 'Literal');
+        if (!error.nodeId && typeof identity?.value.value === 'string') error.nodeId = identity.value.value;
+        error.span ??= { start: node.start, end: node.end };
+      }
+      throw error;
+    }
   }
   const root = walk(ast.body[0].expression, 1);
   if (root.tag !== 'Deck') throw new SourceError('root', 'Expected Deck root');
