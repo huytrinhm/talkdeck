@@ -83,10 +83,13 @@ const { models } = await import(pathToFileURL(join(generationRoot, 'src/orchestr
 const fixture = await loadFixture(fixturePath);
 const selectedModels = models(), limits = { maxCalls: Number(values['max-calls'] ?? 200), maxInputTokens: Number(values['max-input-tokens'] ?? 2_000_000),
   maxOutputTokens: Number(values['max-output-tokens'] ?? 100_000), maxOutputTokensPerCall: 8000 };
-const prompt = await readFile(join(generationRoot, 'docs/AGENT_PROMPT.md'), 'utf8') + await readFile(join(generationRoot, 'SPEC.md'), 'utf8') + await readFile(join(generationRoot, 'src/host/jsx-backend.ts'), 'utf8');
+const promptFiles = ['docs/AGENT_PROMPT.md', 'SPEC.md', 'src/host/jsx-backend.ts',
+  'src/orchestration/runtime.ts', 'src/orchestration/tools.ts', 'src/orchestration/openai.ts'];
+const promptFingerprint = await Promise.all(promptFiles.map(async path => ({ path, sha256: lineHash(await readFile(join(generationRoot, path), 'utf8')) })));
+const promptSha256 = lineHash(JSON.stringify(promptFingerprint));
 const manifest = { schemaVersion: 1, sourceSha: frozen?.sourceSha ?? harnessSourceSha, dirty: frozen ? false : harnessDirty, harness,
   nodeVersion: process.version, platform: `${process.platform}/${process.arch}`, startedAt: new Date().toISOString(),
-  lockSha256: lineHash(await readFile(join(generationRoot, 'package-lock.json'), 'utf8')), promptSha256: lineHash(prompt),
+  lockSha256: lineHash(await readFile(join(generationRoot, 'package-lock.json'), 'utf8')), promptSha256,
   fixtureSha256: lineHash(await readFile(fixturePath, 'utf8')), dependencies: [],
   model: { provider: 'openai', name: selectedModels.fast, roles: selectedModels, serviceTier: 'fast',
     settingsSha256: lineHash(JSON.stringify({ models: selectedModels, limits, reasoning: { fast: 'none', slow: 'medium', specialist: 'low' }, decisionsTier: 'endpoint-default' })),
@@ -103,6 +106,8 @@ const failed = (phase: string, error: unknown) => {
   console.error(`${phase}: ${message}`); process.exitCode = 1;
 };
 try {
+  await writeFile(join(recorder.directory, 'prompt-fingerprint.json'), JSON.stringify({ algorithm: 'sha256-json-ordered-path-digests-v1',
+    sha256: promptSha256, files: promptFingerprint }, null, 2), { flag: 'wx' });
   host = await createEvaluationHost({ recorder, clock: monotonicClock, initialContext: fixture.initialContext,
     budget: { maxCalls: limits.maxCalls, maxTokens: limits.maxOutputTokensPerCall, serviceTier: 'fast' }, limits });
   console.log(JSON.stringify({ event: 'started', directory: recorder.directory, fixture: fixture.id, limits }));
