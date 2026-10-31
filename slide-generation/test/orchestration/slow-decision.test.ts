@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import OpenAI from "openai";
-import { SlideRuntime } from "../src/runtime.js";
-import { OpenAISlowDecider } from "../src/openai.js";
-import type { SlowDecisionInput, ModelResult, Role } from "../src/types.js";
+import { SlideRuntime } from "../../src/orchestration/runtime.js";
+import { OpenAISlowDecider } from "../../src/orchestration/openai.js";
+import type { SlowDecisionInput, ModelResult, Role } from "../../src/orchestration/types.js";
 const done: ModelResult = { output: [] };
 const deferred = <T>() => {
   let resolve!: (value: T) => void;

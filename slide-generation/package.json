@@ -8,14 +8,17 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --import tsx --test test/*.test.ts",
+    "test": "node --import tsx --test test/*.test.ts test/orchestration/*.test.ts",
     "start": "node --import tsx src/server.ts",
     "smoke:generation": "node --import tsx scripts/generation-smoke.ts",
     "eval:talks": "node --import tsx src/evaluation/cli.ts talks",
     "eval:replay": "node --import tsx src/evaluation/cli.ts replay",
     "eval:compare": "node --import tsx src/evaluation/cli.ts compare",
     "eval:report": "node --import tsx src/evaluation/cli.ts report",
-    "eval:freeze": "node --import tsx src/evaluation/cli.ts freeze"
+    "eval:freeze": "node --import tsx src/evaluation/cli.ts freeze",
+    "test:orchestration": "node --import tsx --test test/orchestration/*.test.ts",
+    "legacy:fixture": "node --import tsx src/orchestration/fixture-deck.ts",
+    "legacy:server": "node --import tsx src/orchestration/server.ts"
   },
   "dependencies": {
     "@hono/node-server": "1.19.17",
@@ -27,12 +30,17 @@
     "hono": "4.13.14",
     "playwright": "1.64.1",
     "tailwindcss": "4.3.3",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "diff": "9.0.0",
+    "openai": "7.46.0",
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@types/fontkit": "2.0.9",
-    "@types/node": "26.6.5",
+    "@types/node": "26.6.6",
     "tsx": "4.23.15",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "@types/ws": "8.18.2",
+    "prettier": "3.9.10"
   }
 }

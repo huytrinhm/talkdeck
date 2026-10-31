@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AssetStore } from "../src/assets.js";
-import { ChromiumRenderer } from "../src/renderer.js";
-import { blankSlide } from "../src/types.js";
+import { AssetStore } from "../../src/orchestration/assets.js";
+import { ChromiumRenderer } from "../../src/orchestration/renderer.js";
+import { blankSlide } from "../../src/orchestration/types.js";
 test("Chromium renders image/geometry and rejects unresolved references, components, duplicate IDs and execution failures", async () => {
   const assets = new AssetStore(),
     renderer = new ChromiumRenderer(assets);

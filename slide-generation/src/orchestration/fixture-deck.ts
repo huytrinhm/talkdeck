@@ -12,7 +12,7 @@ import { SlideRuntime } from "./runtime.js";
 import { LiveTranscription, readWav } from "./transcription.js";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const fixture = JSON.parse(
-  readFileSync(join(root, "test-fixture-5-slides.json"), "utf8"),
+  readFileSync(join(root, "fixtures", "legacy", "test-fixture-5-slides.json"), "utf8"),
 ) as {
   slides: {
     number: number;
@@ -26,8 +26,8 @@ const output = resolve(
   process.env.RUN_DIR ??
     join(
       root,
-      "orchestration",
-      "runs",
+      ".artifacts",
+      "legacy-runs",
       `deck-${new Date().toISOString().replace(/[:.]/g, "-")}`,
     ),
 );
@@ -46,7 +46,7 @@ const rt = await SlideRuntime.create({
   context:
     "Create a coherent presentation about the fictional campus library locker pilot. The harness manually navigates five planned topics. Keep each topic on its intended slide; later corrections may require refining past slides. Distinguish measured results, illustrative calculations, and proposed thresholds. Never navigate for the user.",
 });
-const pcm = readWav(readFileSync(join(root, "test-fixture-5-slides.wav"))).pcm;
+const pcm = readWav(readFileSync(join(root, "fixtures", "legacy", "test-fixture-5-slides.wav"))).pcm;
 const routed: { slideId: string; fixtureSlide: number; transcript?: string }[] =
   [];
 let transcriber: LiveTranscription | undefined,

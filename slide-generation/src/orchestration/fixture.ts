@@ -14,8 +14,8 @@ const output = resolve(
   process.env.RUN_DIR ??
     join(
       root,
-      "orchestration",
-      "runs",
+      ".artifacts",
+      "legacy-runs",
       new Date().toISOString().replace(/[:.]/g, "-"),
     ),
 );
@@ -61,7 +61,7 @@ process.once("SIGINT", interrupt);
 process.once("SIGTERM", interrupt);
 try {
   if (process.argv.includes("--text")) {
-    const words = readFileSync(join(root, "test-fixture.txt"), "utf8")
+    const words = readFileSync(join(root, "fixtures", "legacy", "test-fixture.txt"), "utf8")
       .split(/\s+/)
       .filter(Boolean);
     let text = "";
@@ -71,7 +71,7 @@ try {
       await delay(250 / (Number(process.env.REPLAY_SPEED) || 1));
     }
   } else {
-    const wav = readFileSync(join(root, "test-fixture.wav"));
+    const wav = readFileSync(join(root, "fixtures", "legacy", "test-fixture.wav"));
     console.log(
       JSON.stringify({
         output,

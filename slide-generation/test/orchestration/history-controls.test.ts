@@ -1,15 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
-import { Publisher } from "../src/publisher.js";
-import { SlideRuntime } from "../src/runtime.js";
+import { Publisher } from "../../src/orchestration/publisher.js";
+import { SlideRuntime } from "../../src/orchestration/runtime.js";
 import {
   blankSlide,
   type ModelInput,
   type ModelResult,
   type Renderer,
   type Rendered,
-} from "../src/types.js";
+} from "../../src/orchestration/types.js";
 import type OpenAI from "openai";
 
 const frame = (source: string): Rendered => ({

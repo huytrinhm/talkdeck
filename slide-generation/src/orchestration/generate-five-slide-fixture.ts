@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { clientFromEnv } from "./config.js";
 
-const root = fileURLToPath(new URL("../../", import.meta.url));
+const root = fileURLToPath(new URL("../../fixtures/legacy/", import.meta.url));
 const stem = "test-fixture-5-slides";
 const script = readFileSync(join(root, `${stem}.txt`), "utf8");
 const sections = [
@@ -33,7 +33,7 @@ const rate = 24000,
   bytesPerSample = 2,
   gapMs = 1200;
 const gap = Buffer.alloc((rate * bytesPerSample * gapMs) / 1000);
-const cache = join(root, "orchestration", "runs", "five-slide-tts");
+const cache = fileURLToPath(new URL("../../.artifacts/legacy-tts/", import.meta.url));
 mkdirSync(cache, { recursive: true });
 const chunks: Buffer[] = [];
 const timeline: Record<string, unknown>[] = [];

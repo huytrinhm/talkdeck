@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import type OpenAI from "openai";
-import { Publisher } from "../src/publisher.js";
-import { SlideRuntime } from "../src/runtime.js";
-import type { ModelInput, ModelResult, Renderer } from "../src/types.js";
+import { Publisher } from "../../src/orchestration/publisher.js";
+import { SlideRuntime } from "../../src/orchestration/runtime.js";
+import type { ModelInput, ModelResult, Renderer } from "../../src/orchestration/types.js";
 const rendered = {
   screenshot: Buffer.from("png"),
   geometry: [],

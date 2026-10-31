@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 test("HTTP lifecycle, screenshot, validation and SSE reconnect do not create duplicate sessions", async () => {
-  const child = spawn(process.execPath, ["--import", "tsx", "src/server.ts"], {
-    cwd: new URL("../", import.meta.url),
+  const child = spawn(process.execPath, ["--import", "tsx", "src/orchestration/server.ts"], {
+    cwd: new URL("../../", import.meta.url),
     env: {
       ...process.env,
       OPENAI_API_KEY: "test-key-no-model-requests",

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import OpenAI from "openai";
 import { WebSocketServer } from "ws";
-import { LiveTranscription } from "../src/transcription.js";
+import { LiveTranscription } from "../../src/orchestration/transcription.js";
 test("live transcription transport configures a silent session, streams PCM, and reconciles final text", async () => {
   const server = new WebSocketServer({ port: 0 });
   await once(server, "listening");

@@ -14,7 +14,7 @@ import { AssetStore, assetOrigin } from "./assets.js";
 import { ChromiumRenderer } from "./renderer.js";
 import { FileLog } from "./log.js";
 import { LiveTranscription } from "./transcription.js";
-const root = fileURLToPath(new URL("../", import.meta.url));
+const root = fileURLToPath(new URL("../../.artifacts/legacy-server/", import.meta.url));
 const client = clientFromEnv(),
   selected = models();
 interface Session {

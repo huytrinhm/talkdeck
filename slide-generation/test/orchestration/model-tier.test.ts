@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type OpenAI from "openai";
-import { OpenAIModel } from "../src/openai.js";
+import { OpenAIModel } from "../../src/orchestration/openai.js";
 
 test("Fast uses Luna/fast/none; Slow uses Sol/fast/medium; specialists keep Sol/default/low", async () => {
   const requests: Record<string, any>[] = [];

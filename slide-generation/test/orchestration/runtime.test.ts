@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
-import { SlideRuntime } from "../src/runtime.js";
-import type { ModelInput, ModelResult, Observation } from "../src/types.js";
+import { SlideRuntime } from "../../src/orchestration/runtime.js";
+import type { ModelInput, ModelResult, Observation } from "../../src/orchestration/types.js";
 const rendered = {
   screenshot: Buffer.from("png"),
   geometry: [],

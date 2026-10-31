@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { merge, replaceExactly } from "../src/merge.js";
-import { AssetStore } from "../src/assets.js";
-import { Publisher } from "../src/publisher.js";
-import { History } from "../src/history.js";
-import { SpeechGate } from "../src/gate.js";
-import { TranscriptAccumulator, readWav } from "../src/transcription.js";
+import { merge, replaceExactly } from "../../src/orchestration/merge.js";
+import { AssetStore } from "../../src/orchestration/assets.js";
+import { Publisher } from "../../src/orchestration/publisher.js";
+import { History } from "../../src/orchestration/history.js";
+import { SpeechGate } from "../../src/orchestration/gate.js";
+import { TranscriptAccumulator, readWav } from "../../src/orchestration/transcription.js";
 import { readFileSync } from "node:fs";
-import type { Decider, Observation, Renderer, Rendered } from "../src/types.js";
+import type { Decider, Observation, Renderer, Rendered } from "../../src/orchestration/types.js";
 const png = Buffer.from("image");
 const renderer: Renderer = {
   async render() {
@@ -253,7 +253,7 @@ test("transcription reconciles out-of-order final events and ignores late deltas
 });
 test("prepared audio fixture is supported PCM and contains 85 seconds of audio", () => {
   const wav = readWav(
-    readFileSync(new URL("../../test-fixture.wav", import.meta.url)),
+    readFileSync(new URL("../../fixtures/legacy/test-fixture.wav", import.meta.url)),
   );
   assert(wav.durationMs > 85000 && wav.durationMs < 86000);
   assert(wav.pcm.length > 4_000_000);

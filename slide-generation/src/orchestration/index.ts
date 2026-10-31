@@ -1,5 +1,5 @@
 /** Public orchestration API. All versions/watermarks are runtime bookkeeping. */
-export { SlideRuntime, type RuntimeOptions } from "./src/runtime.js";
+export { SlideRuntime, type RuntimeOptions } from "./runtime.js";
 export {
   Publisher,
   type Edit,
@@ -8,15 +8,15 @@ export {
   type DeckSnapshot,
   type StructureResult,
   type HistoryResult,
-} from "./src/publisher.js";
-export { AssetStore } from "./src/assets.js";
-export { ChromiumRenderer } from "./src/renderer.js";
-export { OpenAIDecider, OpenAISlowDecider, OpenAIModel } from "./src/openai.js";
+} from "./publisher.js";
+export { AssetStore } from "./assets.js";
+export { ChromiumRenderer } from "./renderer.js";
+export { OpenAIDecider, OpenAISlowDecider, OpenAIModel } from "./openai.js";
 export {
   LiveTranscription,
   TranscriptAccumulator,
   readWav,
-} from "./src/transcription.js";
+} from "./transcription.js";
 export type {
   Speech,
   Correction,
@@ -38,4 +38,4 @@ export type {
   Message,
   Task,
   Log,
-} from "./src/types.js";
+} from "./types.js";
