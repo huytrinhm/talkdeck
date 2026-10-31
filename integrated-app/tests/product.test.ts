@@ -80,7 +80,7 @@ test('product projects, receipts, epochs, Present privacy and restart recovery u
     assert.notEqual((await request(host, `${a.base}/input`, { ...input, id: 'late-input' }, a.session)).status, 200);
     const reopened = await request(host, `${a.base}/sessions`, { role: 'editor' });
     a.session = reopened.body;
-    assert.equal((await state(host, a)).mode, 'view', 'reopening starts in View');
+    assert.equal((await state(host, a)).mode, 'talk', 'reopening starts in Talk');
     const persisted = JSON.parse(await readFile(`${owner.directory}/project.json`, 'utf8'));
     assert.equal('mode' in persisted, false, 'previous mode is never saved');
     assert.equal((await request(host, `${a.base}/pdf`, undefined, a.session)).status, 404);
@@ -103,7 +103,7 @@ test('product projects, receipts, epochs, Present privacy and restart recovery u
     await host.close(); host = await f.make();
     const reattached = await request(host, `${a.base}/sessions`, { role: 'editor' }); a.session = reattached.body;
     assert.equal((await state(host, a)).slides.length, 1);
-    assert.equal((await state(host, a)).mode, 'view');
+    assert.equal((await state(host, a)).mode, 'talk');
     assert.equal('history' in await state(host, a), false);
     assert.match((await host.store.open(a.id)).runtime.local.engine.readDocument().source, /Private raw evidence/);
   } finally { await host.close(); await rm(f.directory, { recursive: true, force: true }); }
@@ -216,7 +216,7 @@ test('explicit slide deletion selects a neighbor, retains evidence, deduplicates
     assert.equal(duplicate.body.snapshot.slides.length, 2);
     await command(host, p, {type:'mode',mode:'present'});
     assert.equal((await command(host, p, {type:'delete',slideId:third})).status, 409);
-    await command(host, p, {type:'mode',mode:'view'});
+    await command(host, p, {type:'mode',mode:'talk'});
     assert.equal((await command(host, p, {type:'delete',slideId:third})).body.snapshot.selectedId, original);
     assert.equal((await command(host, p, {type:'delete',slideId:original})).status, 409);
     assert.equal((await state(host, p)).slides.length, 1);

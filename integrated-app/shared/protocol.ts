@@ -1,5 +1,5 @@
 /** Product facade v1. Canonical source is server-owned; slides below are projections. */
-export type Mode = "view" | "talk" | "present" | "practice" | "review";
+export type Mode = "talk" | "present" | "practice" | "review";
 export interface Project {
   id: string;
   schema: "talkdeck-canonical-v1";

@@ -157,7 +157,7 @@ export class ProjectOwner {
       await this.runtime.backend.navigate(this.data.selectedId);
     this.data.selectedId = this.runtime.backend.selectedId;
     this.data.epoch++;
-    this.data.mode = "view";
+    this.data.mode = "talk";
     this.data.build = 0;
     this.data.blackout = false;
     delete this.data.practiceId;
@@ -183,6 +183,8 @@ export class ProjectOwner {
     this.timer = setInterval(() => this.broadcastSnapshot(), 1500);
     this.timer.unref();
     if (this.contextText()) await this.updateBrief(this.contextText());
+    await this.runtime.practice.leavePractice();
+    this.runtime.actors.resume();
     await this.save();
   }
   private serialize<T>(fn: () => Promise<T>) {
@@ -242,11 +244,11 @@ export class ProjectOwner {
     for (const listener of a.listeners) listener(e);
   }
   async attach(role: "editor" | "audience") {
-    // Every newly opened editor starts in View; modes are session state only.
+    // Every newly opened editor starts in Talk; modes are session state only.
     if (role === "editor") await this.serialize(async () => {
       if (this.data.practiceId && this.runtime.practice.get(this.data.practiceId).status === "recording")
         await this.runtime.practice.cancel(this.data.practiceId);
-      await this.mode("view", "transcript");
+      await this.mode("talk", "audio");
       delete this.data.practiceId;
       this.data.build = 0;
       this.data.blackout = false;
@@ -482,15 +484,15 @@ export class ProjectOwner {
         } else if (command.type === "next" || command.type === "previous")
           await this.navigate(command.type === "next" ? 1 : -1);
         else if (command.type === "add") {
-          if (!["talk", "view"].includes(this.data.mode))
+          if (this.data.mode !== "talk")
             throw new ProductError(
               "mode",
-              "Slides can be added in View or Talk",
+              "Slides can be added in Talk",
             );
           await this.runtime.backend.createSlide();
         } else if (command.type === "delete") {
-          if (!["view", "talk"].includes(this.data.mode))
-            throw new ProductError("mode", "Slides can be deleted in View or Talk");
+          if (this.data.mode !== "talk")
+            throw new ProductError("mode", "Slides can be deleted in Talk");
           if (!command.slideId) throw new ProductError("slide_required", "Choose a slide to delete");
           if (this.runtime.backend.list().length <= 1)
             throw new ProductError("last_slide", "Keep at least one slide in the deck");
@@ -552,7 +554,7 @@ export class ProjectOwner {
     });
   }
   private async mode(mode: Mode, input: "audio" | "transcript") {
-    if (!["view", "talk", "present", "practice", "review"].includes(mode))
+    if (!["talk", "present", "practice", "review"].includes(mode))
       throw new ProductError("mode", "Unknown mode");
     if (mode === this.data.mode) return;
     if (
@@ -1066,7 +1068,7 @@ export class ProjectStore {
     };
     const data: Persisted = {
       project,
-      mode: "view",
+      mode: "talk",
       epoch: 0,
       build: 0,
       blackout: false,

@@ -28,7 +28,7 @@ const commandSchema = z
       "context",
       "push-to-edit",
     ]),
-    mode: z.enum(["view", "talk", "present", "practice", "review"]).optional(),
+    mode: z.enum(["talk", "present", "practice", "review"]).optional(),
     slideId: id.optional(),
     value: z.union([z.boolean(), z.number()]).optional(),
     context: z.string().max(100000).optional(),

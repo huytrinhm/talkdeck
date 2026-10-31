@@ -22,7 +22,7 @@ npm run dev
 
 Open http://localhost:3000. The API listens on loopback port 3001. Application code
 reads process environment only. Projects and provider evidence live in ignored
-`.data/projects/`; one runtime owns each project. Projects always open in View.
+`.data/projects/`; one runtime owns each project. Projects always open in Talk with microphone input. The centered voice panel sits above the filmstrip; typed transcript input is not available in the workspace.
 Modes are not saved. The editor sidebar is on the right. Legacy workspace,
 exports, Undo/Redo and saved-session history controls have been removed.
 

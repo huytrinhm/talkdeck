@@ -12,14 +12,14 @@ test('local navigation follows canonical builds and the latest click instead of 
   const previous = navigationTarget(snapshot,deck,slide,'previous')!;
   assert.equal(previous.slideId,'a'); assert.equal(previous.build,0);
   assert.equal(navigationTarget(snapshot,deck,undefined,'previous'),undefined);
-  const view = {...snapshot,mode:'view'} as Snapshot;
-  const next = navigationTarget(view,deck,undefined,'next')!;
+  const talk = {...snapshot,mode:'talk'} as Snapshot;
+  const next = navigationTarget(talk,deck,undefined,'next')!;
   assert.equal(next.slideId,'b');
-  assert.equal(navigationTarget(view,deck,next,'next')!.slideId,'c');
+  assert.equal(navigationTarget(talk,deck,next,'next')!.slideId,'c');
 });
 test('stale prepared content cannot render or infer presentation builds', () => {
   assert.equal(navigationTarget({...snapshot,epoch:2},deck,undefined,'next'),undefined);
   assert.equal(navigationTarget({...snapshot,revision:'r2'},deck,undefined,'next'),undefined);
-  const next = navigationTarget({...snapshot,mode:'view',revision:'r2'},deck,undefined,'next')!;
+  const next = navigationTarget({...snapshot,mode:'talk',revision:'r2'},deck,undefined,'next')!;
   assert.equal(next.slideId,'b'); assert.equal(next.preview,undefined);
 });
