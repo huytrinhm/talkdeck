@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  preview: { allowedHosts: ['talkdeck.blackpinker.com'] },
   resolve: { dedupe: ['react', 'react-dom'] },
   server: {
     host: '0.0.0.0', port: 3000, strictPort: true,
