@@ -517,7 +517,7 @@ export async function replayRecordedActors(
               request.input[0]?.content?.[0]?.type !== "input_text")
             refuse("Unsupported recorded speech decision boundary; replay with its matching generator");
           const expected = json(request.input[0].content[0].text);
-          const id = expected.speech.slideId;
+          const id = entry.slideId;
           if (!id) refuse("Decision slide attribution");
           const gate = actors.gates.get(id),
             first = firstUndispatched.get(id);
@@ -536,7 +536,7 @@ export async function replayRecordedActors(
           })[0].content[0];
           if (projectedText.type !== "input_text") refuse("Missing speech projection");
           const projected = json(projectedText.text);
-          for (const field of ["speech", "lastDispatched", "delta", "correctionsSinceDispatch"])
+          for (const field of ["current_transcript", "previously_sent_transcript", "correction_context"])
             equal(projected[field], expected[field], `Decision ${field}`);
           watch(gate.tick(entry.startedAtMs));
         }

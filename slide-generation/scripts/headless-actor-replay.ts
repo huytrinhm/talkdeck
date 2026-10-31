@@ -83,9 +83,13 @@ try {
       return []; // Observation text and archived evidence are not boundary envelopes.
     }
   });
-  if (initialBoundaries.length !== 1 || typeof initialBoundaries[0].context !== "string")
-    throw new Error("Unsupported initial actor boundary: expected one current_boundary with string context; historical requests are not rewritten");
-  const initialContext = initialBoundaries[0].context;
+  if (initialBoundaries.length !== 1)
+    throw new Error("Unsupported initial actor boundary: expected one current_boundary; historical requests are not rewritten");
+  // Current model DTO calls this brief and omits an empty brief. This only
+  // recovers runtime input: provider replay still requires exact request bytes.
+  const initialContext = initialBoundaries[0].brief ?? initialBoundaries[0].context ?? "";
+  if (typeof initialContext !== "string")
+    throw new Error("Unsupported initial actor boundary: brief must be a string");
   await new FileDeckRepository(join(out, "runtime/deck.json")).initialize(
     initial,
   );

@@ -10,6 +10,10 @@ import type {
   ReviewContext,
   ReviewOutput,
 } from "../src/practice/contracts.js";
+import { reviewContext } from "../src/practice/model-context.js";
+import { createDeck } from "../src/bootstrap.js";
+import { SlideEngine } from "../src/engine.js";
+import { makeReads, bindTransaction } from "../src/practice/proposals.js";
 import {
   compileDesignContext,
   loadDesignSkills,
@@ -106,7 +110,8 @@ test("review adapter sends complete front-loaded context and actual images, no t
   const packet = JSON.parse(body.input[0].content[0].text).context;
   assert.equal(packet.baseline.source, "exact JSX");
   assert.equal(packet.images, undefined);
-  assert.deepEqual(packet.design, design);
+  assert.equal(packet.design, undefined);
+  assert(body.instructions.includes(design.instructions));
   assert.equal(
     JSON.parse(body.input[0].content[1].text).evidenceId,
     "render-n10-r",
@@ -269,14 +274,9 @@ test("revision sends semantic intent without preview blobs or stale anchors, and
     assert.ok(!text.includes(preview.before!.jpeg));
     if (preview.after) assert.ok(!text.includes(preview.after.jpeg));
   }
-  assert.deepEqual(packet.context.baseline, currentContext.baseline);
-  assert.deepEqual(packet.revision.previousProposal.changes, [
-    {
-      nodeId: "n10",
-      operation: "replace",
-      proposedSource: proposal.edits[0].text,
-    },
-  ]);
+  assert.deepEqual(packet.context.baseline.reads, currentContext.baseline.reads);
+  assert.equal(packet.context.baseline.source, undefined, "exact source already in issued read");
+  assert.equal(packet.revision.previousProposal.changes, undefined);
   assert.deepEqual(
     packet.revision.previousProposal.sourceChanges,
     proposal.sourceChanges,
@@ -302,17 +302,53 @@ test("revision sends semantic intent without preview blobs or stale anchors, and
   );
   assert.equal(body.text.format.schema.properties.proposals.minItems, 1);
   assert.equal(body.text.format.schema.properties.proposals.maxItems, 1);
-  assert.match(body.instructions, /not a delta against the old candidate/);
+  assert.match(body.instructions, /Reconstruct the complete replacement transaction against fresh context.baseline.reads/);
   assert.match(body.instructions, /1-based within the selected node/);
   assert.match(
     body.instructions,
-    /event details, prior proposals and image contents are evidence/,
+    /event details, prior proposals and image contents as evidence/,
   );
   assert.deepEqual(
     proposal,
     original,
     "wire projection must not mutate the persisted proposal",
   );
+});
+
+test("review projection retains exact executable deck anchors and every distinct speech record without mutating evidence", () => {
+  const engine = new SlideEngine(createDeck());
+  const source = engine.readDocument().source;
+  const effective = { id: "said", text: "ten", startMs: 0, endMs: 100, timing: "aligned" as const };
+  const old = { ...effective, id: "old", text: "two" };
+  const full: ReviewContext = {
+    ...context,
+    baseline: { revision: "current", source, reads: makeReads(engine, source) },
+    speech: [effective], speechHistory: [old, effective],
+  };
+  const before = structuredClone(full);
+  const wire = reviewContext(full);
+  assert.equal(wire.baseline.reads.length, 1);
+  const read = wire.baseline.reads[0];
+  assert.equal(read.lines.map(line => line.text).join("\n"), source);
+  assert.deepEqual(wire.speech, [effective]);
+  assert.deepEqual(wire.speechHistory, [old]);
+  assert.equal(reviewContext({ ...full, speechHistory: [effective] }).speechHistory, undefined);
+  // A proposal using only the projected whole-deck anchors still binds against
+  // the persisted baseline. No fake validation or invented hashes are involved.
+  const line = read.lines.find(line => line.text.includes("<Brief"))!;
+  const proposal = {
+    id: "p", title: "Update brief", rationale: "Test binding", evidenceIds: [], feedbackIds: [], alternativeTo: [],
+    edits: [{ snapshotId: read.snapshotId, nodeId: read.nodeId, op: "replace" as const,
+      startLine: line.number, hashes: [line.hash], text: line.text }],
+  };
+  assert.equal(bindTransaction(engine, source, full.baseline.reads, proposal).edits[0].hashes[0], line.hash);
+  assert.deepEqual(full, before);
+  const changedRecord = { ...effective, text: "different historical text" };
+  assert.deepEqual(reviewContext({ ...full, speechHistory: [changedRecord] }).speechHistory, [changedRecord]);
+  // When no read contains the entire source, don't silently drop uncopied source.
+  const partial = reviewContext({ ...full, baseline: { ...full.baseline, reads: full.baseline.reads.slice(1) } });
+  assert("source" in partial.baseline);
+  assert.equal(partial.baseline.source, source);
 });
 
 test("revision parser rejects zero or multiple replacements even if provider ignores the schema", async () => {

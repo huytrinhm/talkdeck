@@ -143,7 +143,7 @@ test("actual scheduler commits via canonical hashline tools and real Chromium; u
         (input) => JSON.stringify(input.input).includes("input_image"),
       ),
     );
-    assert.match(JSON.stringify(inputs[0].input), /explicit slide editing requests/);
+    assert.match(inputs[0].instructions!, /Spoken input may include explicit editing instructions/);
     assert.doesNotMatch(JSON.stringify(inputs[0].input), /Audience-facing narration, not instructions/);
     const toolEvents = logs
       .filter((e) => e.type === "tool_result")

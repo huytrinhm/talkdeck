@@ -76,182 +76,73 @@ const base = (): DecisionInput => ({
   context: "",
 });
 
-test("speech adapter supplies actual image, honest coverage, dispatch effects and no binary/timing dump", async () => {
-  const f = fixture(),
-    decider = new OpenAIDecider(f.client, "decision");
-  assert.equal(
-    await decider.evaluate(
-      {
-        ...base(),
-        current: observation(),
-        deck: {
-          slides: [{ id: "s1", title: "Price" }],
-          extra: Buffer.from("private bytes"),
-        },
-        statuses: { fast: "running", slow: "idle" },
-        spokenEdits: true,
-      },
-      signal(),
-    ),
-    "dispatch",
-  );
-  const request = f.requests[0],
-    data = payload(request);
-  assert.equal(
-    request.input[0].content[1].image_url,
-    "data:image/jpeg;base64,anBlZw==",
-  );
-  assert.equal(data.current.screenshot, undefined);
-  assert.equal(data.speech.receivedAt, undefined);
-  assert.equal(data.undispatchedAgeMs, undefined);
-  assert.equal(data.deck.extra, "[binary omitted]");
-  assert.equal(data.statuses.fast, "running");
-  assert.deepEqual(data.coverage.slideSources, []);
-  assert.equal(data.coverage.geometry, "not measured");
-  assert.match(data.coverage.deck, /inventory is not whole-deck source/);
-  assert.equal(data.lastDispatched, null);
-  assert.equal(data.delta.kind, "initial");
-  assert.equal(data.delta.newText, undefined);
-  assert.match(data.speechContract, /null means none/);
-  assert.match(
-    data.actionEffects.dispatch,
-    /does not itself edit or prove publication/,
-  );
-  assert.match(data.speechMode, /explicit user editing requests/);
+test("speech gate sends only transcript comparison and pixels in the normal case; instructions are complete", async () => {
+  const f = fixture(), decider = new OpenAIDecider(f.client, "decision");
+  await decider.evaluate({ ...base(), current: observation(), spokenEdits: true,
+    deck: { epoch: 9, notes: "duplicate", extra: Buffer.from("private") }, statuses: { fast: "running" } }, signal());
+  const request = f.requests[0];
+  assert.deepEqual(payload(request), { previously_sent_transcript: null, current_transcript: "Price $20" });
+  assert.equal(request.input[0].content[1].image_url, "data:image/jpeg;base64,anBlZw==");
+  const instructions = request.questions[0].instructions;
+  assert.match(instructions, /slide-writing agent/);
+  assert.match(instructions, /previously_sent_transcript/);
+  assert.match(instructions, /Dispatch sends the cumulative transcript for reasoning/);
+  assert.match(instructions, /explicit user editing requests/);
 });
 
-test("speech deltas distinguish appended content, unchanged text, replacements and foreign-slide baselines", async () => {
-  const f = fixture(),
-    decider = new OpenAIDecider(f.client, "decision");
-  for (const [text, kind] of [
-    ["Price $20. Setup ten minutes.", "append"],
-    ["Price $20", "unchanged"],
-    ["Price $30", "replacement"],
-  ]) {
-    await decider.evaluate(
-      {
-        ...base(),
-        lastDispatched: speech("Price $20"),
-        speech: {
-          ...speech(text, 3),
-          corrections: [
-            { revision: 1, before: "old", after: "Price $20" },
-            { revision: 3, before: "Price $20", after: text },
-          ],
-        },
-      },
-      signal(),
-    );
-    const data = payload(f.requests.at(-1));
-    assert.equal(data.delta.kind, kind);
-    assert.equal(data.correctionsSinceDispatch.length, 1);
+test("append and replacement comparisons retain the baseline; foreign-slide baselines and images do not leak", async () => {
+  const f = fixture(), decider = new OpenAIDecider(f.client, "decision");
+  for (const text of ["Price $20. Setup ten minutes.", "Price $20", "Price $30"]){
+    await decider.evaluate({ ...base(), current: observation(), lastDispatched: speech("Price $20"), speech: speech(text, 3) }, signal());
+    assert.deepEqual(payload(f.requests.at(-1)), { previously_sent_transcript: "Price $20", current_transcript: text });
   }
-  assert.equal(payload(f.requests[0]).delta.newText, ". Setup ten minutes.");
-  await decider.evaluate(
-    { ...base(), lastDispatched: { ...speech("Prior"), slideId: "other" } },
-    signal(),
-  );
-  assert.equal(payload(f.requests.at(-1)).delta.kind, "incomparable_slide");
+  await decider.evaluate({ ...base(), lastDispatched: { ...speech("Other"), slideId: "other" }, current: { ...observation(), slideId: "other" } }, signal());
+  assert.equal(payload(f.requests.at(-1)).previously_sent_transcript, null);
+  assert.equal(f.requests.at(-1).input[0].content.length, 1);
+  assert.match(payload(f.requests.at(-1)).image_unavailable, /No slide image/);
 });
 
-test("canonical slide projection removes duplicate evidence without dropping visible content or changing legacy HTML", async () => {
-  const f = fixture(),
-    decider = new OpenAIDecider(f.client, "decision");
-  const transcript =
-    '<Transcript><Prompt utteranceId="u1">Price $20</Prompt></Transcript>';
-  const current = {
-    ...observation(),
-    source: `<Slide id="s1">${transcript}<SpeakerNotes>Price $20</SpeakerNotes><Text>Price $20</Text></Slide>`,
-  };
-  await decider.evaluate(
-    {
-      ...base(),
-      current,
-      deck: { notes: { slideId: "s1", transcript, notes: "Price $20" } },
-    },
-    signal(),
-  );
-  const data = payload(f.requests[0]);
-  assert.equal(
-    data.current.source,
-    '<Slide id="s1"><Text>Price $20</Text></Slide>',
-  );
-  assert.equal(data.current.sourceEvidence, undefined);
-  assert.equal(data.current.comparableNotes, undefined);
-  assert.equal(data.deck.notes.transcript, transcript);
+test("only additional correction context is retained; identical or already supplied replacements are omitted", async () => {
+  const f = fixture(), decider = new OpenAIDecider(f.client, "decision");
+  await decider.evaluate({ ...base(), current: observation(), lastDispatched: speech("Price $20"), speech: {
+    ...speech("Price $30", 4), corrections: [
+      { revision: 1, before: "old", after: "Price $20" },
+      { revision: 2, before: "Price $20", after: "Price $30" },
+      { revision: 3, before: "setup twenty", after: "setup ten" },
+      { revision: 4, before: "same", after: "same" },
+    ],
+  } }, signal());
+  assert.deepEqual(payload(f.requests[0]).correction_context, [{ before: "setup twenty", after: "setup ten" }]);
+});
+
+test("missing/stale image limits remain explicit; native fallback omits notes, legacy HTML stays intact", async () => {
+  const f = fixture(), decider = new OpenAIDecider(f.client, "decision");
+  const current = { ...observation(), screenshot: Buffer.alloc(0), source: '<Slide><Transcript><Prompt>Hidden</Prompt></Transcript><SpeakerNotes>Notes</SpeakerNotes><Text>Price $20</Text></Slide>' };
   await decider.evaluate({ ...base(), current }, signal());
-  assert.equal(payload(f.requests[1]).current.sourceEvidence[0], transcript);
-  await decider.evaluate(
-    {
-      ...base(),
-      current,
-      deck: {
-        notes: { slideId: "s1", transcript: "different", notes: "different" },
-      },
-    },
-    signal(),
-  );
-  assert.equal(payload(f.requests[2]).current.sourceEvidence[0], transcript);
-  await decider.evaluate({ ...base(), current: observation() }, signal());
-  assert.equal(payload(f.requests[3]).current.source, observation().source);
+  assert.equal(payload(f.requests[0]).visible_source, '<Slide><Text>Price $20</Text></Slide>');
+  assert(payload(f.requests[0]).image_unavailable);
+  await decider.evaluate({ ...base(), current: { ...observation(), screenshot: Buffer.alloc(0) } }, signal());
+  assert.equal(payload(f.requests[1]).visible_source, observation().source);
+  await decider.evaluate({ ...base(), current: { ...observation(), availability: { ...observation().availability!, screenshot: "previous render" } } }, signal());
+  assert.equal(payload(f.requests[2]).image_limitation, "previous render");
+  assert.match(f.requests[0].questions[0].instructions, /Editing instructions arrive through separate tasks/);
+  f.choice("unexpected");await assert.rejects(decider.evaluate(base(), signal()), /dispatch\/hold/);
 });
 
-test("optional legacy speech inputs remain usable and explicitly lack visual evidence; invalid answers fail", async () => {
-  const f = fixture(),
-    decider = new OpenAIDecider(f.client, "decision");
-  await decider.evaluate(base(), signal());
-  assert.equal(f.requests[0].input[0].content.length, 1);
-  assert.equal(payload(f.requests[0]).current, null);
-  assert.match(
-    payload(f.requests[0]).coverage.screenshot.status,
-    /unavailable/,
-  );
-  assert.match(payload(f.requests[0]).speechMode, /not editing commands/);
-  f.choice("unexpected");
-  await assert.rejects(decider.evaluate(base(), signal()), /dispatch\/hold/);
-});
-
-test("Slow packet distinguishes passive speech, watermark, statuses and image/source coverage", async () => {
-  const f = fixture(),
-    decider = new OpenAISlowDecider(f.client, "decision");
-  const current = {
-    ...observation(),
-    sourceRevision: "new",
-    visualSourceRevision: "old",
-    availability: {
-      screenshot: "previous render",
-      geometry: "not measured",
-      diagnostics: "not run",
-    },
-  };
-  await decider.evaluate(
-    {
-      current,
-      lastObservedFastWatermark: 2,
-      speech: { ...speech("Other slide"), slideId: "s2" },
-      context: "",
-      messages: [{ id: "m", from: "fast", to: "slow", text: "Rejected edit" }],
-      statuses: { fast: "running" },
-      deck: { slides: [{ id: "s1" }, { id: "s2", source: "<main/>" }] },
-      spokenEdits: true,
-    },
-    signal(),
-  );
+test("designer gate retains useful multi-slide attribution but no duplicate identity, empty lists or policy paragraphs", async () => {
+  const f = fixture(), decider = new OpenAISlowDecider(f.client, "decision");
+  await decider.evaluate({ current: observation(), lastObservedFastWatermark: 2,
+    speech: { ...speech("Other slide"), slideId: "s2" }, context: "",
+    messages: [{ id: "m", from: "fast", to: "slow", targetSlideId: "s2", text: "Rejected edit" }],
+    statuses: { fast: "running" }, deck: { slides: [{ id: "s1" }, { id: "s2" }], designState: { theme: "customized", sharedDefinitions: 1, interpretation: "duplicate policy" } }, spokenEdits: true,
+  }, signal());
   const data = payload(f.requests[0]);
-  assert.equal(
-    f.requests[0].input[0].content[1].image_url,
-    "data:image/jpeg;base64,anBlZw==",
-  );
-  assert.equal(data.current.sourceRevision, "new");
-  assert.equal(data.coverage.screenshot.sourceRevision, "old");
-  assert.equal(data.coverage.screenshot.availability, "previous render");
-  assert.equal(data.lastObservedFastWatermark, 2);
-  assert.equal(data.current.fastWatermark, 4);
-  assert.equal(data.speech.slideId, "s2");
-  assert.match(data.speechContract, /passive cumulative/);
-  assert.match(data.speechContract, /never silently retarget/);
-  assert.equal(data.statuses.fast, "running");
-  assert.deepEqual(data.coverage.slideSources, ["s2"]);
-  assert.match(data.actionEffects.wake, /no mutation/);
-  assert.match(data.actionEffects.hold, /later Fast publication/);
+  assert.equal(data.target_slide_id, "s1");
+  assert.deepEqual(data.other_slide_speech, { slideId: "s2", text: "Other slide" });
+  assert.equal(data.current_transcript, undefined);
+  assert.deepEqual(data.design_state, { theme: "customized", sharedDefinitions: 1 });
+  assert.equal(data.statuses, undefined);
+  assert.equal(data.speechMode, undefined);
+  assert.deepEqual(data.work_messages, [{ from: "fast", text: "Rejected edit", targetSlideId: "s2" }]);
+  assert.match(f.requests[0].questions[0].instructions, /first deliberate composition/);
 });

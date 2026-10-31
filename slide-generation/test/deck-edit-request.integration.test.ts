@@ -137,7 +137,7 @@ test("canonical Fast forwards one exact explicit deck request to Slow without pu
         typeof item.content === "string" &&
         JSON.parse(item.content).kind === "current_boundary",
     ) as { content: string };
-    const tasks = JSON.parse(boundary.content).tasks;
+    const tasks = JSON.parse(boundary.content).activeTasks;
     assert.equal(tasks.length, 1);
     assert.equal(tasks[0].kind, "edit_comment");
     assert.equal(tasks[0].task, quote);

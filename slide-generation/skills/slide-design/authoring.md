@@ -12,6 +12,7 @@ only as authorized; source evidence is not.
 
 JSX braces may contain literal numbers, booleans, arrays and typed objects, such as
 `cols={2}`, `build={1}` and `freeForm={{reason: 'Comparison composition'}}`.
+Write booleans explicitly (`grow={true}`, not bare `grow`).
 They may not evaluate variables, arithmetic, functions or calls. No spreads or
 fragments. Text children are literal text; quote/escape JSX delimiters as needed.
 
@@ -53,6 +54,9 @@ fragments. Text children are literal text; quote/escape JSX delimiters as needed
 - `Shape` is optional decoration, at most two directly inside a Slide; kinds
   disc/ring/blob/pill/arc/dots/grid/glow/sparkle, sizes sm/md/lg/xl. Do not use
   decorative shapes as a precision chart or add a mandatory motif.
+  It accepts theme-token `fill`, `at="tl|t|tr|l|c|r|bl|b|br"` (choose one),
+  `bleed={true}` (or `{false}`) and `opacity="faint|soft|solid"` (choose one).
+  For example: `<Shape kind="ring" fill="accent" at="tr" size="lg" opacity="faint"/>`.
 
 Example visual subtree (use only with real supplied content and valid anchors):
 
@@ -76,12 +80,21 @@ transform field is required. Other props are node-specific; do not infer CSS pro
 
 ## Theme and reusable definitions
 
-Keep the existing Theme. Optional style recipes express intent, not available
+Preserve an established or user-specified Theme. The designer may develop a
+provisional default into a coherent style when its task permits theme changes;
+the content editor's local scope does not. Optional style recipes express intent, not available
 fonts or permission to recolor. Colors are Theme Token hex values; visual fill/color
 props reference token suffixes such as bg, fg, accent. Text-bearing fill X needs
 X-fg. Do not use raw hex on visual props. Font assets must resolve by explicit
 version; no system font assumptions, network fonts or invented serif/body tokens.
 Role sizes and spacing come from Scale and normalize to readability floors.
+
+Theme may contain one `Frame` and one `Motif` in addition to tokens and Scale:
+`<Frame labels={{left: 'Supplied label', footer: 'Supplied footer'}} rule={true} page={true}/>`
+adds framing/page furniture (left/right labels up to 48 characters, footer up to 64).
+Do not invent labels or provenance. `<Motif kinds={['ring']}/>` declares one or two
+allowed shape kinds for consistent decoration. `Slide frame={false}` hides its
+frame. These are native capabilities, not arbitrary positioning or chart tools.
 
 Read `list_library` and the selected definition with `read_source` before reuse;
 the listing describes shape/dependencies, not exact named slot bindings. If the
@@ -97,6 +110,27 @@ not definition names. Free-form Slides require a meaningful `freeForm={{reason:
 have maximum depth six. `class` is permitted only inside definitions and only from
 the runtime allowlist: retain known-valid existing classes; do not invent utilities.
 No arbitrary CSS, positioning or inline style props.
+
+For example, a designer may create this definition in Library, then use the
+instance as the Slide's sole visual child (retain Transcript/SpeakerNotes):
+
+```jsx
+<Layout name="Headline" description="One headline with supporting text">
+  <Slide><Slot name="title" kind="headline"/><Slot name="body" kind="text"/></Slide>
+</Layout>
+```
+
+```jsx
+<Headline>
+  <Slot name="title"><Text>Exact supplied headline</Text></Slot>
+  <Slot name="body"><Text>Exact supplied supporting text</Text></Slot>
+</Headline>
+```
+
+These are definition/instance examples, not already registered names. Preserve
+existing definitions/slots when reusing them; inspect their source first. A
+Component uses the same named Slot binding with a non-Slide visual root such as
+Stack or Panel. New definitions and their uses must be valid together.
 
 Do not shrink text below floors, discard content, or silently split a slide to
 pass validation. Use the authorized host workflow and report limits. Images and

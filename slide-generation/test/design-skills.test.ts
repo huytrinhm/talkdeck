@@ -9,6 +9,9 @@ import {
 } from "../src/design/skills.js";
 import { JsxBackend } from "../src/host/jsx-backend.js";
 import { createLocalRuntime } from "../src/runtime.js";
+import { createDeck } from "../src/bootstrap.js";
+import { allocateIds } from "../src/source/candidate.js";
+import { expandSource } from "../src/expansion.js";
 
 test("stored skill snapshots reproduce prompts and reject corrupt or reordered resources", async () => {
   const snapshot = await loadDesignSkills();
@@ -31,6 +34,21 @@ test("stored skill snapshots reproduce prompts and reject corrupt or reordered r
   const reordered = structuredClone(snapshot);
   reordered.files.reverse();
   assert.throws(() => validateDesignSkillSnapshot(reordered), /integrity/);
+});
+
+test("new authoring examples use actual native frame, motif, shape and slot syntax", async () => {
+  const authoring = (await loadDesignSkills()).files.find(file => file.path === "authoring.md")!.text;
+  const blocks = [...authoring.matchAll(/```jsx\n([\s\S]*?)\n```/g)].map(match => match[1]);
+  const definition = blocks.find(block => block.startsWith("<Layout"))!;
+  const instance = blocks.find(block => block.startsWith("<Headline"))!;
+  assert(definition && instance);
+  const inline = (tag: string) => authoring.match(new RegExp("`(<" + tag + "[^`]+/>)`"))![1];
+  const base = createDeck().source.replace("</Theme>", `${inline("Frame")}${inline("Motif")}</Theme>`);
+  const defined = base.replace('<Library id="n9" />', `<Library id="n9">${definition}</Library>`)
+    .replace('<SpeakerNotes id="n12" />', `<SpeakerNotes id="n12" />${instance}`);
+  assert.equal(expandSource(allocateIds(defined).source).library[0].name, "Headline");
+  const decorated = base.replace('<SpeakerNotes id="n12" />', `<SpeakerNotes id="n12" />${inline("Shape")}<Text>Exact content</Text>`);
+  assert.equal(expandSource(allocateIds(decorated).source).slides.length, 1);
 });
 
 test("skills affect actor instructions only, preserve legacy mode, and do not add tools or decision context", async () => {
@@ -77,12 +95,12 @@ test("skills affect actor instructions only, preserve legacy mode, and do not ad
     const specialist = enabled.generation.instructions("specialist");
     assert.deepEqual(enabled.generation.definitions("specialist"), []);
     assert.match(specialist, /private specialist/i);
-    assert.match(specialist, /Private artifact references are not automatically resolved canonical assets/);
+    assert.match(specialist, /parent handles canonical asset registration/);
     assert(specialist.length < 4000, "Specialists receive a compact private-task prompt, not the recipe book");
     assert.doesNotMatch(specialist, /Host rules|# Canonical authoring boundary|# Refinement|Follow the canonical JSX|read_source|edit_source|read_speaker_notes|presentation_readiness|search_icons|read_icon|## L\d\d|## S\d\d/);
     assert.match(specialist, /send_message/);
-    assert.match(specialist, /queued to the parent automatically/);
-    assert.match(specialist, /finish ends the activation; it does not deliver prose/);
+    assert.match(specialist, /queue their results to the designer/);
+    assert.match(specialist, /Call finish after delivery/);
     const frozen = enabled.generation.instructions("slow");
     snapshot.files[0].text = "Caller mutation";
     enabled.designContext("slow")!.instructions = "Returned value mutation";

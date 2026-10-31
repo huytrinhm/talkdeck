@@ -36,7 +36,7 @@ test('explicit change survives the compact review adapter and enforces one priva
   const request = requests[0];
   assert.deepEqual(JSON.parse(request.input[0].content[0].text).change, change);
   assert.match(request.instructions, /change\.slideId/);
-  assert.match(request.instructions, /not.*publish/);
+  assert.match(request.instructions, /user reviews the prepared preview before acceptance/);
   assert.equal(request.text.format.schema.properties.proposals.minItems, 1);
   assert.equal(request.text.format.schema.properties.proposals.maxItems, 1);
   proposals = []; await assert.rejects(review());

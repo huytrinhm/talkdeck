@@ -338,9 +338,10 @@ test("OpenAI Slow adapter sends current PNG/context and rejects invalid choices"
   const content = requests[0].input[0].content;
   assert.equal(content[1].image_url, "data:image/png;base64,cG5n");
   const context = JSON.parse(content[0].text);
-  assert.equal(context.current.source, input.current.source);
-  assert.equal(context.current.screenshot, undefined);
-  assert.equal(context.lastObservedFastWatermark, 1);
+  assert.equal(context.image_unavailable, undefined);
+  assert.equal(context.visible_source, undefined);
+  assert.equal(context.lastObservedFastWatermark, undefined);
+  assert.equal(context.brief, "Library talk");
   answer = "unexpected";
   await assert.rejects(
     decider.evaluate(input, new AbortController().signal),

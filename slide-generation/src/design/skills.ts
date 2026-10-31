@@ -130,7 +130,7 @@ Preserve exact substantive wording, qualifications, units and uncertainty. Do no
 
 Use the supplied style when available. Give the main idea a clear first reading, group related elements, align deliberately and leave breathing room. Keep text readable and avoid decorative clutter. Missing style or evidence remains missing; report material limitations instead of guessing. Inspect any supplied asset preview for text accuracy and readability without claiming checks you could not perform.
 
-Private artifact references are not automatically resolved canonical assets. Do not claim integration or presentation readiness. Send explanations or limitations to the supplied parent recipient with send_message. Successful save_artifact/image_generate results are queued to the parent automatically; do not resend their bytes. Call finish when the assigned work is complete. finish ends the activation; it does not deliver prose, so send needed explanations before it.`,
+Send explanations or limitations to the supplied parent recipient with send_message. Successful save_artifact/image_generate results queue to the parent automatically. The parent handles canonical asset registration, integration and presentation checks. Call finish after delivering the assigned work.`,
   };
   const sections = [read("common.md"), read("authoring.md"), read(`modes/${mode}.md`)];
   if (mode === "fast") {
@@ -155,6 +155,6 @@ Private artifact references are not automatically resolved canonical assets. Do 
     skill: "talkdeck-slide-design",
     version: snapshot.version,
     sha256: snapshot.sha256,
-    instructions: `# Talkdeck slide-design skill ${snapshot.version}\nThese preloaded recipes are advisory design guidance. User intent, factual fidelity, host role/publication rules and the canonical schema take precedence. Source/theme is the current design state. Do not look for filesystem or skill-retrieval tools.\n\n${sections.join("\n\n")}`,
+    instructions: `# Talkdeck slide-design skill ${snapshot.version}\nThese preloaded recipes are advisory design guidance. User intent, factual fidelity, host role/publication rules and the canonical schema take precedence. Source/theme is the current design state. Use the guidance below with the tools supplied in this request.\n\n${sections.join("\n\n")}`,
   };
 }

@@ -21,6 +21,8 @@ export const DECISIONS_TIER_POLICY = {
   reference: 'https://developers.openai.com/api/reference/resources/decisions/methods/create',
 } as const;
 export interface ProviderRecord {
+  /** Host routing metadata, never sent in the model request body. */
+  slideId?: string;
   id: string; inferenceId: string; role: ProviderRole; agent: string; provider: 'openai'; model: string;
   endpoint: ProviderEndpoint; requestBody: string; responseBody?: string; startedAtMs: number; finishedAtMs: number;
   providerRequestId?: string; inputTokens?: number; outputTokens?: number; status?: number;
@@ -94,7 +96,7 @@ function usageOf(value: any) {
   const input = value?.usage?.input_tokens, output = value?.usage?.output_tokens;
   return Number.isSafeInteger(input) && input >= 0 && Number.isSafeInteger(output) && output >= 0 ? { input, output } : undefined;
 }
-interface Context { id: string; role: ProviderRole; agent: string; attempt: number; transportError?: unknown }
+interface Context { id: string; role: ProviderRole; agent: string; slideId?: string; attempt: number; transportError?: unknown }
 type Recorder = Pick<RunRecorder, 'model'>;
 function makeModels(client: OpenAI, recorder: Recorder, configuration: ProviderConfiguration, replay?: ProviderCassette) {
   const budget = new ProviderBudget(configuration.limits), context = new AsyncLocalStorage<Context>();
@@ -124,6 +126,7 @@ function makeModels(client: OpenAI, recorder: Recorder, configuration: ProviderC
     const reservedOutputTokens = budget.limits.maxOutputTokensPerCall;
     current.attempt++;
     const record: ProviderRecord = { id: `provider-request-${++requestSequence}`, inferenceId: current.id, role: current.role, agent: current.agent,
+      ...(current.slideId ? { slideId: current.slideId } : {}),
       provider: 'openai', model: request.model, endpoint, requestBody, startedAtMs: performance.now(), finishedAtMs: 0,
       requestedTier, reservedInputTokens, reservedOutputTokens, dispatched: false, aborted: false, attempt: current.attempt, usageMissing: true };
     let reservation: Reservation | undefined, settled = false;
@@ -134,6 +137,7 @@ function makeModels(client: OpenAI, recorder: Recorder, configuration: ProviderC
         const index = replay.records.findIndex((entry, index) => !consumed.has(index) && entry.role === current.role && entry.agent === current.agent && entry.endpoint === endpoint);
         if (index < 0) throw new Error('Provider cassette exhausted; live fallback is forbidden');
         entry = replay.records[index];
+        if (current.role === 'decision' && entry.slideId !== current.slideId) throw new Error('Provider cassette routing mismatch');
         if (entry.requestBody !== requestBody) throw new Error('Provider cassette context mismatch; requests must match exactly');
         consumed.add(index);
       }
@@ -186,12 +190,12 @@ function makeModels(client: OpenAI, recorder: Recorder, configuration: ProviderC
   const delegate = new OpenAIModel(recordedClient, configuration.models, undefined, { maxOutputTokens: budget.limits.maxOutputTokensPerCall });
   const decision = new OpenAIDecider(recordedClient, configuration.models.decision);
   const slowDecision = new OpenAISlowDecider(recordedClient, configuration.models.decision);
-  const run = <T>(role: ProviderRole, agent: string, operation: () => Promise<T>, inferenceId?: string) => {
-    const current: Context = { id: inferenceId ?? `provider-${++sequence}`, role, agent, attempt: 0 };
+  const run = <T>(role: ProviderRole, agent: string, operation: () => Promise<T>, inferenceId?: string, slideId?: string) => {
+    const current: Context = { id: inferenceId ?? `provider-${++sequence}`, role, agent, slideId, attempt: 0 };
     return context.run(current, async () => { try { return await operation(); } catch (error) { throw current.transportError ?? error; } });
   };
   const model: Model = { infer: input => run(input.role, input.agent, () => delegate.infer(input), input.inferenceId) };
-  const decider: Decider = { evaluate: (input, signal) => run('decision', 'speech-gate', () => decision.evaluate(input, signal)) };
+  const decider: Decider = { evaluate: (input, signal) => run('decision', 'speech-gate', () => decision.evaluate(input, signal), undefined, input.speech.slideId) };
   const slowDecider: SlowDecider = { evaluate: (input, signal) => run('slow-decision', 'slow-gate', () => slowDecision.evaluate(input, signal)) };
   return { model, decider, slowDecider, budget,
     records: () => structuredClone(records),

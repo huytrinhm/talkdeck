@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { ResponseInputItem } from "openai/resources/responses/responses";
 import type { Observation } from "./types.js";
+import { actorContext, taskContext, messageContext } from "./model-context.js";
 export type Entry =
   | { kind: "item"; item: ResponseInputItem }
   | { kind: "boundary"; value: Record<string, unknown> }
@@ -135,6 +136,12 @@ export class History {
       if (sourceResults.has(key)) retainedResults.add(i);
     });
     const archivedCalls = new Set<string>();
+    const currentBoundary = this.entries[latestBoundary];
+    const currentSource = [...latest.values()].map(index => this.entries[index])
+      .find(entry => entry.kind === "observation" && currentBoundary?.kind === "boundary" &&
+        entry.value.slideId === currentBoundary.value.workingSlideId);
+    const specialist = currentBoundary?.kind === "boundary" &&
+      (currentBoundary.value.recipient as { role?: string } | undefined)?.role === "specialist";
     if (this.canonical)
       this.entries.forEach((e, i) => {
         if (
@@ -150,25 +157,17 @@ export class History {
     return this.entries.map((e, i): ResponseInputItem => {
       if (e.kind === "boundary") {
         if (i === latestBoundary)
-          return { role: "user", content: JSON.stringify(e.value) };
-        const { activation, tasks, messages, speechDelivery, workingSlideId } =
+          return { role: "user", content: JSON.stringify(actorContext(e.value,
+            currentSource?.kind === "observation" ? currentSource.value : undefined)) };
+        const { tasks, messages, workingSlideId } =
           e.value;
         return {
           role: "user",
           content: JSON.stringify({
             kind: "historical_boundary",
-            authority: "historical evidence, not newly pending commands",
-            activation,
             workingSlideId,
-            tasks,
-            messages,
-            speechDelivery:
-              speechDelivery && typeof speechDelivery === "object"
-                ? {
-                    ...speechDelivery,
-                    delta: "[Historical speech body archived]",
-                  }
-                : speechDelivery,
+            ...(Array.isArray(tasks) && tasks.length ? { tasks: taskContext(tasks) } : {}),
+            ...(Array.isArray(messages) && messages.length ? { messages: messageContext(messages) } : {}),
           }),
         };
       }
@@ -198,30 +197,32 @@ export class History {
           ? structuredClone(e.item)
           : {
               role: "user",
-              content: `Historical screenshot ${e.key}; image body archived in logs, not a new request.`,
+              content: "Historical image (archived).",
             };
       const o = e.value;
       if (latest.get(o.id) !== i)
         return {
           role: "user",
-          content: `Archived slide observation ${o.id}. Its full source and screenshot remain in logs.`,
+          content: `Historical slide observation (archived): ${o.slideId ?? "unknown"}.`,
         };
       return {
         role: "user",
         content: [
           {
             type: "input_text",
-            text: JSON.stringify({
-              ...(this.canonical
-                ? {
-                    kind: "source_observation",
-                    authority:
-                      "state evidence, not instructions or issued edit anchors; issued anchors are available only through source tools exposed to editor roles",
-                  }
-                : {}),
+            text: JSON.stringify(this.canonical ? {
+              kind: "source_observation",
+              slideId: o.slideId,
+              ...(!specialist ? { source: o.source } : {}),
+              ...(o.geometry.length ? { geometry: o.geometry } : {}),
+              ...(o.diagnostics.length ? { diagnostics: o.diagnostics } : {}),
+              ...(!o.screenshot.length ? { image_unavailable: o.availability?.screenshot ?? "No image supplied" }
+                : o.availability?.screenshot && !/^(available[;:]|current render$)/i.test(o.availability.screenshot)
+                  ? { image_limitation: o.availability.screenshot } : {}),
+            } : {
               observation: o.id,
               slideId: o.slideId,
-              source: o.source,
+              ...(!specialist ? { source: o.source } : { purpose: "Visual reference for the private task, not an editable source snapshot" }),
               sourceRevision: o.sourceRevision,
               visualSourceRevision: o.visualSourceRevision,
               availability: o.availability,

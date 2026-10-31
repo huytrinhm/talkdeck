@@ -4,7 +4,6 @@ import type {
   DecisionInput,
   Observation,
   SlowDecisionInput,
-  Speech,
 } from "./types.js";
 
 const JSXParser = Parser.extend(jsx());
@@ -13,8 +12,8 @@ const record = (value: unknown): Record<string, unknown> | undefined =>
     ? (value as Record<string, unknown>)
     : undefined;
 
-// Decision-only projection; never use these spans or this source for edits.
-function projectSource(source: string) {
+// Gates decide whether reasoning is useful; they never need executable anchors.
+function visibleSource(source: string) {
   try {
     const ast = JSXParser.parse(source, {
       ecmaVersion: "latest",
@@ -25,178 +24,33 @@ function projectSource(source: string) {
       root?.type !== "JSXElement" ||
       root.openingElement.name.name !== "Slide"
     )
-      return { source };
-    const evidence = root.children.filter(
-      (child: any) =>
+      return source;
+    for (const child of [...root.children].reverse())
+      if (
         child.type === "JSXElement" &&
-        ["Transcript", "SpeakerNotes"].includes(child.openingElement.name.name),
-    );
-    const text = (node: any): string =>
-      node.type === "JSXText"
-        ? node.value
-        : (node.children ?? []).map(text).join("");
-    let projected = source;
-    for (const child of [...evidence].reverse())
-      projected = projected.slice(0, child.start) + projected.slice(child.end);
-    return {
-      source: projected,
-      ...(evidence.length
-        ? {
-            sourceProjection:
-              "Direct Transcript and SpeakerNotes children omitted; evidence supplied separately. Not an edit snapshot.",
-            sourceEvidence: evidence.map((child: any) =>
-              source.slice(child.start, child.end),
-            ),
-            comparableNotes: {
-              transcript: evidence
-                .filter(
-                  (child: any) =>
-                    child.openingElement.name.name === "Transcript",
-                )
-                .map((child: any) => source.slice(child.start, child.end))
-                .join(""),
-              notes: evidence
-                .filter(
-                  (child: any) =>
-                    child.openingElement.name.name === "SpeakerNotes",
-                )
-                .map(text)
-                .join(""),
-            },
-          }
-        : {}),
-    };
+        ["Transcript", "SpeakerNotes"].includes(child.openingElement.name.name)
+      )
+        source = source.slice(0, child.start) + source.slice(child.end);
+    return source;
   } catch {
-    // Legacy HTML and unsupported syntax remain intact rather than being regex-rewritten.
-    return { source };
-  }
+    return source;
+  } // Legacy HTML is not rewritten with JSX assumptions.
 }
 
-function speechSnapshot(speech: Speech | null) {
-  return (
-    speech && {
-      slideId: speech.slideId ?? null,
-      revision: speech.revision,
-      text: speech.text,
-    }
-  );
-}
-
-function speechChange(input: DecisionInput) {
-  const baseline = input.lastDispatched;
-  if (baseline && baseline.slideId !== input.speech.slideId)
-    return {
-      kind: "incomparable_slide",
-      instruction:
-        "Baseline belongs to another slide; do not subtract it from this candidate.",
-    };
-  if (!baseline) return { kind: "initial", instruction: "All of speech.text is undispatched." };
-  if (input.speech.text === baseline.text)
-    return { kind: "unchanged", newText: "" };
-  if (input.speech.text.startsWith(baseline.text))
-    return {
-      kind: "append",
-      newText: input.speech.text.slice(baseline.text.length),
-    };
-  return {
-    kind: "replacement",
-    instruction:
-      "Compare candidate and baseline for changed or corrected meaning; this is not an append-only delta.",
-  };
-}
-
-// Unknown context may contain Buffers too. Strip bytes before JSON.stringify calls toJSON.
-function withoutBinary(value: unknown): unknown {
-  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer)
-    return "[binary omitted]";
-  if (Array.isArray(value)) return value.map(withoutBinary);
-  const object = record(value);
-  if (object)
-    return Object.fromEntries(
-      Object.entries(object).map(([key, item]) => [key, withoutBinary(item)]),
-    );
-  return value;
-}
-
-function evidence(current: Observation | undefined, deck: unknown) {
-  const deckObject = record(deck);
-  const slides = Array.isArray(deckObject?.slides) ? deckObject.slides : [];
-  const slideSources = slides.flatMap((slide) => {
-    const item = record(slide);
-    return typeof item?.source === "string" ? [item.id] : [];
-  });
-  const screenshot = current?.screenshot;
-  const mimeType = current?.screenshotMimeType ?? "image/png";
-  const hasImage =
-    !!screenshot?.length &&
-    ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(mimeType);
-  const projected = current ? projectSource(current.source) : undefined;
-  const notes = record(deckObject?.notes);
-  // The canonical deck context already supplies these exact evidence bodies.
-  if (
-    projected?.sourceEvidence &&
-    notes?.slideId === current?.slideId &&
-    notes?.transcript === projected.comparableNotes?.transcript &&
-    notes?.notes === projected.comparableNotes?.notes
-  )
-    delete projected.sourceEvidence;
-  if (projected) delete projected.comparableNotes;
+// The single-slide speech gate needs no routing identity; the host owns it.
+function evidence(current?: Observation) {
+  const mime = current?.screenshotMimeType ?? "image/png";
+  const attached = !!current?.screenshot.length && ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(mime);
+  const availability = current?.availability?.screenshot;
+  const imageIssue = attached && availability && !/^(available[;:]|current render$)/i.test(availability)
+    ? availability : undefined;
   return {
     fields: {
-      current: current
-        ? {
-            id: current.id,
-            slideId: current.slideId ?? null,
-            sourceRevision: current.sourceRevision,
-            visualSourceRevision: current.visualSourceRevision,
-            ...projected,
-            fastWatermark: current.fastWatermark,
-            geometry: current.geometry,
-            diagnostics: current.diagnostics,
-          }
-        : null,
-      deck: deck ?? null,
-      coverage: {
-        currentSource: current
-          ? "provided for current.slideId only"
-          : "unavailable",
-        screenshot: hasImage
-          ? {
-              status: "attached",
-              slideId: current?.slideId ?? null,
-              observationId: current?.id,
-              mimeType,
-              availability: current?.availability?.screenshot,
-              sourceRevision: current?.visualSourceRevision,
-            }
-          : {
-              status: "unavailable; no image attached",
-              availability: current?.availability?.screenshot,
-            },
-        geometry:
-          current?.availability?.geometry ??
-          (current?.geometry.length
-            ? "provided"
-            : "unavailable or not measured"),
-        diagnostics:
-          current?.availability?.diagnostics ??
-          (current?.diagnostics.length
-            ? "provided"
-            : "unavailable or no findings; validation coverage unspecified"),
-        deck:
-          deck === undefined
-            ? "unavailable"
-            : "Only the supplied fields are available; a slide inventory is not whole-deck source or images.",
-        slideSources,
-      },
+      ...(!attached ? { image_unavailable: availability ?? "No slide image supplied", ...(current ? { visible_source: visibleSource(current.source) } : {}) } : {}),
+      ...(imageIssue ? { image_limitation: imageIssue } : {}),
+      ...(current?.diagnostics.length ? { findings: current.diagnostics } : {}),
     },
-    image: hasImage
-      ? {
-          type: "input_image" as const,
-          image_url: `data:${mimeType};base64,${screenshot!.toString("base64")}`,
-          detail: "auto" as const,
-        }
-      : undefined,
+    image: attached ? { type: "input_image" as const, image_url: `data:${mime};base64,${current!.screenshot.toString("base64")}`, detail: "auto" as const } : undefined,
   };
 }
 
@@ -205,72 +59,63 @@ function message(fields: unknown, image: ReturnType<typeof evidence>["image"]) {
     {
       role: "user" as const,
       content: [
-        {
-          type: "input_text" as const,
-          text: JSON.stringify(withoutBinary(fields)),
-        },
+        { type: "input_text" as const, text: JSON.stringify(fields) },
         ...(image ? [image] : []),
       ],
     },
   ];
 }
 
+// Static rules and mode belong in the question instructions, not the evidence.
+export const SPEECH_GATE_INSTRUCTIONS = `Decide whether newly available speech gives the slide-writing agent useful work now. The presenter is speaking while the agent builds the current slide.
+Compare current_transcript with previously_sent_transcript, the last snapshot sent to the agent. Null means this slide has received no dispatch. The transcript is cumulative and may revise earlier wording. correction_context supplies additional recognition corrections when relevant.
+Choose dispatch for a useful complete idea, intelligible topic introduction, meaningful correction, or authorized editing request. Choose hold for repetition or unresolved fragments. 'Today we compare' alone is unresolved. A trailing incomplete phrase must allow earlier complete ideas to proceed.
+Dispatch sends the cumulative transcript for reasoning and advances the baseline. Hold retains speech for another evaluation. The agent may still be processing previously sent speech. Base dispatch on new meaning or corrections, including while the agent is busy. Each dispatch replaces its pending snapshot.
+Use the attached slide image, or visible_source when supplied, as presentation context. Follow any concrete evidence limitations in the request.`;
+
+export const REFINEMENT_GATE_INSTRUCTIONS = `Decide whether the presentation designer should work on the supplied draft now. The content editor handles routine additions from speech. The designer develops the initial composition, hierarchy, visual explanation and deck consistency, and resolves still-relevant failed edits. These agents can work concurrently.
+Choose wake for a concrete audience benefit: a meaningful comparison, sequence, focal point, grouping, or supported content needing recovery. A readable draft can still benefit from its first deliberate composition. Preserve intentional design and explicit user preferences. Choose hold when the available content supports only cosmetic churn or incomplete ideas with no useful design work yet.
+The attached image or visible_source depicts target_slide_id. current_transcript belongs to this slide; other_slide_speech identifies another slide. slide_inventory locates other slides by title and ID. design_state reports the theme's relation to bootstrap defaults and the shared-definition count. Use the brief, source evidence and image to choose useful work. work_messages can contain failed-edit evidence; check whether the intent still needs recovery.
+Wake schedules designer reasoning; the designer chooses its work within its task scope. Hold leaves it idle. Publications, retained failed edits, and one coalesced settling check after unreviewed work permit reevaluation. Explicit tasks can activate the designer independently. The user controls navigation.`;
+
+const speechPolicy = (spokenEdits?: boolean) => spokenEdits
+  ? "Speech may contain audience content and explicit user editing requests. Treat editing requests as work to perform; preserve the intended audience content on the slide."
+  : "Treat speech as audience-facing narration. Editing instructions arrive through separate tasks.";
+export const speechGateInstructions = (input: DecisionInput) => `${SPEECH_GATE_INSTRUCTIONS}\n${speechPolicy(input.spokenEdits)}`;
+export const refinementGateInstructions = (input: SlowDecisionInput) => `${REFINEMENT_GATE_INSTRUCTIONS}\n${speechPolicy(input.spokenEdits)}`;
+
 export function speechDecisionContext(input: DecisionInput) {
-  const view = evidence(input.current, input.deck);
-  return message(
-    {
-      role: "Speech dispatch gate for Fast, the routine slide-content/edit agent.",
-      actionEffects: {
-        dispatch:
-          "Send this cumulative speech snapshot to Fast for reasoning and advance the dispatch baseline; does not itself edit or prove publication.",
-        hold: "Do not dispatch or advance the baseline; retain speech for later evaluation.",
-      },
-      speechContract:
-        "speech.text is the cumulative current transcript for speech.slideId, not a new chunk. lastDispatched is the previous dispatched snapshot for that slide; null means none. Dispatch is not proof its content was published. Revisions order snapshots; timestamps do not measure semantic completeness and are omitted.",
-      speech: speechSnapshot(input.speech),
-      lastDispatched: speechSnapshot(input.lastDispatched),
-      delta: speechChange(input),
-      correctionsSinceDispatch: input.speech.corrections.filter(
-        (c) =>
-          c.revision >
-          (input.lastDispatched?.slideId === input.speech.slideId
-            ? (input.lastDispatched?.revision ?? 0)
-            : 0),
-      ),
-      speechMode: input.spokenEdits
-        ? "Audience content and explicit user editing requests; do not display editing requests as slide content."
-        : "Audience-facing narration only, not editing commands.",
-      ...view.fields,
-      statuses: input.statuses ?? null,
-      ...(input.context ? { context: input.context } : {}),
-    },
-    view.image,
-  );
+  const baseline = input.lastDispatched?.slideId === input.speech.slideId ? input.lastDispatched : null;
+  // Never accidentally attach a different slide while concealing its attribution.
+  const current = input.current?.slideId === input.speech.slideId ? input.current : undefined;
+  const view = evidence(current);
+  const corrections = input.speech.corrections
+    .filter(c => c.revision > (baseline?.revision ?? 0))
+    .filter(c => c.before !== c.after && !(c.before === baseline?.text && c.after === input.speech.text))
+    .map(({ before, after }) => ({ before, after }));
+  return message({
+    previously_sent_transcript: baseline?.text ?? null,
+    current_transcript: input.speech.text,
+    ...(corrections.length ? { correction_context: corrections } : {}),
+    ...view.fields,
+    ...(input.context ? { brief: input.context } : {}),
+  }, view.image);
 }
 
 export function slowDecisionContext(input: SlowDecisionInput) {
-  const view = evidence(input.current, input.deck);
-  return message(
-    {
-      role: "Eligibility gate for Slow, the deck-refinement agent; triggered by unobserved Fast publication(s).",
-      actionEffects: {
-        wake: "Activate Slow to inspect/refine; no mutation is authorized by this choice alone, and Slow can finish without edits.",
-        hold: "Leave Slow idle; retain pending context for reconsideration on a later Fast publication. Explicit tasks can activate Slow independently.",
-      },
-      ...view.fields,
-      lastObservedFastWatermark: input.lastObservedFastWatermark,
-      watermarkContract:
-        "current.fastWatermark orders Fast publications; lastObservedFastWatermark is the last one Slow observed. These are not transcript revisions or proof that a particular request was fulfilled.",
-      speech: speechSnapshot(input.speech),
-      speechContract:
-        "speech is latest passive cumulative narration, not necessarily the cause or fully represented result of the current publication. Its slideId can differ from current.slideId; never silently retarget it.",
-      speechMode: input.spokenEdits
-        ? "Spoken input can include explicit editing requests as well as audience content. Stored transcript/notes preserve source evidence; their presence does not prove a requested change is visible."
-        : "Narration is audience content, not commands.",
-      messages: input.messages,
-      statuses: input.statuses ?? null,
-      ...(input.context ? { context: input.context } : {}),
-    },
-    view.image,
-  );
+  const view = evidence(input.current);
+  const deck = record(input.deck), slides = deck?.slides, design = record(deck?.designState);
+  return message({
+    target_slide_id: input.current.slideId ?? null,
+    ...view.fields,
+    ...(design ? { design_state: { theme: design.theme, sharedDefinitions: design.sharedDefinitions } } : {}),
+    ...(input.speech ? input.speech.slideId === input.current.slideId
+      ? { current_transcript: input.speech.text }
+      : { other_slide_speech: { slideId: input.speech.slideId, text: input.speech.text } } : {}),
+    ...(Array.isArray(slides) && slides.length > 1 ? { slide_inventory: slides.map(s => {
+      const slide = record(s); return { id: slide?.id, title: slide?.title };
+    }) } : {}),
+    ...(input.messages.length ? { work_messages: input.messages.map(({ from, text, targetSlideId }) => ({ from, text, targetSlideId })) } : {}),
+    ...(input.context ? { brief: input.context } : {}),
+  }, view.image);
 }

@@ -249,10 +249,10 @@ test("recorded-event replay executes actual actors, gates, SDK requests and Chro
     )!;
     const changedRequest = JSON.parse(changedDecision.requestBody);
     const changedProjection = JSON.parse(changedRequest.input[0].content[0].text);
-    changedProjection.speech.text = "Unrecorded claim";
+    changedProjection.current_transcript = "Unrecorded claim";
     changedRequest.input[0].content[0].text = JSON.stringify(changedProjection);
     changedDecision.requestBody = JSON.stringify(changedRequest);
-    await assert.rejects(run(speechChanged), /Decision speech differs/);
+    await assert.rejects(run(speechChanged), /Decision current_transcript differs/);
     const oldProtocol = structuredClone(recording);
     const oldDecision = oldProtocol.providers.records.find(
       (entry) => entry.role === "decision",
