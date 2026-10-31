@@ -70,7 +70,7 @@ export class CanonicalMicrophone {
     if (!this.parts.length) { this.startMs = Math.max(0, this.captureStart + startSample / 24); if (!this.utteranceId) this.binding.slideId = this.options.binding().slideId; }
     this.parts.push(pcm); this.durationMs += duration;
     if (rms > 0.008) { this.voiced = true; this.silenceMs = 0; } else this.silenceMs += duration;
-    if (this.binding.practice ? this.durationMs >= 1000 : (this.voiced && this.silenceMs >= 500) || this.durationMs >= 12000) this.finalize();
+    if (this.binding.practice ? this.durationMs >= 1000 : (this.voiced && this.silenceMs >= 800) || this.durationMs >= 12000) this.finalize();
     else if (!this.binding.practice && this.voiced) this.finalize(false);
     if (!this.binding.practice && !this.voiced && this.durationMs >= 1000) { this.parts = this.parts.slice(-1); this.durationMs = duration; this.startMs = Math.max(0, this.captureStart + startSample / 24); }
   }

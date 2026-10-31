@@ -21,6 +21,8 @@ test('voice uploads start with the first frame and commit only at a pause or sli
     assert.equal(sent[2].pcm.byteLength, 0); assert.equal(sent[2].endMs, 500);
     assert.equal(sent[3].slideId, 'n20'); assert.notEqual(sent[3].utteranceId, sent[0].utteranceId);
     frame(18000, 0); frame(24000, 0); await mic.retry();
+    assert.equal(sent.at(-1)?.final, false, "brief pauses preserve recognition context");
+    frame(30000, 0); frame(36000, 0); await mic.retry();
     assert.equal(sent.at(-1)?.final, true);
     assert.equal(sent.filter(p => p.final).length, 2);
     assert.deepEqual(sent.map(p => p.sequence), sent.map((_, i) => i));

@@ -67,7 +67,7 @@ the deployed application as having passed every M0–M5 release gate.
 ## Responsive speech and controls
 
 Talk/Present upload 250 ms PCM transport frames with a stable `X-Utterance-Id`;
-`X-Audio-Final` commits only at a 500 ms pause, slide/capture boundary, or a 12 s
+`X-Audio-Final` commits only at a 800 ms pause, slide/capture boundary, or a 12 s
 utterance limit. Those limits no longer delay upload or recognition. Practice
 retains its 1 s recording chunks and end-pass review. Legacy whole-utterance
 uploads without the new headers remain supported. A final packet can be empty.
