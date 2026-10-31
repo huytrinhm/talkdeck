@@ -14,6 +14,7 @@ function run(candidate: boolean, live = false): RunEvidence {
   return { directory: candidate ? 'candidate' : 'baseline', manifest: {
     schemaVersion: 1, sourceSha: (candidate ? 'c' : 'a').repeat(40), dirty: false, nodeVersion: process.version, platform: process.platform,
     startedAt: new Date().toISOString(), lockSha256: 'b'.repeat(64), promptSha256: 'c'.repeat(64), fixtureSha256: 'd'.repeat(64), dependencies: [], mode: live ? 'live' : 'actor-replay',
+    harness: { sourceSha: 'f'.repeat(40), dirty: false, runnerSha256: '1'.repeat(64), evaluatorSha256: '2'.repeat(64), observerSha256: '3'.repeat(64) },
     model: { provider: 'recorded-test', name: 'synthetic', maxCalls: 2, maxTokens: 100 },
   }, metrics: { schemaVersion: 1, fixtureId: 'edit-heavy', repetition: 1, pace: 1, provenance: live ? 'real-system' : 'synthetic-test',
     observations: [{ expectationId: 'e1', utteranceId: 'u1', effect: 'visible', scheduledEndMs: 1, actualUtteranceEndMs: 2, deadlineMs: 100,
@@ -87,4 +88,23 @@ test('complete fifteen-run measurement set still requires explicit higher-priori
   const result = compareRuns(before, after, frozen);
   assert.equal(result.measurementSetComplete, true); assert.equal(result.qualificationComplete, false);
   assert.ok(result.requiredReviews.length > 0);
+});
+
+
+test('comparison requires common evaluator and observer, independently of harness checkout or runner bytes', () => {
+  const baseline = run(false, true), candidate = run(true, true);
+  candidate.manifest.harness = { ...candidate.manifest.harness!, sourceSha: 'e'.repeat(40), runnerSha256: '4'.repeat(64), dirty: true };
+  assert.equal(compareRuns([baseline], [candidate], frozen).pairs[0].p50ChangeMs, -10);
+  for (const field of ['evaluatorSha256', 'observerSha256'] as const) {
+    const altered = structuredClone(candidate); altered.manifest.harness![field] = '5'.repeat(64);
+    assert.throws(() => compareRuns([baseline], [altered], frozen), /common conditions/);
+  }
+  const absentObserver = structuredClone(candidate); delete absentObserver.manifest.harness!.observerSha256;
+  assert.throws(() => compareRuns([baseline], [absentObserver], frozen), /common conditions/);
+  delete baseline.manifest.harness; delete candidate.manifest.harness;
+  const historical = compareRuns([baseline], [candidate], frozen);
+  assert.equal(historical.pairs[0].instrumentationVerified, false);
+  assert.equal(historical.pairs[0].p50ChangeMs, null);
+  assert.equal(historical.pairs[0].missingOrIncomplete, true);
+  assert.equal(historical.measurementSetComplete, false);
 });
