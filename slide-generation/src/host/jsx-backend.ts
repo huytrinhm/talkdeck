@@ -228,6 +228,25 @@ export class JsxBackend implements GenerationBackend {
       await this.navigate(created.id); return this.get(created.id);
     });
   }
+  /** Explicit user deletion; canonical surgery retains notes and raw evidence in Archive. */
+  async deleteSlide(id: string) {
+    return this.serialize(async () => {
+      if (this.closed) throw new Error('Backend closed');
+      this.get(id);
+      if (this.list().length <= 1) throw new SourceError('last_slide', 'Keep at least one slide in the deck');
+      const before = this.snapshot();
+      const target = this.runtime.engine.readSource(id).lines.map(line => line.text).join('\n');
+      const read = this.runtime.engine.readSource('deck');
+      const source = read.lines.map(line => line.text).join('\n');
+      const result = await this.runtime.engine.edit({ edits: [{ snapshotId: read.snapshotId, nodeId: read.nodeId,
+        op: 'replace', startLine: 1, hashes: read.lines.map(line => line.hash), text: source.replace(target, '') }] },
+        undefined, () => { if (this.closed) throw new Error('Backend closed'); });
+      if (!result.accepted) throw new SourceError('deletion_refused', JSON.stringify(result.findings));
+      this.committed(before, 'slow');
+      await this.navigate(this.selectedId);
+      return { deletedId: id, selectedId: this.selectedId };
+    });
+  }
   async next() { const slides = this.list(), index = slides.findIndex(s => s.id === this.selectedId); return index + 1 < slides.length ? this.navigate(slides[index + 1].id) : this.createSlide(); }
   setPaused(value: boolean) { if (value && !this.paused) this.pauseEpoch++; this.paused = value; }
   historyStatus() { return { undoDepth: this.undoSources.length, redoDepth: this.redoSources.length, canUndo: !!this.undoSources.length, canRedo: !!this.redoSources.length }; }
