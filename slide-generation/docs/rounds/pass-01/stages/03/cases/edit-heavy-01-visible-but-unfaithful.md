@@ -63,16 +63,16 @@ Next verification should separately test canonical visual context for Slow decis
 - [Slow gate after mispatch][gate], [explicit accepted Slow handoff][handoff]
 - [Duplicate Draft frame][duplicate], [final checklist][checklist], [final Owners][owners], [complete PNG/video gallery][gallery]
 
-[report]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
-[metrics]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/metrics.json
-[failure]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/failure.json
-[source]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/deck.jsx
-[read]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/393f10603fbaf8275014403859a4c61caa045473e3d9c011643789c588a61868.json
-[request]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/model/847e85c4e2fed2d1777c479e942e841d705f92156bb0fd8a0b205ae9dd2b1ab2.json
-[edit]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/30bce85d20723f3f8defeb6793c34af5db225b17122d3536a9764fe4c85d0445.json
-[gate]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/model/00cb092df08d40017b6f272538d9dab588abe411eff273f7a60eeb14ae850ef4.json
-[handoff]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/c1fde58538eb8dce7a70fcbcfd57377e046985589ac885cc3b136f230ec4b601.json
-[duplicate]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer/frame-000014.png
-[checklist]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n10.jpg
-[owners]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n28.jpg
-[gallery]: ../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html
+[report]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
+[metrics]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/metrics.json
+[failure]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/failure.json
+[source]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/deck.jsx
+[read]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/393f10603fbaf8275014403859a4c61caa045473e3d9c011643789c588a61868.json
+[request]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/model/847e85c4e2fed2d1777c479e942e841d705f92156bb0fd8a0b205ae9dd2b1ab2.json
+[edit]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/30bce85d20723f3f8defeb6793c34af5db225b17122d3536a9764fe4c85d0445.json
+[gate]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/model/00cb092df08d40017b6f272538d9dab588abe411eff273f7a60eeb14ae850ef4.json
+[handoff]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/c1fde58538eb8dce7a70fcbcfd57377e046985589ac885cc3b136f230ec4b601.json
+[duplicate]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer/frame-000014.png
+[checklist]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n10.jpg
+[owners]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n28.jpg
+[gallery]: ../../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html

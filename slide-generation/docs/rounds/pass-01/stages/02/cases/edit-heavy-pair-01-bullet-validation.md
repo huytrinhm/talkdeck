@@ -58,14 +58,14 @@ Fix marker metadata in isolation and test a real numbered/disc list through rend
 - [Exact reconstruction and provenance][reconstruction], [full browser reports][browser], [missing-role DOM leaves][dom]
 - [Candidate final screenshot][image], [candidate original viewer timeline/video][gallery]
 
-[batch]: ../../../../.artifacts/runs/headless-round-02/batch.json
-[baseline]: ../../../../.artifacts/runs/headless-round-02/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
-[candidate]: ../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
-[failure]: ../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/failure.json
-[tool]: ../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/1bb35389148998a5614553957ad900961a55a38c78cb2ecde1cc1d7932eaa5b6.json
-[handoff]: ../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/dd3942385e589f8e7427d99deeb566b8379c1ae1ee5354ed0a9de21f3153436c.json
-[reconstruction]: ../../../../.artifacts/review/round02-validation-refusal/reconstruction.json
-[browser]: ../../../../.artifacts/review/round02-validation-refusal/browser-report.json
-[dom]: ../../../../.artifacts/review/round02-validation-refusal/missing-role-dom.json
-[image]: ../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n10.jpg
-[gallery]: ../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html
+[batch]: ../../../../../../.artifacts/runs/headless-round-02/batch.json
+[baseline]: ../../../../../../.artifacts/runs/headless-round-02/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
+[candidate]: ../../../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
+[failure]: ../../../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/failure.json
+[tool]: ../../../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/1bb35389148998a5614553957ad900961a55a38c78cb2ecde1cc1d7932eaa5b6.json
+[handoff]: ../../../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/tools/dd3942385e589f8e7427d99deeb566b8379c1ae1ee5354ed0a9de21f3153436c.json
+[reconstruction]: ../../../../../../.artifacts/review/round02-validation-refusal/reconstruction.json
+[browser]: ../../../../../../.artifacts/review/round02-validation-refusal/browser-report.json
+[dom]: ../../../../../../.artifacts/review/round02-validation-refusal/missing-role-dom.json
+[image]: ../../../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n10.jpg
+[gallery]: ../../../../../../.artifacts/runs/headless-round-02/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html

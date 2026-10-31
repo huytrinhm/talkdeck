@@ -1,4 +1,7 @@
-# Round 03: visible generation after the marker fix
+# Pass 1, stage 3 — visible generation after the marker fix
+
+Historical stage evidence within the [consolidated Pass 1](../../README.md). Original artifact names and trial outcomes are retained.
+
 
 This is one new live edit-heavy run of frozen generator `734d84a7be9b4924e0c4ee0213d598cc2564826a`, after repairing numbered bullet typography metadata. It is distinct from the offline reconstruction/render of round 02. Real checked edits now reach the viewer, but this run remains unfaithful and terminates with host-error. The [individual case](cases/edit-heavy-01-visible-but-unfaithful.md) traces the accepted wrong edit, failed recovery, Slow context omission and unresolved target.
 
@@ -8,7 +11,7 @@ The user requested that later passes show screenshots of the **entire deck conca
 
 ![Entire round 03 final deck: checklist followed by Owners](screenshots/deck-contact-sheet.png)
 
-This 1968×612 PNG combines both original 1920×1080 JPEGs at 960×540 each, ordered `n10`, `n28`. It was generated offline in a new review directory after the run, using zero model calls. The [status/provenance sidecar](../../../.artifacts/review/round03-deck-contact-sheet/contact-sheet-status.json) records canonical source SHA, both image hashes, count, order and coordinates. The original run images, report and scores were not rewritten. The sheet shows final captures; it cannot substitute for the [original viewer timeline and video](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html).
+This 1968×612 PNG combines both original 1920×1080 JPEGs at 960×540 each, ordered `n10`, `n28`. It was generated offline in a new review directory after the run, using zero model calls. The [status/provenance sidecar](../../../../../.artifacts/review/round03-deck-contact-sheet/contact-sheet-status.json) records canonical source SHA, both image hashes, count, order and coordinates. The original run images, report and scores were not rewritten. The sheet shows final captures; it cannot substitute for the [original viewer timeline and video](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html).
 
 The visible final checklist is wrong: Launch instead of Release, Publish and the requested caption missing, Verify still highlighted, items in the wrong order. Owners has the correct latest pairings: Verify — Ada, Publish — Jo, Monitor — Samira. Readable typography and no obvious overlap in these final screenshots do not compensate for those fidelity failures. Owners still follows checklist despite the reorder request.
 
@@ -65,8 +68,8 @@ These are hypotheses for a combined candidate, not isolated causal results or ne
 
 ## Immutable evidence
 
-- [Run report](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md)
-- [Driver record](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/driver-result.json)
-- [Provider accounting](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/provider-statistics.json)
-- [Metrics](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/metrics.json), [audit](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/audit.json), [failure](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/failure.json)
-- [Final canonical source and archive](../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/deck.jsx)
+- [Run report](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md)
+- [Driver record](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/driver-result.json)
+- [Provider accounting](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/provider-statistics.json)
+- [Metrics](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/metrics.json), [audit](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/audit.json), [failure](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/failure.json)
+- [Final canonical source and archive](../../../../../.artifacts/runs/headless-round-03/candidate/edit-heavy/1/execution/slide-generation/.artifacts/run/final/deck.jsx)

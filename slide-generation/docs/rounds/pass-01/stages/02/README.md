@@ -1,4 +1,7 @@
-# Iteration 2 — frozen A/B exposes a renderer failure
+# Pass 1, stage 2 — frozen A/B exposes a renderer failure
+
+Historical stage evidence within the [consolidated Pass 1](../../README.md). Original artifact names and trial outcomes are retained.
+
 
 Baseline `5f970fb` and candidate `16a1671` ran the unchanged `edit-heavy` talk serially at speed 1, one fresh session each.
 Both source exports are immutable and verified. Current measurement instrumentation was identical: runner

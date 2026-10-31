@@ -102,7 +102,7 @@ Status: open | accepted | superseded
 Keep unanswered choices open. If a later user response changes a decision, preserve the older row as superseded and link
 the replacement. A prior answer is persistent authorization; do not reopen it merely because another agent takes over.
 
-## O01 evidence and pending question — 2026-10-31
+## Historical O01 question — subsequently resolved by D56
 
 The real Chromium viewer demonstration in [O01-stat-counting](rounds/implementation/cases/O01-stat-counting.md)
 showed `$12.5 million` and `$12.6 million` between source `$12.4 million` and corrected target `$12.7 million`.

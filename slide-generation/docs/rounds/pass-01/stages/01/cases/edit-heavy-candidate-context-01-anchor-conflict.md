@@ -60,15 +60,15 @@ Classification: hash conflict, model recovery, routing/source integration. Sever
 - [Exact edit request/response][request], [tool call and refusal][tool], [intervening third-input source state][state]
 - [Unresolved utterance's durable receipt][pending], [final source][source], [final blank n10][image], [viewer gallery/video][gallery]
 
-[report]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/review.md
-[driver]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/driver-result.json
-[failure]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/failure.json
-[provider]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/provider-statistics.json
-[audit]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/audit.json
-[request]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/model/cedcc91fe619e16af61ef58c717177cd06d3d24720114aa702d2ac04a42e3670.json
-[tool]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/tools/1aac43a28c0ed3851f139afcafb544abd8ec2957b050aed7ac18fcb830675e5c.json
-[state]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/states/bc99a6efd76692c528c35769219568b997ea906deb8f17132c23a29a7f149c4d.json
-[pending]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/pending-input/000021-cfbd4ef8aba056e4d2672975b9da20e62540359be7992f4982048f7ba96a75b1.json
-[source]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/final/deck.jsx
-[image]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/final/slide-n10.jpg
-[gallery]: ../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/viewer-gallery.html
+[report]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/review.md
+[driver]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/driver-result.json
+[failure]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/failure.json
+[provider]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/provider-statistics.json
+[audit]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/audit.json
+[request]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/model/cedcc91fe619e16af61ef58c717177cd06d3d24720114aa702d2ac04a42e3670.json
+[tool]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/tools/1aac43a28c0ed3851f139afcafb544abd8ec2957b050aed7ac18fcb830675e5c.json
+[state]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/states/bc99a6efd76692c528c35769219568b997ea906deb8f17132c23a29a7f149c4d.json
+[pending]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/pending-input/000021-cfbd4ef8aba056e4d2672975b9da20e62540359be7992f4982048f7ba96a75b1.json
+[source]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/final/deck.jsx
+[image]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/final/slide-n10.jpg
+[gallery]: ../../../../../../.artifacts/runs/headless-round-01/candidate-context/edit-heavy/1/viewer-gallery.html

@@ -1,3 +1,5 @@
+> Historical checkpoint. Superseded by [current continuation](../../continuation/README.md). Retained for provenance; do not use its task status as current.
+
 # Renderer agent checkpoint — interrupted at user request
 
 Stopped implementation when root relayed the user's request to restart with more permissions. No agent commits.

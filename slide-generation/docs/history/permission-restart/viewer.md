@@ -1,3 +1,5 @@
+> Historical checkpoint. Superseded by [current continuation](../../continuation/README.md). Retained for provenance; do not use its task status as current.
+
 # Viewer implementation checkpoint
 
 Stopped at the user's requested permission-environment restart, before integration or browser verification. No viewer

@@ -1,6 +1,6 @@
 # Slide generation implementation and handoff plan
 
-Status: implementation plan, not a completion report. Prepared 2026-10-31 for the next implementing agent.
+Status: milestone and acceptance reference, updated 2026-10-31. Current completion limits are summarized below.
 
 ## Start here
 
@@ -9,7 +9,7 @@ Read, in order:
 1. `AGENTS.md` — branch, directory, commit, and push rules.
 2. `SPEC.md` — the agreed target behavior.
 3. `docs/DECISIONS.md` — settled product decisions and the latest fidelity/optimization priorities.
-4. `TECHNICAL.md` — what the scaffold actually does and does not do.
+4. `TECHNICAL.md` — implemented behavior and remaining boundaries.
 5. This plan — implementation milestones and their acceptance tests.
 6. `docs/IMPROVEMENT_LOOP.md` — the required seven-step measurement and improvement process.
 7. `fixtures/talks/README.md` and the five JSON fixtures — timed talks, expectations, and replay rules.
@@ -22,56 +22,29 @@ part of merely reading this handoff; when executing the live-evaluation mileston
 selected model availability, and the run budget, then record actual requests/results. Never claim a replay was a new
 live-model run. No credentials belong in documents, manifests, or browser messages.
 
-## Work boundaries and existing state
+## Work boundaries and current status
 
-All new implementation, tests, fixtures, documentation, dependencies, logs, and benchmark artifacts belong to
-`talkdeck/slide-generation/`. Work directly on `master`. Make focused additional commits. Before **every push** fetch and
-rebase onto `origin/master`, rerun relevant checks, then push; never force-push. Do not modify adjacent packages to make
-integration convenient. Coordinate a missing integration hook with its owner and record the blocker. You may continue
-independent subsystem implementation while waiting. No branch/worktree is needed for frozen baselines: use immutable
-exports into `.artifacts/baselines/` as described in the improvement-loop document.
+All work belongs to `slide-generation/`, directly on master. The user authorized consolidating the former orchestration
+package here; actors now live in `src/orchestration/`. Keep frontend work separate. Fetch/rebase and run required checks
+before every push; additional commits only. Freeze immutable exports for comparisons, without branches or worktrees.
 
-At handoff the foundation consists of three commits (inspect current Git history; other work may have landed):
+The original scaffold has been replaced by a working source-to-render-to-checked-commit-to-viewer path and real actor
+integration. The milestones below retain their acceptance requirements; their original implementation order is not a
+claim that all qualification gates have passed.
 
-- `1c51378`: specification, technical documentation, agent instructions, and local implementation rules.
-- `38738a5`: dependencies, parser, seed deck, hashline staging, and foundation tests.
-- `733004e`: Hono routes, engine/validator refusal boundaries, and service tests.
+| Milestones | Current evidence and remaining gate |
+|---|---|
+| P0–P8 | Core parser, source/evidence, renderer, mandatory checks, durable edits and viewer implemented with actual browser tests |
+| P9 | Actual scheduler/backend/headless viewer connected; real-model visible edits recorded; fidelity defects remain |
+| P10 | Paced recording, full-deck images, audits, freezes and transaction replay implemented; full-talk actor replay and audience/build coverage remain partial |
+| P11 | Diagnostic edit-heavy stages consolidated into Pass 1; broader live corpus in progress; repeated five-talk qualification unfinished |
+| P12 | Evidence-driven fixes underway; quality not stable, so separate refactoring passes have not begun |
 
-Those hashes identify provenance, not the correct baseline for future comparisons. Always record the current actual SHA.
-An earlier environment could not resolve GitHub during fetch; do not assume that condition still exists, or that any
-commit remains unpushed. Inspect local status and fetch. The former workspace SPEC.md was removed and is superseded by
-this directory's SPEC.md.
-
-Existing commands: `npm ci`, `npm run check`, `npm test`, `npm start` from this directory. Node >=22.12.0. Initial
-verification passed TypeScript and 47 individual tests in four files; rerun rather than trusting that historical count.
-The test command uses `node --import tsx --test` to avoid the tsx CLI's extra IPC listener in restricted environments.
-The local Hono development server binds `127.0.0.1:8875` (SLIDE_GENERATION_PORT overrides it).
-
-Current API: GET /health, GET /source/:nodeId, GET /slides/:slideId/speaker-notes, GET /presentation-readiness,
-POST /edits. A bootstrap slide has ID n10, but consumers must discover IDs instead of relying on that example.
-All mutations intentionally refuse. Even an injected passing validator reaches `not_implemented`: versioned commit,
-ID allocation, normalization, archival, durable storage, expansion, rendering, assets/fonts, and browser checks are
-unfinished. No successful-render or live-model claims can be made for this package yet.
-
-### Existing integration seams to inspect
-
-| Existing code | Reusable concept | Mismatch / required work |
-|---|---|---|
-| ../orchestration/interfaces.ts | Exported runtime, model, renderer, log interfaces | They currently describe single-slide HTML, not canonical JSX decks |
-| ../orchestration/src/runtime.ts | Immutable inference snapshots, actor queues, Fast/Slow lifecycle | Constructs Publisher internally; RuntimeOptions injects model/decider/renderer but not the JSX transaction engine |
-| ../orchestration/src/publisher.ts, merge.ts | Serialized publication and conservative conflict handling | Exact old/new HTML edits and three-way merge must not become a second agent mutation API |
-| ../orchestration/src/history.ts, log.ts | Stored model/tool context and observation history | New explicit-screenshot policy; distinguish evaluator recordings from agent feedback |
-| ../orchestration/src/transcription.ts | Audio/transcript accumulation and corrections | Need stable utterance/slide attribution and source-preserving ingestion |
-| ../orchestration/src/fixture.ts | Real-model runner and paced input | One talk/slide; needs five scripts, absolute deadlines, multi-slide evidence, new source tool contract |
-| ../orchestration/src/replay-publications.ts | Re-executes recorded real edits without live inference | Old edit format; cannot directly replay hashline reads/snapshot handles |
-| ../orchestration/src/renderer.ts | Chromium lifecycle and observation concepts | Old default is 1280x720; advisory visual checks; not the new mandatory 1920x1080 validation |
-| ../frontend/docs/integration.md | Explicit frontend adapter ownership | Contracts remain unconfirmed; current synchronous reference interpreter is not a live job service |
-
-A renderer-only injection does NOT integrate the new edit protocol. Do not wrap JSX in arbitrary old HTML edits, weaken
-validation, or fork an unobserved imitation of the actor scheduler and label it the real product. Define the necessary
-host port here, provide a contract test/example, and have the owning package wire it. Record source SHAs of all packages
-in integrated measurements. Model defaults mentioned in the neighboring README are observations, not requirements of
-this plan; record and verify the actual configured models at execution time.
+See [technical reference](TECHNICAL.md), [Pass 1](docs/rounds/pass-01/README.md), and
+[current continuation](docs/continuation/README.md) for evidence and exact active artifacts. Historical foundation hashes,
+permission failures and unconditional refusal boundaries are preserved in Git/history, not current API descriptions.
+Commands: `npm ci`, `npm run check`, `npm test`, `npm start`; Node >=22.12.0. Never use passing foundation or unit tests
+as a substitute for complete visible functionality.
 
 ## Implementation discipline
 
@@ -292,8 +265,8 @@ Dependencies: P7/P8; coordinate host hooks identified in P0.
    user content or original commands. Version deferred background improvements against all real dependencies.
 5. Connect the packaged viewer to actual publication events and acknowledgments. Record every user-visible version and
    rejection/loading/error state, not only final HTML. Wire explicit screenshot requests into model observations.
-6. Keep the existing dispatch/Decisions implementation outside this subsystem unless its owner changes it. The user
-   removed the proposed decision-API layout fallback; layout choices are editing-agent choices, not a new service.
+6. Use the consolidated real dispatch/Decisions implementation under src/orchestration/ (user authorization D58).
+   Preserve the removal of decision-API layout fallback; layout choices remain editing-agent choices.
 
 Tests: host contract tests plus a local integrated browser run with controlled recorded responses; real tool schemas;
 slow model with new utterances; stale background result; explicit edits preserve unrelated content; reconnect/snapshot

@@ -1,3 +1,5 @@
+> Historical checkpoint. Superseded by [current continuation](../../continuation/README.md). Retained for provenance; do not use its task status as current.
+
 # Browser agent checkpoint — 2026-10-31
 
 Stopped at the user's request for a restart with more permissions. No browser implementation files or tests have been

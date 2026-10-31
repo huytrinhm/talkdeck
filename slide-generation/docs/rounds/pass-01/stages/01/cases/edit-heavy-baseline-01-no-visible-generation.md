@@ -59,16 +59,16 @@ Do not adjust fixture assertions, exclude missing content, or promote readiness 
 - [Exact scheduler trace][scheduler], [provider accounting][provider], [route table][routes], [audit][audit]
 - [Final JSX][jsx], [final readiness][readiness], [final blank slide n10][image], [original viewer gallery/video][gallery]
 
-[review]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
-[driver]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/driver-result.json
-[request4]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/model/031a43d7ada96b78aa4859747e26bd801cc9c463d1b265aede0a8a3d2fa86594.json
-[request7]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/model/ed055138729758edfd3e8564c2dc72b3b8e6608111c2a899b3970e12dfca8403.json
-[request25]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/model/c83dde5dc3e35c56de1d65ec05d0a411b23acc2bd9cab06139366d1d2825b2d5.json
-[scheduler]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/scheduler.jsonl
-[provider]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/provider-statistics.json
-[routes]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/routes.json
-[audit]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/audit.json
-[jsx]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/final/deck.jsx
-[readiness]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/final/readiness.json
-[image]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n10.jpg
-[gallery]: ../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html
+[review]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/review.md
+[driver]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/driver-result.json
+[request4]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/model/031a43d7ada96b78aa4859747e26bd801cc9c463d1b265aede0a8a3d2fa86594.json
+[request7]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/model/ed055138729758edfd3e8564c2dc72b3b8e6608111c2a899b3970e12dfca8403.json
+[request25]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/model/c83dde5dc3e35c56de1d65ec05d0a411b23acc2bd9cab06139366d1d2825b2d5.json
+[scheduler]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/scheduler.jsonl
+[provider]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/provider-statistics.json
+[routes]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/routes.json
+[audit]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/audit.json
+[jsx]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/final/deck.jsx
+[readiness]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/final/readiness.json
+[image]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/final/slide-n10.jpg
+[gallery]: ../../../../../../.artifacts/runs/headless-round-01/baseline/edit-heavy/1/execution/slide-generation/.artifacts/run/viewer-gallery.html

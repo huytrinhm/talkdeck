@@ -1,4 +1,7 @@
-# Iteration 1 — edit-heavy failure, diagnosis and revision
+# Pass 1, stage 1 — edit-heavy failure, diagnosis and revision
+
+Historical stage evidence within the [consolidated Pass 1](../../README.md). Original artifact names and trial outcomes are retained.
+
 
 Date: 2026-10-31. Priorities: faithfulness first, then visible responsiveness. This exploratory iteration used the actual
 62.438-second, 22-utterance `edit-heavy` talk at speed 1. Each run retained failures, full requests, source states, PNGs
@@ -55,7 +58,7 @@ must not be silently compared with different scoring. No latency improvement is 
 
 Individual evidence: [baseline case](cases/edit-heavy-baseline-01-no-visible-generation.md),
 [candidate anchor case](cases/edit-heavy-candidate-context-01-anchor-conflict.md),
-[absence audit proposal](absence-instrumentation-proposal.md), [deck request invariant](../deck-request-routing.md).
+[absence audit proposal](absence-instrumentation-proposal.md), [deck request invariant](../../../deck-request-routing.md).
 
 Decision: **revise; do not promote a quality or latency claim.** No new product decision is required for these reproduced
 implementation/instrumentation defects. Source preservation, exact hash validation, bounded counting and provisional
