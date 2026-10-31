@@ -211,7 +211,11 @@ export class SlideEngine {
       candidate = advanceVersions(current, candidate, affectedSlides);
       parseAndValidate(candidate, this.services?.schema);
       const baseline = await this.check(current), report = await this.check(candidate);
-      if (!baseline.complete || !report.complete) throw new SourceError('validation_unavailable', 'All required validation stages must complete before an edit can commit');
+      if (!baseline.complete || !report.complete) throw new SourceError('validation_unavailable',
+        'All required validation stages must complete before an edit can commit: ' + JSON.stringify({
+          baseline: { complete: baseline.complete, findings: baseline.findings },
+          candidate: { complete: report.complete, findings: report.findings },
+        }));
       const errors = introducedErrors(baseline.findings, report.findings);
       if (errors.length) return { accepted: false as const, findings: errors, revision: lineHash(current) };
       if (!this.services) throw new SourceError('not_implemented', 'Validated candidate; normalized versioned commit is not wired yet');

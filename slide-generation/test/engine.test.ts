@@ -32,6 +32,23 @@ test('browser crash leaves source unchanged and releases transaction queue', asy
   await assert.rejects(engine.edit(change(engine, 'n2', '<Brief id="n2">B</Brief>')), /browser crashed/);
   assert.deepEqual(engine.readDocument(), before);
 });
+test('incomplete validation preserves the actual failed stage findings in tool diagnostics', async () => {
+  let checks = 0;
+  const validation: ValidationPipeline = { async check() {
+    return ++checks === 1 ? { complete: true, findings: [], pendingNodeIds: [] } : {
+      complete: false, pendingNodeIds: [], findings: [{ check: 'validation-unavailable', slideId: 'n10', nodeId: 'n10',
+        severity: 'error', magnitude: 1, message: 'Native text is missing typography role: numbered marker' }],
+    };
+  } };
+  const engine = new SlideEngine(createDeck(), validation), before = engine.readDocument();
+  await assert.rejects(engine.edit(change(engine, 'n2', '<Brief id="n2">Changed</Brief>')), error => {
+    assert.match(String(error), /"baseline":\{"complete":true/);
+    assert.match(String(error), /"candidate":\{"complete":false/);
+    assert.match(String(error), /Native text is missing typography role: numbered marker/);
+    return true;
+  });
+  assert.deepEqual(engine.readDocument(), before);
+});
 test('even a successful test validator cannot enable unfinished commit logic', async () => {
   const engine = new SlideEngine(createDeck(), { async check() { return { complete: true, findings: [], pendingNodeIds: [] }; } });
   const before = engine.readDocument();
