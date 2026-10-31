@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "NodeNext", "moduleResolution": "NodeNext", "jsx": "react-jsx", "jsxImportSource": "hono/jsx",
+    "strict": true, "skipLibCheck": true, "noEmit": true,
+    "esModuleInterop": true, "types": ["node"]
+  },
+  "include": ["server", "shared", "tests/*.test.ts", "../slide-generation/src/render/apca-w3.d.ts"]
+}
