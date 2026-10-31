@@ -33,7 +33,7 @@ const token = z.object({ ...base, name: str.regex(/^--(color|font|text|radius|sh
 const scaleMap = (keys: readonly string[]) => z.object(Object.fromEntries(keys.map(k => [k, z.number().finite().positive().optional()]))).strict();
 const props: Record<string, z.ZodType> = {
   Deck: z.object({ ...base, version: version.optional(), nextId: version.optional() }).strict(),
-  Brief: z.object(base).strict(), Theme: z.object(base).strict(), Token: token,
+  Brief: z.object(base).strict(), Theme: z.object({ ...base, font: assetSchema.optional() }).strict(), Token: token,
   Scale: z.object({ ...base, text: scaleMap(textSteps).optional(), space: scaleMap(spaceSteps).optional() }).strict(),
   Frame: z.object({ ...base, labels: z.object({ left: str.max(48).optional(), right: str.max(48).optional(), footer: str.max(64).optional() }).strict().optional(), rule: z.boolean().optional(), page: z.boolean().optional() }).strict(),
   Motif: z.object({ ...base, kinds: z.array(z.enum(shapeKinds)).min(1).max(2) }).strict(),
@@ -143,6 +143,7 @@ export function validateStructure(root: SourceNode, options: SchemaOptions = {})
       if (!binding && !node.props.kind) error(node, 'Slot declaration requires kind');
       if (binding && ['kind', 'role', 'optional', 'accepts'].some(k => node.props[k] !== undefined)) error(node, 'Slot styling belongs to its declaration');
     }
+    if (node.tag === 'Each' && [...nodes(node)].filter(n => n.tag === 'Item').length !== 1) error(node, 'Each requires exactly one Item placeholder');
     if (node.tag === 'Each' && (!def || children.length !== 1 || Number(node.props.min ?? 0) > Number(node.props.max ?? 8))) error(node, 'Each requires a definition, one wrapper, and min <= max');
     if (['Item', 'Index'].includes(node.tag) && !insideEach) error(node, `${node.tag} requires Each`);
     if (node.tag === 'Icon') {

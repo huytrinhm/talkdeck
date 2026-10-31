@@ -1,3 +1,4 @@
+import { expandSource } from './expansion.js';
 import { prepareCandidate } from './source/candidate.js';
 import { parseAndValidate } from './schema.js';
 import { randomUUID } from 'node:crypto';
@@ -58,7 +59,7 @@ export class SlideEngine {
     const transaction = transactionSchema.parse(input);
     const current = this.document.source;
     const staged = this.snapshots.stage(current, transaction.edits);
-    const candidate = prepareCandidate(current, staged).source;
+    const candidate = expandSource(prepareCandidate(current, staged).source).source;
     parseAndValidate(candidate);
     const baseline = await this.validation.check(current);
     const report = await this.validation.check(candidate);

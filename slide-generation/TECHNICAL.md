@@ -282,3 +282,19 @@ writers and path aliases/symlinks are unsupported; this is not a distributed rep
 out-of-order delivery timestamps. It survives restart and will clear an event only when the supplied committed source
 contains exactly that evidence. These storage primitives are tested on the actual filesystem but not wired to engine
 publication/host ingestion yet. Their existence does not enable the commit or live-host capability.
+
+## P4 expansion
+
+`expandSource` now builds dependency closure, rejects cycles/nesting violations and duplicate layout slot shapes,
+expands Layout/Component/Slot/Each/Item/Index, records transitively dependent slides, and normalizes slot roles/sizes
+into canonical source. Required missing slots and Each shortages produce deterministic Pending nodes; optional slots
+may disappear. Repeated items use repeated named Slot bindings, one child each. Structural identities include instance,
+definition and repeated authored-item IDs in an `@` namespace unavailable to authored IDs. Reordering preserves wrappers.
+
+Tests cover layout ground replacement, nested components, transitive dependencies, missing slots, type/count errors,
+canonical role normalization, duplicate shapes, cycles, and expanded depth independently of authored depth. The engine
+uses expansion on candidates; final browser validation/publication remains disabled. Unused-definition expanded-depth
+validation and broader adversarial coverage still require review before P4 is considered fully qualified.
+
+Custom-font source references use provisional `Theme font={{id, version}}`, through the existing injected asset resolver;
+this adds no provider/storage contract. Renderer and browser work are ongoing in parallel.
