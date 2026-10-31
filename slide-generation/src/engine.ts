@@ -11,6 +11,7 @@ import { introducedErrors, ready, UnavailableValidation } from './validation.js'
 import type { DeckRepository } from './storage/repository.js';
 import type { EvidenceInbox } from './storage/inbox.js';
 import { DurabilityError } from './storage/files.js';
+import { restoreContentCandidate } from './source/history.js';
 
 export interface CommitServices {
   repository: DeckRepository;
@@ -118,7 +119,7 @@ export class SlideEngine {
     this.lastInputError = blocked[0]?.failure.code;
   }
   async settledInput() { await this.drainTail; return { pendingError: this.lastInputError }; }
-  edit(input: unknown, idempotencyKey?: string) {
+  edit(input: unknown, idempotencyKey?: string, commitGuard?: () => void) {
     if (idempotencyKey !== undefined) {
       if (!/^[\w.-]{1,128}$/.test(idempotencyKey)) throw new SourceError('idempotency_key', 'Invalid idempotency key');
       const digest = lineHash(JSON.stringify(transactionSchema.parse(input)));
@@ -127,20 +128,21 @@ export class SlideEngine {
         if (existing.digest !== digest) throw new SourceError('idempotency_conflict', 'Idempotency key already used for different edits');
         return existing.promise;
       }
-      const promise = this.runEdit(input);
+      const promise = this.runEdit(input, commitGuard);
       this.retries.set(idempotencyKey, { digest, promise });
       while (this.retries.size > 256) this.retries.delete(this.retries.keys().next().value!);
       return promise;
     }
-    return this.runEdit(input);
+    return this.runEdit(input, commitGuard);
   }
-  private runEdit(input: unknown) {
+  private runEdit(input: unknown, commitGuard?: () => void) {
     const transactionId = randomUUID();
     const run = this.editTail.then(async () => {
       const cause = { deckId: parseSource(this.document.source).id!, revision: lineHash(this.document.source), transactionId };
       this.trace.emit('edit.started', cause);
       try {
-        const result = await this.transact(input, transactionId);
+        commitGuard?.();
+        const result = await this.transact(input, transactionId, commitGuard);
         this.trace.emit(result.accepted ? 'edit.committed' : 'edit.refused', { ...cause, revision: result.revision }, result.accepted ? undefined : 'new_errors');
         return result;
       } catch (error) {
@@ -179,7 +181,7 @@ export class SlideEngine {
       throw error;
     }
   }
-  private async transact(input: unknown, transactionId: string) {
+  private async transact(input: unknown, transactionId: string, commitGuard?: () => void) {
     const transaction = transactionSchema.parse(input);
     for (let attempt = 0; attempt < 3; attempt++) {
       const current = this.document.source, staged = this.snapshots.stage(current, transaction.edits);
@@ -220,6 +222,7 @@ export class SlideEngine {
         if (latest.document.source !== this.document.source) { this.document = latest.document; this.lastCheckComplete = false; }
         await this.flushInputLocked();
         if (current !== this.document.source) return undefined;
+        commitGuard?.();
         if (candidate !== current) await this.persist(current, candidate);
         const noOp = candidate === current;
         const root = parseSource(this.document.source);
@@ -235,5 +238,33 @@ export class SlideEngine {
 
     }
     throw new SourceError('revision_conflict', 'Source changed repeatedly during validation; reread and retry');
+  }
+
+  /** Trusted user history control. Restore visual source while retaining all current evidence. */
+  restoreContent(snapshot: string, commitGuard?: () => void) {
+    const run = this.editTail.then(async () => {
+      if (!this.services) throw new SourceError('not_implemented', 'Durable history is not configured');
+      for (let attempt = 0; attempt < 3; attempt++) {
+        commitGuard?.();
+        const current = this.document.source;
+        let candidate = restoreContentCandidate(current, snapshot);
+        candidate = await this.services.normalize(candidate);
+        parseAndValidate(candidate, this.services.schema);
+        const baseline = await this.check(current), report = await this.check(candidate);
+        if (!baseline.complete || !report.complete) throw new SourceError('validation_unavailable', 'History restoration requires all browser checks');
+        if (introducedErrors(baseline.findings, report.findings).length) throw new SourceError('history_validation', 'Restored content introduces validation errors');
+        const result = await this.withWrite(async () => {
+          await this.flushInputLocked();
+          if (current !== this.document.source) return undefined;
+          commitGuard?.();
+          if (candidate !== current) { await this.persist(current, candidate); this.publish('edit'); }
+          return { revision: lineHash(this.document.source), changed: candidate !== current };
+        });
+        if (result) return result;
+      }
+      throw new SourceError('revision_conflict', 'Input changed during history restoration');
+    });
+    this.editTail = run.catch(() => {});
+    return run;
   }
 }
