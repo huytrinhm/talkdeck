@@ -10,3 +10,5 @@ export { createPracticeRuntime } from "./practice/runtime.js";
 export { PracticeService } from "./practice/service.js";
 export { OpenAIPracticeReviewer, OpenAIPracticeTranscriber } from "./practice/openai.js";
 export type { Reviewer, ReviewContext, ReviewOutput, PreparedProposal, PracticeRecord } from "./practice/contracts.js";
+export { loadDesignSkills, compileDesignContext, validateDesignSkillSnapshot } from "./design/skills.js";
+export type { DesignSkillSnapshot, DesignContext } from "./design/skills.js";

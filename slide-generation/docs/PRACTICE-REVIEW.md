@@ -239,6 +239,11 @@ Poll the review record while it is `processing`. Valid states are `recording`,
 
 ## Verification
 
+New practice runtimes also freeze the [design skill](DESIGN-SKILLS.md) into
+`context.design`: canonical authoring limits, full style/pattern recipes and
+review-specific guidance. This adds no tools or proposal fields. Legacy contexts
+without design guidance remain usable; retry does not silently upgrade them.
+
 `test/practice.integration.test.ts` runs the real canonical engine and Chromium:
 private previews, acceptance/history, cancellation boundaries, context attribution,
 conflicts and unrelated edits, counter-prompts, restart-safe anchor binding, audio

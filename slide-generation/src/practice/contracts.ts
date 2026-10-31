@@ -87,6 +87,8 @@ export interface SlideImage {
   jpeg: string;
 }
 export interface ReviewContext {
+  /** Exact compiled guidance, frozen with evidence; absent on pre-skill records. */
+  design?: import("../design/skills.js").DesignContext;
   version: 1;
   practiceId: string;
   instructions: string;

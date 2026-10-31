@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util';
-import { readFile, writeFile, mkdir, readdir, lstat, readlink, symlink } from 'node:fs/promises';
+import { access, readFile, writeFile, mkdir, readdir, lstat, readlink, symlink } from 'node:fs/promises';
 import { join, resolve, relative, isAbsolute, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -96,6 +96,17 @@ const selectedModels = models(), limits = { maxCalls: Number(values['max-calls']
   maxOutputTokens: Number(values['max-output-tokens'] ?? 100_000), maxOutputTokensPerCall: 8000 };
 const promptFiles = ['docs/AGENT_PROMPT.md', 'SPEC.md', 'src/host/jsx-backend.ts',
   'src/orchestration/runtime.ts', 'src/orchestration/tools.ts', 'src/orchestration/openai.ts'];
+// Older frozen generators have no design skill. New ones fingerprint their own
+// resource inventory, never the current harness's recipes.
+const designModule = join(generationRoot, 'src/design/skills.ts');
+const hasDesignSkills = await access(designModule).then(() => true, error => {
+  if (error.code === 'ENOENT') return false;
+  throw error;
+});
+if (hasDesignSkills) {
+  const { designSkillFiles } = await import(pathToFileURL(designModule).href) as typeof import('../src/design/skills.js');
+  promptFiles.push('src/design/skills.ts', ...designSkillFiles.map(file => `skills/slide-design/${file}`));
+}
 const promptFingerprint = await Promise.all(promptFiles.map(async path => ({ path, sha256: lineHash(await readFile(join(generationRoot, path), 'utf8')) })));
 const promptSha256 = lineHash(JSON.stringify(promptFingerprint));
 const manifest = { schemaVersion: 1, sourceSha: frozen?.sourceSha ?? harnessSourceSha, dirty: frozen ? false : harnessDirty, harness,

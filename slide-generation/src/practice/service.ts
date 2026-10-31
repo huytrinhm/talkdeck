@@ -545,6 +545,7 @@ export class PracticeService {
         this.options.reviewInstructions ??
         "Review the entire rehearsal and propose useful conservative changes; preserve substantive facts, qualifiers and original source evidence.",
       brief: r.brief,
+      design: this.options.backend.designContext("review"),
       baseline: { ...baseline, reads: makeReads(fork, source) },
       slides: sourceSlides.map((s) => {
         const evidence = fork.readSpeakerNotes(s.id!);

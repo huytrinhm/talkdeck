@@ -175,3 +175,18 @@ explicit push-to-edit remains available. No frontend is included.
 
 See [PRACTICE-REVIEW.md](PRACTICE-REVIEW.md) for source/notes evidence, proposal
 versioning, stale acceptance, audio timing limitations and implementation evidence.
+
+## D59 — canonical slide-design skill
+
+User direction: **“adapt the skills to integrate as skills for design”** after
+reviewing the local `presentation-skill-v2` work. The tracked adaptation lives in
+`skills/slide-design/`; the original studies remain untouched. Common guidance,
+styles and communication patterns are preloaded as role-specific context, not a
+new retrieval tool or agent. Native JSX authoring/publication rules override recipe
+preferences. Fast preserves incremental composition; Slow handles meaningful
+refinement; end review returns existing native proposals. Pattern IDs are neither
+registered Layout names nor evidence IDs. Record skill bytes/digests so historical
+replay and finalized-review retry do not silently receive revised guidance.
+
+See [DESIGN-SKILLS.md](DESIGN-SKILLS.md). No improved generation-quality or latency
+claim follows from the standalone HTML study or prompt integration alone.

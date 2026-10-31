@@ -17,6 +17,10 @@ import {
 } from "../src/headless/transaction-replay.js";
 import { childNodes, parseAndValidate } from "../src/schema.js";
 import type { RenderDependency } from "../src/render/types.js";
+import {
+  designSkillSnapshotSchema,
+  validateDesignSkillSnapshot,
+} from "../src/design/skills.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -40,6 +44,7 @@ const configSchema = z
     promptSha256: digest,
     toolSchemaSha256: digest,
     initialDependencies: z.array(dependencySchema),
+    designSkills: designSkillSnapshotSchema.optional(),
   })
   .passthrough();
 const json = async (path: string) => JSON.parse(await readFile(path, "utf8"));
@@ -204,6 +209,10 @@ export async function main(argv: string[]) {
     );
     backend = new JsxBackend(runtime, {
       instructions: configuration.instructions,
+      designSkills:
+        configuration.designSkills === undefined
+          ? undefined
+          : validateDesignSkillSnapshot(configuration.designSkills),
     });
     await backend.initialize(initial.source);
     const result = await replayIntegratedTransactions(

@@ -222,3 +222,13 @@ private previews. Acceptance revalidates changes, checks the exact candidate at
 commit, and creates a canonical undo unit. Practice speech bypasses generation;
 explicit push-to-edit still works. See [the contract and API](docs/PRACTICE-REVIEW.md).
 No product frontend, prosody inference, or long-talk summary pipeline is added.
+
+## Design skills
+
+`skills/slide-design/` adapts the standalone design library to canonical JSX.
+`src/design/skills.ts` loads, fingerprints and compiles it for Fast (compact index),
+Slow (full recipes) and end review (full recipes plus proposal guidance). Live
+headless/practice factories opt in; directly constructed backends remain explicit.
+Decision gates and tool inventories are unchanged. Review context retains exact
+guidance; headless configuration retains the whole skill snapshot for replay.
+See [DESIGN-SKILLS.md](docs/DESIGN-SKILLS.md) for capability limits and provenance.

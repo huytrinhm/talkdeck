@@ -9,6 +9,7 @@ now lives under `src/orchestration/`, with tests in `test/orchestration/` and hi
 - [Technical documentation](TECHNICAL.md) and [host integration](docs/HOST_PORT.md): current architecture and boundaries.
 - [Decision ledger](docs/DECISIONS.md): settled choices; do not reopen them.
 - [Agent instructions](docs/AGENT_PROMPT.md) and [Lucide icons](docs/LUCIDE_ICONS.md): editing and dedicated-icon contracts.
+- [Slide-design skill](skills/slide-design/SKILL.md) and [integration guide](docs/DESIGN-SKILLS.md): shared design guidance, five styles, twenty patterns, canonical authoring and recorded role-specific prompts.
 - [Improvement loop](docs/IMPROVEMENT_LOOP.md) and [five timed talks](fixtures/talks/README.md): measurement and comparison.
 - [Practice feedback and proposals](docs/PRACTICE-REVIEW.md): record first, one tool-free end review, private previews and explicit acceptance. Run `npm run practice:server`.
 - [Headless evidence](src/headless/README.md): actual viewer frames, recording, audits and reports.

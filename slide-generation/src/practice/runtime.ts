@@ -16,6 +16,7 @@ import { PracticeService } from "./service.js";
 import { createPracticeApp } from "./app.js";
 import type { Reviewer, Transcriber } from "./contracts.js";
 import type { RuntimeOptions as ActorOptions } from "../orchestration/runtime.js";
+import { loadDesignSkills } from "../design/skills.js";
 
 export interface PracticeRuntimeOptions {
   directory: string;
@@ -42,7 +43,10 @@ export async function createPracticeRuntime(options: PracticeRuntimeOptions) {
       new URL("../../docs/AGENT_PROMPT.md", import.meta.url),
       "utf8",
     );
-    const backend = new JsxBackend(local, { instructions });
+    const backend = new JsxBackend(local, {
+      instructions,
+      designSkills: await loadDesignSkills(),
+    });
     const selected = models();
     actors = await SlideRuntime.create({
       backend,

@@ -9,6 +9,7 @@ import { disableReplayNetwork } from "../src/evaluation/offline.js";
 import { lineHash } from "../src/hashline.js";
 import { replayRecordedActors } from "../src/headless/actor-replay.js";
 import { main as replayTransactions } from "./headless-replay.js";
+import { validateDesignSkillSnapshot } from "../src/design/skills.js";
 const { values } = parseArgs({
   options: { run: { type: "string" }, out: { type: "string" } },
   strict: true,
@@ -91,7 +92,13 @@ try {
     configuration.toolSchemaSha256
   )
     throw new Error("Recorded tool schema differs");
-  const backend = new JsxBackend(local, { instructions: currentInstructions });
+  const backend = new JsxBackend(local, {
+    instructions: currentInstructions,
+    designSkills:
+      configuration.designSkills === undefined
+        ? undefined
+        : validateDesignSkillSnapshot(configuration.designSkills),
+  });
   const result = await replayRecordedActors(
     {
       initialSource: initial.source,

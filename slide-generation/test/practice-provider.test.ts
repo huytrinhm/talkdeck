@@ -6,6 +6,10 @@ import {
   OpenAIPracticeTranscriber,
 } from "../src/practice/openai.js";
 import type { ReviewContext } from "../src/practice/contracts.js";
+import {
+  compileDesignContext,
+  loadDesignSkills,
+} from "../src/design/skills.js";
 const empty = { summary: "No changes", feedback: [], proposals: [] };
 const context = {
   version: 1,
@@ -37,6 +41,7 @@ const context = {
   ],
 } satisfies ReviewContext;
 test("review adapter sends complete front-loaded context and actual images, no tools, structured native edits, Fast tier", async () => {
+  const design = compileDesignContext(await loadDesignSkills(), "review");
   let body: any;
   const client = new OpenAI({
     apiKey: "test",
@@ -70,7 +75,7 @@ test("review adapter sends complete front-loaded context and actual images, no t
   });
   assert.deepEqual(
     await new OpenAIPracticeReviewer(client).review({
-      context,
+      context: { ...context, design },
       signal: new AbortController().signal,
     }),
     empty,
@@ -85,6 +90,7 @@ test("review adapter sends complete front-loaded context and actual images, no t
   const packet = JSON.parse(body.input[0].content[0].text).context;
   assert.equal(packet.baseline.source, "exact JSX");
   assert.equal(packet.images, undefined);
+  assert.deepEqual(packet.design, design);
 });
 test("review adapter rejects truncated output instead of returning partial proposals", async () => {
   const client = {

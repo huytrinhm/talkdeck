@@ -13,10 +13,13 @@ import type { InputUtterance } from '../source/ingestion.js';
 import type { ToolObservation } from '../tools.js';
 
 import type { NoteRestoration } from '../source/history.js';
+import { compileDesignContext, validateDesignSkillSnapshot, type DesignSkillSnapshot, type DesignContext, type DesignMode } from '../design/skills.js';
 interface HistoryEntry {source: string; selectedId: string; notes?: NoteRestoration[]}
 type Runtime = Awaited<ReturnType<typeof createLocalRuntime>>;
 export interface JsxBackendOptions {
   instructions: string;
+  /** Explicit snapshot: omitted for legacy runs/replays, loaded by live hosts. */
+  designSkills?: DesignSkillSnapshot;
   onSelection?(slideId: string): void | Promise<void>;
   onTool?(event: ToolObservation & { inferenceId: string; agent: string; role: Role; slideId?: string; context: unknown }): void | Promise<void>;
 }
@@ -42,7 +45,13 @@ export class JsxBackend implements GenerationBackend {
   onConflict: Publisher['onConflict'];
   validateAccess: Publisher['validateAccess'];
   readonly generation: GenerationPolicy;
+  private readonly designContexts = new Map<DesignMode, DesignContext>();
   constructor(readonly runtime: Runtime, private options: JsxBackendOptions) {
+    if (options.designSkills) {
+      const snapshot = validateDesignSkillSnapshot(options.designSkills);
+      for (const mode of ['fast', 'slow', 'review', 'specialist'] as const)
+        this.designContexts.set(mode, compileDesignContext(snapshot, mode));
+    }
     this.generation = {
       instructions: role => `${options.instructions}\n\nYou are ${role}. This runtime uses canonical JSX and hashline edit_source, never HTML edits. Spoken input includes explicit editing instructions. Preserve its exact words and qualifiers in notes/raw evidence. ${role === 'fast' ? 'Handle routine content and explicit edits within workingSlideId. Use read_source for that slide, then one granular edit_source when possible. For a blank slide, insert_before its closing </Slide> line; the preceding blank line is a stable insertion boundary. Do not anchor visible insertions to Transcript or SpeakerNotes lines, which change as speech arrives. After a stale refusal, reread and apply the latest requested state instead of finishing with the slide blank. For an explicit request requiring theme, library, slide deletion/reordering or cross-slide work, call request_deck_edit with its scope and the exact Prompt utteranceId copied from notes.transcript (or read_speaker_notes); this wakes Slow with the complete original input. Supply the ID, not quoted or combined speech. Do not merely finish or try to edit outside workingSlideId.' : 'Use shared definitions for repeated shapes and refine the whole deck only when useful. Preserve factual content and source evidence.'} Finish this activation promptly once the requested change is represented. Do not repeatedly inspect readiness or reword correct content. The host handles explicit new-slide/return navigation; never create another slide for an already-created workingSlideId. Only explicit screenshot calls provide images.`,
       definitions: role => role === 'specialist' ? [] : runtime.tools.definitions()
@@ -54,7 +63,13 @@ export class JsxBackend implements GenerationBackend {
       invoke: (input, name, args) => this.invoke(input, name, args),
       deliverUtterance: input => this.deliverUtterance(input),
     };
+    const baseInstructions = this.generation.instructions;
+    this.generation.instructions = role => {
+      const design = this.designContexts.get(role);
+      return baseInstructions(role) + (design ? `\n\n${design.instructions}` : '');
+    };
   }
+  designContext(mode: DesignMode) { const context = this.designContexts.get(mode); return context ? structuredClone(context) : undefined; }
   async initialize(_source: string) { this.selectedId = this.list()[0]?.id ?? ''; if (!this.selectedId) throw new Error('Canonical deck requires an initial slide'); }
   list(): SlideRecord[] {
     const source = this.runtime.engine.readDocument().source;

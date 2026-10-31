@@ -18,6 +18,7 @@ import type { EvaluationClock } from '../evaluation/clock.js';
 import { nodes, parseSource, textContent } from '../parser.js';
 import { childNodes } from '../schema.js';
 import { navigationCommand, namedInputTarget, requestedTitle, routingTitles } from './input-routing.js';
+import { loadDesignSkills } from '../design/skills.js';
 export { navigationCommand } from './input-routing.js';
 
 /** Error text is diagnostic, not raw evidence; authentication details never enter logs. */
@@ -46,6 +47,7 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
   const basePrompt = await readFile(join(root, 'docs/AGENT_PROMPT.md'), 'utf8');
   const specification = await readFile(join(root, 'SPEC.md'), 'utf8');
   const instructions = `${basePrompt}\n\n${specification}`;
+  const designSkills = await loadDesignSkills();
   const local = await createLocalRuntime({ directory: join(recorder.directory, 'runtime') });
   let cleanupRecording: HeadlessRecordingSession | undefined, cleanupActors: SlideRuntime | undefined;
   let cleanupSubscription = () => {};
@@ -79,7 +81,7 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
     },
     observation() { /* Canonical state and actual viewer evidence are recorded by HeadlessRecordingSession. */ },
   };
-  const backend = new JsxBackend(local, { instructions,
+  const backend = new JsxBackend(local, { instructions, designSkills,
     onSelection: slideId => recording.session.selectSlide(slideId),
     onTool: event => { operations.push({ kind: 'tool', ...event, sourceSha256: local.engine.state().revision }); },
   });
@@ -92,7 +94,7 @@ export async function createEvaluationHost(options: HeadlessHostOptions) {
   const initialArtifact = await local.renderer.render(initial.source, firstSlideId);
   await writeFile(join(recorder.directory, 'configuration.json'), evidenceJson({ source: 'real-actor-jsx-headless', models: selectedModels,
     toolSchemaSha256: lineHash(JSON.stringify(local.tools.definitions())), initialDependencies: initialArtifact.dependencies,
-    providerLimits: providers.budget.snapshot().limits, promptSha256: lineHash(instructions), instructions,
+    providerLimits: providers.budget.snapshot().limits, promptSha256: lineHash(instructions), instructions, designSkills,
     navigation: 'Explicit new/create-slide, return/go-back navigation, and On <live title>, editing targets in actual words; no evaluator metadata.' }));
   let arrivalSequence = 0, routingPending = 0, routingTail: Promise<void> = Promise.resolve(), closed = false, finishing: Promise<any> | undefined;
   let finalReadiness: Awaited<ReturnType<typeof local.engine.readiness>> | undefined, readinessAtMs: number | undefined;

@@ -156,6 +156,10 @@ test("one end-pass receives full frozen context, prepares real previews privatel
     assert.equal(f.backend.historyStatus().undoDepth, history);
     assert.equal(packet!.speech[0].text, "After is the clearer title.");
     assert.equal(packet!.images.length, 1);
+    assert.equal(packet!.design?.skill, "talkdeck-slide-design");
+    assert.match(packet!.design!.instructions, /L10 — Side-by-side comparison/);
+    assert.match(packet!.design!.instructions, /There is no Chart, Table/);
+    assert.deepEqual(r.context!.design, packet!.design);
     assert.equal(packet!.slides[0].notes, "");
     assert(packet!.baseline.reads.length >= 4);
     assert.equal(packet!.visits.length, 1);
@@ -385,10 +389,12 @@ test("cancellation ignores a late review result and retry reuses frozen context"
     pending.resolve(output(input.context));
     assert.equal((await f.practice.wait(r.id)).status, "cancelled");
     const before = f.practice.get(r.id).context!.baseline.revision;
+    const retainedDesign = f.practice.get(r.id).context!.design;
     await f.practice.retry(r.id);
     const result = await f.practice.wait(r.id);
     assert.equal(result.status, "ready", result.error ?? "");
     assert.equal(result.context!.baseline.revision, before);
+    assert.deepEqual(result.context!.design, retainedDesign);
   } finally {
     pending.resolve({ summary: "", feedback: [], proposals: [] });
     await f.cleanup();
