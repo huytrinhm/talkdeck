@@ -5,7 +5,7 @@
 The actual actor scheduler is now connected through an injected canonical JSX backend in this consolidated package.
 A real headless iframe records viewer acknowledgments and frames without a product frontend. The integrated three-input
 pilot and exact offline actor replay completed. The four diagnostic stages are consolidated in [Pass 1](docs/rounds/pass-01/README.md). Its final frozen pair
-completed but retains fidelity failures. A broader four-talk pair set is in progress; repeated five-talk qualification
+completed but retains fidelity failures. The broader [Pass 2](docs/rounds/pass-02/README.md) closed with six completed runs, one timeout and one user-skipped run; repeated five-talk qualification
 and separately verified refactoring remain unfinished.
 Passing integration tests or structural readiness does not establish faithful visible generation.
 
@@ -198,8 +198,8 @@ manual-review misses. Reports include coverage/censoring and link the original P
 fixtures by default. `--plan-only` makes no model calls; `--fixtures`, `--repetitions`, `--max-runs` and per-run token/call
 limits bound execution. Generator SHA is distinct from common evaluator/observer hashes. Frozen execution artifacts live
 at the directory in the container's `run-location.json`, normally `execution/slide-generation/.artifacts/run/`.
-Pass 1 retains the completed diagnostic pairs and exact comparison limitations. The active breadth batch uses frozen
-`734d84a` and `7aee9be`; see current continuation for status and README for exact commands. Complete-deck PNGs are
+Pass 1 retains the completed diagnostic pairs and exact comparison limitations. The closed breadth batch used frozen
+`734d84a` and `7aee9be`; see current continuation for outcomes and README for exact commands. Complete-deck PNGs are
 composed from every actual final slide capture; original per-slide images and video remain unchanged. Initial manifest
 dependencies contain resolved digests, with an additional source-referenced initial/state inventory after each run.
 

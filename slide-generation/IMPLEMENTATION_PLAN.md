@@ -37,7 +37,7 @@ claim that all qualification gates have passed.
 | P0–P8 | Core parser, source/evidence, renderer, mandatory checks, durable edits and viewer implemented with actual browser tests |
 | P9 | Actual scheduler/backend/headless viewer connected; real-model visible edits recorded; fidelity defects remain |
 | P10 | Paced recording, full-deck images, audits, freezes and transaction replay implemented; full-talk actor replay and audience/build coverage remain partial |
-| P11 | Diagnostic edit-heavy stages consolidated into Pass 1; broader live corpus in progress; repeated five-talk qualification unfinished |
+| P11 | Diagnostic edit-heavy stages consolidated into Pass 1; breadth pass closed with six completions, a timeout and a user skip; repeated five-talk qualification unfinished |
 | P12 | Evidence-driven fixes underway; quality not stable, so separate refactoring passes have not begun |
 
 See [technical reference](TECHNICAL.md), [Pass 1](docs/rounds/pass-01/README.md), and

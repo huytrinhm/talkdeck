@@ -54,8 +54,8 @@ not live latency.
 The four diagnostic stages are consolidated in [Pass 1](docs/rounds/pass-01/README.md), with original failure cases,
 statistics and whole-deck images. The final frozen pair (`734d84a` / `7aee9be`) completed with 8/30 automatic successes
 each, but different successful effects and unresolved ordering/deletion/build requests. It establishes no overall quality
-or speed improvement. TypeScript and all 318 tests passed at pushed checkpoint `a65a1a5`; current progress is in
-[continuation](docs/continuation/README.md). A breadth batch covers the other four original talks. [Separate quality fixtures](fixtures/quality/README.md)
+or speed improvement. Final TypeScript checking and all 318 tests passed; the closed-pass checkpoint is in
+[continuation](docs/continuation/README.md). [Pass 2](docs/rounds/pass-02/README.md) closed with six completed runs, one timeout and one user-skipped run across the other four talks. [Separate quality fixtures](fixtures/quality/README.md)
 extend layouts, themes, decoration and motion; their live verification is pending. Repeated qualification and later refactoring remain unfinished.
 
 Responses requests use `service_tier: "fast"`; provider records distinguish requested and actually returned tiers.

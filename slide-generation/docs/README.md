@@ -8,7 +8,7 @@ Current status and commands live in the [package README](../README.md), [technic
 | Behavior and settled choices | [SPEC](../SPEC.md), [decisions](DECISIONS.md), [Lucide contract](LUCIDE_ICONS.md) |
 | Milestones and acceptance gates | [Implementation plan](../IMPLEMENTATION_PLAN.md) |
 | Measurement procedure | [Improvement loop](IMPROVEMENT_LOOP.md) |
-| Current implementation evidence | [Pass 1 consolidated report](rounds/pass-01/README.md) |
+| Implementation and live evidence | [Pass 1 consolidated report](rounds/pass-01/README.md), [Pass 2 breadth report](rounds/pass-02/README.md) |
 | Host and provider boundaries | [Host port](HOST_PORT.md), [provider policy](HEADLESS_PROVIDERS.md) |
 | Rendering and mandatory checks | [Browser checks](BROWSER_CHECKS.md), [transaction review](P7_REVIEW.md) |
 | Offline verification | [Transaction replay](HEADLESS_TRANSACTION_REPLAY.md), [actor replay](HEADLESS_ACTOR_REPLAY.md) |
