@@ -39,12 +39,12 @@ export class OpenAIDecider implements Decider {
               {
                 value: "dispatch",
                 description:
-                  "Send this transcript for slide-writing reasoning.",
+                  "New usable content is present, even a short fragment: start slide-writing reasoning now.",
               },
               {
                 value: "hold",
                 description:
-                  "Only unresolved fragments or repetition; accumulate further.",
+                  "No new usable content yet: only filler, repetition, or wholly unresolved wording.",
               },
             ],
           },

@@ -286,3 +286,10 @@ Provisional ASR evidence is throttled to 200 ms with trailing delivery, so a
 last delta cannot be stranded until another delta or final ASR. This does not
 force transcription commits or bypass semantic readiness: the speech decision
 gate still controls dispatch, and final recognition supersedes draft evidence.
+
+The speech decision gate favors starting work on new usable semantic fragments,
+not waiting for finished sentences, lists, or comparisons. Fast renders the
+supported portion immediately. Topicless preambles, repetition, and wholly
+unresolved wording still hold; missing values are never guessed. Explicit
+retractions dispatch even before replacement facts arrive. The 200 ms decision
+cadence and pending-snapshot coalescing are unchanged.
