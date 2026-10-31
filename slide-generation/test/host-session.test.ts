@@ -144,3 +144,34 @@ test('navigation reuses exact browser evidence but refreshes changed dependencie
     assert.equal(sent.length, published + 1);
   } finally { await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
 });
+
+test('structural edits reuse unchanged render evidence and publication reuses candidate checks', async () => {
+  await mkdir('.artifacts/tests', { recursive: true });
+  const directory = await mkdtemp('.artifacts/tests/edit-evidence-cache-');
+  const runtime = await createLocalRuntime({ directory: resolve(directory) });
+  const backend = new JsxBackend(runtime, { instructions: '' });
+  const session = new GenerationSession(runtime.engine, runtime.tools, runtime.renderer, runtime.browser,
+    { channel: 'edit_evidence_cache_channel', slideId: 'n10', send() {}, record() {} });
+  const inspect = runtime.browser.inspect.bind(runtime.browser);
+  const inspected: string[] = [];
+  runtime.browser.inspect = async artifact => { inspected.push(artifact.slideId); return inspect(artifact); };
+  try {
+    await session.selectSlide('n10');
+    inspected.length = 0;
+    const created = await backend.createSlide();
+    await session.selectSlide(created.id);
+    assert.deepEqual(inspected, [created.id], 'only the new slide needs a browser measurement');
+    inspected.length = 0;
+    await backend.deleteSlide(created.id);
+    await session.selectSlide('n10');
+    assert.deepEqual(inspected, [], 'deletion without a rendered change reuses exact evidence');
+    await runtime.engine.ingest({ id: 'private-only', slideId: 'n10', text: 'New private evidence', deliveredAtMs: 1 });
+    await runtime.engine.settledInput();
+    const source = runtime.engine.readDocument().source;
+    const report = await runtime.browser.check(source, { reusePublicationChecks: true });
+    assert.deepEqual(inspected, [], 'private narration does not invalidate pixels');
+    const fresh = await runtime.browser.check(source);
+    assert.equal(report.evidence[0].sourceDigest, fresh.evidence[0].sourceDigest);
+    assert.equal(report.evidence[0].artifactDigest, fresh.evidence[0].artifactDigest);
+  } finally { await backend.close(); await session.close(); await runtime.close(); await rm(directory, { recursive: true, force: true }); }
+});

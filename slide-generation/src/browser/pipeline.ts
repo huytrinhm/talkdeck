@@ -20,11 +20,14 @@ export function artifactDigest(artifact: RenderArtifact) {
 }
 export class BrowserValidationPipeline implements ValidationPipeline {
   private readonly pool: BrowserPool;
-  // Publication-only reuse, bounded to this browser/configuration lifetime. Render
+  // Shared edit/publication evidence, bounded to this browser/configuration lifetime. Render
   // afresh before lookup so font, asset and renderer dependency changes invalidate it.
   private readonly publicationChecks = new Map<string, Promise<BrowserCheckResult>>();
-  private publicationCheck(artifact: RenderArtifact) {
-    const key = artifactDigest(artifact);
+  private async publicationCheck(artifact: RenderArtifact) {
+    // Source contains the entire deck (including private speech). Browser evidence
+    // depends on rendered bytes, identity, assets/fonts and policy, not that source.
+    const key = digest(JSON.stringify({ html: artifact.html, css: artifact.css, slideId: artifact.slideId,
+      fonts: artifact.fonts, dependencies: artifact.dependencies, policy: CHECK_POLICY_VERSION, contrast: APCA_VERSION }));
     let pending = this.publicationChecks.get(key);
     if (!pending) {
       pending = this.inspect(artifact);
@@ -32,7 +35,9 @@ export class BrowserValidationPipeline implements ValidationPipeline {
       void pending.catch(() => { if (this.publicationChecks.get(key) === pending) this.publicationChecks.delete(key); });
       while (this.publicationChecks.size > 128) this.publicationChecks.delete(this.publicationChecks.keys().next().value!);
     }
-    return pending;
+    const checked = await pending;
+    // Rebind provenance to this exact source; never claim the old source was checked.
+    return { ...checked, evidence: { ...checked.evidence, sourceDigest: digest(artifact.source), artifactDigest: artifactDigest(artifact) } };
   }
   constructor(private readonly renderer: ArtifactRenderer, options: BrowserPoolOptions = {}) { this.pool = new BrowserPool(options); }
   private async render(source: string, slideId: string): Promise<RenderArtifact> {

@@ -27,7 +27,7 @@ export async function createLocalRuntime(options: RuntimeOptions) {
   const renderer = new HonoSlideRenderer({ assets: options.assets });
   const browser = new BrowserValidationPipeline(renderer, options.browser);
   const inbox = new EvidenceInbox(resolve(directory, 'input'));
-  const engine = new SlideEngine(initial.document, browser, options.trace, {
+  const engine = new SlideEngine(initial.document, { check: source => browser.check(source, { reusePublicationChecks: true }) }, options.trace, {
     repository, inbox, normalize: source => renderer.normalize(source), schema: { resolveIcon: readIcon },
   });
   // Recovery is trusted metadata ingestion. Pending evidence is never dropped on startup failure.
