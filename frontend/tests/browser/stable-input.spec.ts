@@ -37,7 +37,10 @@ test("explicit capture only, cancelled callbacks rejected after Resume, reload s
     .click();
   await expect(page.getByRole("button", { name: "Pause (P)" })).toBeVisible();
   await result(page, "active input");
-  await expect(page.locator(".speech-status")).toHaveText("active input");
+  await expect(page.locator(".stage .speech-status")).toHaveCount(0);
+  await expect(page.locator(".workspace-sidebar .interim")).toContainText(
+    "active input",
+  );
   await page.evaluate(() => {
     (window as any).__oldResult = (window as any).__safeRecognition.onresult;
   });
@@ -141,4 +144,68 @@ test("speech route reload requires a fresh microphone action", async ({
     await page.evaluate(() => (window as any).__safeRecognition === undefined),
   ).toBe(true);
   await expect(page.locator(".speech-status")).toHaveCount(0);
+});
+test("empty coach is absent throughout Practice Review and completion, current input stays in sidebar", async ({
+  page,
+}) => {
+  await create(page);
+  await page
+    .getByRole("button", { name: "Talk to generate", exact: true })
+    .first()
+    .click();
+  await expect(page.getByRole("button", { name: "Pause (P)" })).toBeVisible();
+  await result(page, "Live words only in transcript");
+  await expect(page.locator(".stage")).not.toContainText(
+    "Live words only in transcript",
+  );
+  await expect(page.locator(".workspace-sidebar .interim")).toContainText(
+    "Live words only in transcript",
+  );
+  await page.getByRole("button", { name: "Pause (P)" }).click();
+  await page.getByRole("button", { name: "Finish", exact: true }).click();
+  await page.getByRole("button", { name: "Practice", exact: true }).click();
+  await expect(page.locator(".practice-coach")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Finish practice", exact: true })
+    .click();
+  const absent = async () => {
+    await expect(
+      page.locator(".coach-review-notes,.practice-coach"),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText(/No coach feedback|Coach notes last|Coaching tip/),
+    ).toHaveCount(0);
+  };
+  await absent();
+  await expect(page.locator(".review-feedback")).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const r = indexedDB.open("talkdeck-local-v2", 1);
+          r.onsuccess = () => resolve(r.result);
+          r.onerror = () => reject(r.error);
+        });
+        return new Promise<number>((resolve) => {
+          const r = db
+            .transaction("workspace")
+            .objectStore("workspace")
+            .get("current");
+          r.onsuccess = () => {
+            resolve(r.result.projects[0].rehearsals.length);
+            db.close();
+          };
+        });
+      }),
+    )
+    .toBe(1);
+  await page.reload();
+  await absent();
+  await page.getByRole("tab", { name: /Slide changes/ }).click();
+  await absent();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await absent();
+  await page.screenshot({
+    path: "docs/main-ui-report/capture-assets/first-freeze-empty-review-complete.png",
+  });
 });

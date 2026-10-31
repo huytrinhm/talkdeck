@@ -79,9 +79,10 @@ it("direct route/reload mounts are microphone-off and reject unsolicited/pre-sta
     callbacks.onState?.({ status: "listening", muted: false });
     callbacks.onInterim?.("current spoken line");
   });
-  expect(document.querySelector(".speech-status")?.textContent).toBe(
-    "current spoken line",
-  );
+  expect(document.querySelector(".stage .speech-status")).toBeNull();
+  expect(
+    document.querySelector(".workspace-sidebar .interim")?.textContent,
+  ).toContain("current spoken line");
   fireEvent.click(screen.getByRole("button", { name: "Pause (P)" }));
   expect(document.querySelector(".speech-status")).toBeNull();
   const count = change.mock.calls.length;

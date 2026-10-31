@@ -26,7 +26,18 @@ afterEach(() => {
   practicePreferences.reset();
 });
 it("hides the unavailable coach without fabricated feedback or idle prompts", () => {
- const c = new PracticeCoachController(context);const view=render(<PracticeCoach controller={c} onPausePractice={()=>{}} onResumePractice={()=>{}} onSettings={()=>{}}/>);expect(view.container.textContent).toBe('');expect(screen.queryByTestId('otter-avatar')).toBeNull();c.dispose();
+  const c = new PracticeCoachController(context);
+  const view = render(
+    <PracticeCoach
+      controller={c}
+      onPausePractice={() => {}}
+      onResumePractice={() => {}}
+      onSettings={() => {}}
+    />,
+  );
+  expect(view.container.textContent).toBe("");
+  expect(screen.queryByTestId("otter-avatar")).toBeNull();
+  c.dispose();
 });
 it("pauses before a consented typed question and separates input/output/interrupt/resume controls", async () => {
   let emit = (_: CoachEvent) => {};
@@ -89,3 +100,66 @@ it("pauses before a consented typed question and separates input/output/interrup
   expect(c.getSnapshot().outputMuted).toBe(true);
   c.dispose();
 });
+
+import { CoachReviewNotes } from "./PracticeCoach";
+import { coachHistory, configureCoachPort } from "../services/practiceCoach";
+it.each([
+  {
+    service: false,
+    recorded: true,
+    feedback: [{ id: "f", text: "Actual feedback" }],
+    visible: false,
+  },
+  {
+    service: true,
+    recorded: false,
+    feedback: [{ id: "f", text: "Actual feedback" }],
+    visible: false,
+  },
+  { service: true, recorded: true, feedback: [], visible: false },
+  {
+    service: true,
+    recorded: true,
+    feedback: [{ id: "f", text: "   " }],
+    visible: false,
+  },
+  {
+    service: true,
+    recorded: true,
+    feedback: [{ id: "f", text: "Actual feedback" }],
+    visible: true,
+  },
+])(
+  "Review coach gate requires service and substantive received feedback: %j",
+  ({ service, recorded, feedback, visible }) => {
+    configureCoachPort({
+      available: service,
+      inputMode: "text",
+      voiceOutput: false,
+      open: async () => {
+        throw new Error("No service calls in test");
+      },
+    });
+    coachHistory.save("gate", {
+      available: recorded,
+      feedback,
+      notes: "Preserve private notes",
+      incomplete: false,
+    });
+    const view = render(<CoachReviewNotes rehearsalId="gate" />);
+    expect(Boolean(view.container.querySelector(".coach-review-notes"))).toBe(
+      visible,
+    );
+    expect(coachHistory.get("gate")?.notes).toBe("Preserve private notes");
+    cleanup();
+    coachHistory.clear();
+    configureCoachPort({
+      available: false,
+      inputMode: "text",
+      voiceOutput: false,
+      open: async () => {
+        throw new Error("Unavailable");
+      },
+    });
+  },
+);

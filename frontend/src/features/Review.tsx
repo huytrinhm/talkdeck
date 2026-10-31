@@ -323,44 +323,43 @@ export function Review({
               </p>
             )}
           </section>
-          <div
-            className={`review-feedback ${!words ? "neutral" : wpm >= 100 && wpm <= 180 ? "positive" : "attention"}`}
-          >
-            <h3>
-              Pace ·{" "}
-              {!words
-                ? "No data"
-                : wpm < 100
-                  ? "Measured"
-                  : wpm > 180
-                    ? "Fast"
-                    : "Steady"}
-            </h3>
-            <p>
-              {!words
-                ? "Practice again and speak to see your pace."
-                : wpm < 100
-                  ? "Leave room for explanation while keeping your points moving."
-                  : wpm > 180
-                    ? "Try slowing down and pausing between your main points."
-                    : "Your overall pace falls within the 100–180 words per minute guide."}
-            </p>
-          </div>
-          <div className={`review-feedback ${vague ? "attention" : "neutral"}`}>
-            <h3>Clarity · {vague ? "Needs attention" : "Keep in mind"}</h3>
-            <p>
-              {vague
-                ? `${vague} vague ${vague === 1 ? "phrase" : "phrases"} matched in your transcript. Name the specific idea or object when possible.`
-                : "Use specific terms and explain how each point connects."}
-            </p>
-          </div>
-          <div className="review-feedback neutral">
-            <h3>Tone & emphasis · Coaching tip</h3>
-            <p>
-              Pause before a key idea and emphasize the words you want your
-              audience to remember.
-            </p>
-          </div>
+          {words > 0 && (
+            <div
+              className={`review-feedback ${!words ? "neutral" : wpm >= 100 && wpm <= 180 ? "positive" : "attention"}`}
+            >
+              <h3>
+                Pace ·{" "}
+                {!words
+                  ? "No data"
+                  : wpm < 100
+                    ? "Measured"
+                    : wpm > 180
+                      ? "Fast"
+                      : "Steady"}
+              </h3>
+              <p>
+                {!words
+                  ? "Practice again and speak to see your pace."
+                  : wpm < 100
+                    ? "Leave room for explanation while keeping your points moving."
+                    : wpm > 180
+                      ? "Try slowing down and pausing between your main points."
+                      : "Your overall pace falls within the 100–180 words per minute guide."}
+              </p>
+            </div>
+          )}
+          {vague > 0 && (
+            <div
+              className={`review-feedback ${vague ? "attention" : "neutral"}`}
+            >
+              <h3>Clarity · {vague ? "Needs attention" : "Keep in mind"}</h3>
+              <p>
+                {vague
+                  ? `${vague} vague ${vague === 1 ? "phrase" : "phrases"} matched in your transcript. Name the specific idea or object when possible.`
+                  : "Use specific terms and explain how each point connects."}
+              </p>
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="changes" className="review-changes">
           {slide ? (

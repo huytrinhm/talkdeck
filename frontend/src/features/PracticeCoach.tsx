@@ -7,6 +7,7 @@ import {
 import {
   PracticeCoachController,
   coachHistory,
+  useCoachAvailability,
   type CoachFeedback,
 } from "../services/practiceCoach";
 import "./practice-coach.css";
@@ -332,7 +333,14 @@ function Feedback({ items }: { items: CoachFeedback[] }) {
   );
 }
 export function CoachReviewNotes({ rehearsalId }: { rehearsalId: string }) {
+  const available = useCoachAvailability();
   const review = coachHistory.get(rehearsalId);
+  if (
+    !available ||
+    !review?.available ||
+    !review.feedback.some((item) => item.text.trim())
+  )
+    return null;
   return (
     <section className="coach-review-notes">
       <h3>Practice coach</h3>

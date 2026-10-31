@@ -981,9 +981,6 @@ export function Workspace({
                     disabled={audience || fullscreen}
                   />
                 )}
-                {enabled && interim && (
-                  <p className="speech-status">{interim}</p>
-                )}
                 {enabled &&
                   (speechState.status === "error" ||
                     speechState.status === "unsupported") && (
